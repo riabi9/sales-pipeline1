@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Grade Converter</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f5f5f3;--surface:#fff;--surface2:#ebebea;--border:#e5e5e3;--border2:#d0d0cc;
+  --text:#1a1a1a;--text2:#555;--text3:#888;--text4:#bbb;
+  --blue:#185FA5;--blue-bg:#E6F1FB;--blue-light:#B5D4F4;
+  --green:#1D9E75;--green-bg:#E1F5EE;--green-text:#0F6E56;
+  --red:#E24B4A;--red-bg:#FCEBEB;--red-text:#A32D2D;
+  --amber:#EF9F27;--amber-bg:#FAEEDA;--amber-text:#854F0B;
+  --purple:#7F77DD;--purple-bg:#EEEDFE;--purple-text:#534AB7;
+}
+[data-theme="dark"]{
+  --bg:#111110;--surface:#1c1c1a;--surface2:#252523;--border:#2e2e2c;--border2:#3a3a38;
+  --text:#f0f0ee;--text2:#c0c0bc;--text3:#888;--text4:#555;
+  --blue:#378ADD;--blue-bg:#0C2A45;--blue-light:#185FA5;
+  --green:#1D9E75;--green-bg:#0a2e22;--green-text:#5DCAA5;
+  --red:#E24B4A;--red-bg:#2e0f0f;--red-text:#f09595;
+  --amber:#EF9F27;--amber-bg:#2e1f05;--amber-text:#FAC775;
+  --purple:#AFA9EC;--purple-bg:#1e1b3a;--purple-text:#AFA9EC;
+}
+*{box-sizing:border-box;margin:0;padding:0;transition:background-color 0.2s,color 0.15s}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 14px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:8px}
+.app-title{font-size:15px;font-weight:700;color:var(--blue)}
+.header-right{display:flex;align-items:center;gap:6px}
+.nav-link{font-size:12px;color:var(--text3);text-decoration:none;padding:4px 8px;border-radius:6px;border:1px solid var(--border)}
+.nav-link:hover{background:var(--surface2)}
+.hbtn{height:30px;padding:0 10px;border:1px solid var(--border2);border-radius:7px;font-size:12px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit}
+.hbtn:hover{background:var(--surface2)}
+.hbtn-blue{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+main{padding:14px;max-width:1200px;margin:0 auto}
+
+/* Intro */
+.intro{background:var(--blue-bg);border:1px solid var(--blue-light);border-radius:12px;padding:14px 16px;margin-bottom:16px;font-size:13px;color:var(--blue);line-height:1.6}
+.intro strong{font-weight:700}
+
+/* Two column layout */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+@media(max-width:700px){.two-col{grid-template-columns:1fr}}
+
+.panel{background:var(--surface);border-radius:12px;border:1px solid var(--border);overflow:hidden}
+.panel-header{padding:12px 14px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.panel-title{font-size:13px;font-weight:600;color:var(--text)}
+.panel-sub{font-size:11px;color:var(--text3)}
+.panel-body{padding:14px}
+
+/* Reference table */
+.ref-table-wrap{max-height:400px;overflow-y:auto}
+.ref-table{width:100%;border-collapse:collapse;font-size:12px}
+.ref-table th{background:var(--surface2);color:var(--text3);font-weight:600;padding:7px 10px;text-align:left;border-bottom:1px solid var(--border);position:sticky;top:0}
+.ref-table td{padding:6px 10px;border-bottom:1px solid var(--border);color:var(--text2)}
+.ref-table tr:last-child td{border-bottom:none}
+.ref-table tr:hover td{background:var(--surface2)}
+.grade-from{font-weight:600;color:var(--text)}
+.grade-to{font-weight:600;color:var(--blue)}
+.cat-badge{font-size:9px;padding:2px 6px;border-radius:20px;font-weight:600;white-space:nowrap}
+.cat-hr{background:var(--amber-bg);color:var(--amber-text)}
+.cat-cr{background:var(--blue-bg);color:var(--blue)}
+.cat-ga{background:var(--green-bg);color:var(--green-text)}
+.cat-st{background:var(--purple-bg);color:var(--purple-text)}
+.add-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;padding:10px 14px;border-top:1px solid var(--border);background:var(--surface2)}
+.form-input{width:100%;height:32px;border:1px solid var(--border2);border-radius:7px;padding:0 9px;font-size:12px;background:var(--surface);color:var(--text);font-family:inherit;outline:none}
+.form-input:focus{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-bg)}
+select.form-input{cursor:pointer}
+.btn{height:32px;padding:0 12px;border:1px solid var(--border2);border-radius:7px;font-size:12px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;white-space:nowrap}
+.btn:hover{background:var(--surface2)}
+.btn-blue{border-color:var(--blue);color:var(--blue);background:var(--blue-bg);font-weight:600}
+.btn-blue:hover{background:var(--blue);color:#fff}
+.btn-green{border-color:var(--green);color:var(--green-text);background:var(--green-bg);font-weight:600}
+.btn-green:hover{background:var(--green);color:#fff}
+.btn-del{border:none;background:transparent;color:var(--text4);cursor:pointer;font-size:14px;padding:0 4px}
+.btn-del:hover{color:var(--red-text)}
+
+/* Upload zone */
+.upload-zone{border:2px dashed var(--border2);border-radius:10px;padding:24px;text-align:center;cursor:pointer;margin-bottom:12px}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--blue);background:var(--blue-bg)}
+.upload-zone p{font-size:13px;color:var(--text3);margin-bottom:8px}
+.upload-zone strong{color:var(--blue)}
+.paste-area{width:100%;height:120px;border:1px solid var(--border2);border-radius:8px;padding:10px;font-size:12px;background:var(--surface);color:var(--text);font-family:monospace;resize:vertical;outline:none;line-height:1.5;margin-bottom:10px}
+.paste-area:focus{border-color:var(--blue)}
+.method-tabs{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:12px}
+.method-tab{flex:1;height:32px;border:none;background:var(--surface2);font-size:12px;cursor:pointer;color:var(--text3);font-family:inherit}
+.method-tab.active{background:var(--blue);color:#fff;font-weight:600}
+.method-zone{display:none}
+.method-zone.visible{display:block}
+
+/* Results */
+.results-panel{background:var(--surface);border-radius:12px;border:1px solid var(--border);margin-bottom:14px;display:none}
+.results-panel.visible{display:block}
+.results-header{padding:12px 14px;background:var(--green-bg);border-bottom:1px solid var(--green);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.results-title{font-size:13px;font-weight:600;color:var(--green-text)}
+.results-actions{display:flex;gap:8px}
+.results-table-wrap{overflow-x:auto;max-height:400px;overflow-y:auto}
+.results-table{width:100%;border-collapse:collapse;font-size:11px}
+.results-table th{background:var(--surface2);color:var(--text3);font-weight:600;padding:7px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0}
+.results-table td{padding:6px 10px;border-bottom:1px solid var(--border);color:var(--text2);white-space:nowrap}
+.results-table tr:last-child td{border-bottom:none}
+.results-table tr:hover td{background:var(--surface2)}
+.converted-grade{font-weight:700;color:var(--blue)}
+.original-grade{font-size:10px;color:var(--text4)}
+.match-yes{color:var(--green-text);font-weight:600}
+.match-no{color:var(--amber-text);font-weight:600}
+.stats-row{display:flex;gap:10px;padding:10px 14px;border-top:1px solid var(--border);flex-wrap:wrap}
+.stat-pill{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600}
+.stat-pill.converted{background:var(--green-bg);color:var(--green-text)}
+.stat-pill.kept{background:var(--amber-bg);color:var(--amber-text)}
+.stat-pill.total{background:var(--blue-bg);color:var(--blue)}
+
+.loading{text-align:center;padding:20px;color:var(--text3);font-size:13px}
+.empty{text-align:center;padding:20px;color:var(--text4);font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <span class="app-title">Grade Converter</span>
+  <div class="header-right">
+    <a class="nav-link" href="index.html">← Pipeline</a>
+    <a class="nav-link" href="stock.html">📦 Stock</a>
+    <button class="hbtn" id="darkBtn" onclick="toggleDark()">🌙</button>
+  </div>
+</header>
+
+<main>
+  <div class="intro">
+    <strong>How it works:</strong> Upload or paste an Erdemir stock list → the converter maps each grade to the EN/EU equivalent using the reference table → download the result as a ready-to-upload stock template. You can add or edit grade mappings in the table at any time.
+  </div>
+
+  <div class="two-col">
+    <!-- Reference table -->
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Grade reference table</div>
+          <div class="panel-sub">Erdemir → EN/EU equivalents</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-blue" onclick="exportRefTable()">Export</button>
+          <button class="btn" onclick="importRefTable()">Import</button>
+          <input type="file" id="refImportInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleRefImport(this.files[0]);this.value=''">
+        </div>
+      </div>
+      <div class="ref-table-wrap">
+        <table class="ref-table">
+          <thead><tr>
+            <th>Erdemir grade</th>
+            <th>EN / EU grade</th>
+            <th>Category</th>
+            <th>Notes</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="refTableBody"></tbody>
+        </table>
+      </div>
+      <div class="add-row">
+        <input class="form-input" id="newFrom" placeholder="Erdemir grade">
+        <input class="form-input" id="newTo" placeholder="EN/EU grade">
+        <select class="form-input" id="newCat">
+          <option value="HR">Hot Rolled</option>
+          <option value="CR">Cold Rolled</option>
+          <option value="GA">Galvanized</option>
+          <option value="ST">Structural</option>
+          <option value="PL">Plate</option>
+          <option value="OT">Other</option>
+        </select>
+        <button class="btn btn-blue" onclick="addRef()">+ Add</button>
+      </div>
+    </div>
+
+    <!-- Input panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Erdemir stock input</div>
+          <div class="panel-sub">Upload Excel or paste text</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="method-tabs">
+          <button class="method-tab active" onclick="setMethod('excel')">Excel / CSV</button>
+          <button class="method-tab" onclick="setMethod('paste')">Paste text</button>
+        </div>
+
+        <div class="method-zone visible" id="zoneExcel">
+          <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            <p>Drop your <strong>Erdemir Excel</strong> file here<br><span style="font-size:11px;color:var(--text4)">or click to browse</span></p>
+            <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFile(this.files[0]);this.value=''">
+          </div>
+          <div id="excelStatus" style="font-size:12px;color:var(--text3);text-align:center;min-height:18px"></div>
+        </div>
+
+        <div class="method-zone" id="zonePaste">
+          <textarea class="paste-area" id="pasteInput" placeholder="Paste Erdemir stock list here...&#10;&#10;Each line should have: Grade, Thickness, Width, Length, Qty, Unit&#10;&#10;Example:&#10;S235JR  10  1500  6000  25  ton&#10;DX53D+Z  1.5  1250    18  ton&#10;ST52-3  12  2000  6000  40  ton"></textarea>
+          <button class="btn btn-blue" onclick="parsePaste()" style="width:100%">Convert pasted text</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-panel" id="resultsPanel">
+    <div class="results-header">
+      <span class="results-title" id="resultsTitle">Converted stock</span>
+      <div class="results-actions">
+        <button class="btn btn-green" onclick="downloadConverted()">Download as stock template</button>
+        <button class="btn" onclick="closeResults()">Clear</button>
+      </div>
+    </div>
+    <div class="results-table-wrap">
+      <table class="results-table">
+        <thead><tr>
+          <th>Original grade</th><th>EN/EU grade</th><th>Product type</th>
+          <th>Thick(mm)</th><th>Width(mm)</th><th>Length(mm)</th>
+          <th>Qty</th><th>Unit</th><th>Origin</th><th>Supplier</th>
+          <th>Buy$/ton</th><th>Location</th><th>Available</th><th>Match</th>
+        </tr></thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    </div>
+    <div class="stats-row" id="statsRow"></div>
+  </div>
+</main>
+
+<script>
+// ── Dark mode ──
+function toggleDark(){
+  const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  document.getElementById('darkBtn').textContent=t==='dark'?'☀️':'🌙';
+  localStorage.setItem('theme',t);
+}
+(()=>{
+  const s=localStorage.getItem('theme')||'light';
+  document.documentElement.setAttribute('data-theme',s);
+  if(s==='dark')setTimeout(()=>document.getElementById('darkBtn').textContent='☀️',0);
+})();
+
+// ── Grade reference table ──
+// Erdemir grade → {en: EN grade, category, notes}
+const DEFAULT_REF = [
+  // Hot Rolled Coil / Sheet
+  {from:'S235JR',  to:'S235JR',   cat:'HR', notes:'Same grade — EN 10025'},
+  {from:'S235J2',  to:'S235J2',   cat:'HR', notes:'Same grade — EN 10025'},
+  {from:'S275JR',  to:'S275JR',   cat:'HR', notes:'Same grade — EN 10025'},
+  {from:'S275J2',  to:'S275J2',   cat:'HR', notes:'Same grade — EN 10025'},
+  {from:'S355JR',  to:'S355JR',   cat:'HR', notes:'Same grade — EN 10025'},
+  {from:'S355J2',  to:'S355J2',   cat:'HR', notes:'Same grade — EN 10025'},
+  {from:'S355K2',  to:'S355K2',   cat:'HR', notes:'Same grade — EN 10025'},
+  {from:'DD11',    to:'DD11',     cat:'HR', notes:'EN 10111 — forming grade'},
+  {from:'DD12',    to:'DD12',     cat:'HR', notes:'EN 10111'},
+  {from:'DD13',    to:'DD13',     cat:'HR', notes:'EN 10111'},
+  {from:'DD14',    to:'DD14',     cat:'HR', notes:'EN 10111'},
+  {from:'S420MC',  to:'S420MC',   cat:'HR', notes:'EN 10149-2'},
+  {from:'S460MC',  to:'S460MC',   cat:'HR', notes:'EN 10149-2'},
+  {from:'S500MC',  to:'S500MC',   cat:'HR', notes:'EN 10149-2'},
+  {from:'S550MC',  to:'S550MC',   cat:'HR', notes:'EN 10149-2'},
+  {from:'S600MC',  to:'S600MC',   cat:'HR', notes:'EN 10149-2'},
+  {from:'S650MC',  to:'S650MC',   cat:'HR', notes:'EN 10149-2'},
+  {from:'S700MC',  to:'S700MC',   cat:'HR', notes:'EN 10149-2'},
+  // Old Turkish / DIN grades still used by Erdemir
+  {from:'St37-2',  to:'S235JR',   cat:'ST', notes:'DIN 17100 → EN 10025'},
+  {from:'ST37',    to:'S235JR',   cat:'ST', notes:'Old DIN → EN 10025'},
+  {from:'St44-2',  to:'S275JR',   cat:'ST', notes:'DIN 17100 → EN 10025'},
+  {from:'ST44',    to:'S275JR',   cat:'ST', notes:'Old DIN → EN 10025'},
+  {from:'St52-3',  to:'S355J2',   cat:'ST', notes:'DIN 17100 → EN 10025'},
+  {from:'ST52',    to:'S355JR',   cat:'ST', notes:'Old DIN → EN 10025'},
+  {from:'ST33',    to:'S185',     cat:'ST', notes:'Old DIN → EN 10025'},
+  // Cold Rolled
+  {from:'DC01',    to:'DC01',     cat:'CR', notes:'EN 10130'},
+  {from:'DC03',    to:'DC03',     cat:'CR', notes:'EN 10130'},
+  {from:'DC04',    to:'DC04',     cat:'CR', notes:'EN 10130'},
+  {from:'DC05',    to:'DC05',     cat:'CR', notes:'EN 10130'},
+  {from:'DC06',    to:'DC06',     cat:'CR', notes:'EN 10130 — IF steel'},
+  {from:'DC07',    to:'DC07',     cat:'CR', notes:'EN 10130'},
+  {from:'HC180B',  to:'HC180B',   cat:'CR', notes:'EN 10268'},
+  {from:'HC220B',  to:'HC220B',   cat:'CR', notes:'EN 10268'},
+  {from:'HC260B',  to:'HC260B',   cat:'CR', notes:'EN 10268'},
+  {from:'HC300B',  to:'HC300B',   cat:'CR', notes:'EN 10268'},
+  // Galvanized (Hot-dip)
+  {from:'DX51D',   to:'DX51D+Z',  cat:'GA', notes:'EN 10327 — general purpose'},
+  {from:'DX51D+Z', to:'DX51D+Z',  cat:'GA', notes:'EN 10327'},
+  {from:'DX52D',   to:'DX52D+Z',  cat:'GA', notes:'EN 10327 — drawing'},
+  {from:'DX52D+Z', to:'DX52D+Z',  cat:'GA', notes:'EN 10327'},
+  {from:'DX53D',   to:'DX53D+Z',  cat:'GA', notes:'EN 10327 — deep drawing'},
+  {from:'DX53D+Z', to:'DX53D+Z',  cat:'GA', notes:'EN 10327'},
+  {from:'DX54D',   to:'DX54D+Z',  cat:'GA', notes:'EN 10327 — extra deep drawing'},
+  {from:'DX54D+Z', to:'DX54D+Z',  cat:'GA', notes:'EN 10327'},
+  {from:'DX56D',   to:'DX56D+Z',  cat:'GA', notes:'EN 10327 — super deep drawing'},
+  {from:'DX56D+Z', to:'DX56D+Z',  cat:'GA', notes:'EN 10327'},
+  {from:'DX57D',   to:'DX57D+Z',  cat:'GA', notes:'EN 10327 — ultra deep drawing'},
+  {from:'HX180YD', to:'HX180YD+Z',cat:'GA', notes:'EN 10327 — HS galvanized'},
+  {from:'HX260YD', to:'HX260YD+Z',cat:'GA', notes:'EN 10327 — HS galvanized'},
+  {from:'HX300YD', to:'HX300YD+Z',cat:'GA', notes:'EN 10327 — HS galvanized'},
+  {from:'S220GD',  to:'S220GD+Z', cat:'GA', notes:'EN 10327 — structural galvanized'},
+  {from:'S250GD',  to:'S250GD+Z', cat:'GA', notes:'EN 10327'},
+  {from:'S280GD',  to:'S280GD+Z', cat:'GA', notes:'EN 10327'},
+  {from:'S320GD',  to:'S320GD+Z', cat:'GA', notes:'EN 10327'},
+  {from:'S350GD',  to:'S350GD+Z', cat:'GA', notes:'EN 10327'},
+  // Plate
+  {from:'S235JR',  to:'S235JR',   cat:'PL', notes:'EN 10025 plate'},
+  {from:'S355J2N', to:'S355J2N',  cat:'PL', notes:'EN 10025 normalized'},
+  {from:'P265GH',  to:'P265GH',   cat:'PL', notes:'EN 10028 — pressure vessel'},
+  {from:'P355GH',  to:'P355GH',   cat:'PL', notes:'EN 10028 — pressure vessel'},
+];
+
+const STORAGE_KEY = 'erdemir_ref_table';
+let refTable = [];
+let convertedData = [];
+
+function loadRef(){
+  try{
+    const s=localStorage.getItem(STORAGE_KEY);
+    if(s) refTable=JSON.parse(s);
+    else refTable=DEFAULT_REF.map((r,i)=>({...r,id:i}));
+  }catch(e){
+    refTable=DEFAULT_REF.map((r,i)=>({...r,id:i}));
+  }
+  renderRef();
+}
+
+function saveRef(){
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(refTable));
+}
+
+const CAT_LABELS={'HR':'Hot Rolled','CR':'Cold Rolled','GA':'Galvanized','ST':'Structural','PL':'Plate','OT':'Other'};
+const CAT_CSS={'HR':'cat-hr','CR':'cat-cr','GA':'cat-ga','ST':'cat-st','PL':'cat-st','OT':'cat-hr'};
+
+function renderRef(){
+  document.getElementById('refTableBody').innerHTML=refTable.map((r,i)=>`
+    <tr>
+      <td class="grade-from">${r.from}</td>
+      <td class="grade-to">${r.to}</td>
+      <td><span class="cat-badge ${CAT_CSS[r.cat]||'cat-hr'}">${CAT_LABELS[r.cat]||r.cat}</span></td>
+      <td style="color:var(--text3);font-size:11px">${r.notes||''}</td>
+      <td><button class="btn-del" onclick="removeRef(${i})">×</button></td>
+    </tr>
+  `).join('');
+}
+
+function addRef(){
+  const from=document.getElementById('newFrom').value.trim();
+  const to=document.getElementById('newTo').value.trim();
+  const cat=document.getElementById('newCat').value;
+  if(!from||!to){alert('Please enter both grades.');return;}
+  refTable.push({from,to,cat,notes:'',id:Date.now()});
+  saveRef();renderRef();
+  document.getElementById('newFrom').value='';
+  document.getElementById('newTo').value='';
+}
+
+function removeRef(idx){
+  refTable.splice(idx,1);
+  saveRef();renderRef();
+}
+
+// ── Grade lookup ──
+function lookupGrade(rawGrade){
+  const g=rawGrade.trim();
+  // Exact match
+  let found=refTable.find(r=>r.from.toLowerCase()===g.toLowerCase());
+  if(found)return{en:found.to,matched:true,cat:found.cat};
+  // Partial / contains match
+  found=refTable.find(r=>g.toLowerCase().includes(r.from.toLowerCase())||r.from.toLowerCase().includes(g.toLowerCase()));
+  if(found)return{en:found.to,matched:true,cat:found.cat};
+  // Not found — keep original
+  return{en:g,matched:false,cat:'OT'};
+}
+
+// Guess product type from grade + dimensions
+function guessProductType(grade,thickness,width,length,cat){
+  const g=grade.toUpperCase();
+  if(cat==='GA'||g.includes('DX')||g.includes('GD')||g.includes('YD'))return'Galvanized Coil';
+  if(cat==='CR'||g.startsWith('DC'))return'CRC Coil';
+  if(length&&Number(length)>0)return'Plate';
+  if(!length||Number(length)===0)return'HRC Coil';
+  return'Plate';
+}
+
+// ── Method tabs ──
+function setMethod(m){
+  document.querySelectorAll('.method-tab').forEach((b,i)=>b.classList.toggle('active',(m==='excel'&&i===0)||(m==='paste'&&i===1)));
+  document.getElementById('zoneExcel').classList.toggle('visible',m==='excel');
+  document.getElementById('zonePaste').classList.toggle('visible',m==='paste');
+}
+
+// ── Excel upload ──
+function handleFile(file){
+  if(!file)return;
+  const status=document.getElementById('excelStatus');
+  status.textContent='Reading file...';status.style.color='var(--blue)';
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'binary'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+      if(!rows.length){status.textContent='No data found.';return;}
+      const items=mapExcelRows(rows);
+      status.textContent=`Read ${items.length} items`;status.style.color='var(--green)';
+      convertAndShow(items);
+    }catch(err){
+      status.textContent='Error: '+err.message;status.style.color='var(--red)';
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+function mapExcelRows(rows){
+  function find(row,...names){
+    for(const n of names){
+      const key=Object.keys(row).find(k=>k.toLowerCase().replace(/[\s\/\(\)_\-\.]/g,'').includes(n.toLowerCase().replace(/[\s\/\(\)_\-\.]/g,'')));
+      if(key&&row[key]!==''&&row[key]!==null&&row[key]!==undefined)return String(row[key]).trim();
+    }return'';
+  }
+  return rows.map(row=>({
+    grade:      find(row,'grade','kalite','ürün','malzeme','quality','material','spec'),
+    thickness:  find(row,'thickness','kalinlik','kalinlık','thk','thick','tmm','t(mm)'),
+    width:      find(row,'width','genislik','genişlik','wid','wmm','w(mm)'),
+    length:     find(row,'length','uzunluk','len','lmm','l(mm)'),
+    quantity:   find(row,'quantity','miktar','qty','ton','adet','amount','ağırlık','agirlik','weight'),
+    unit:       find(row,'unit','birim','uom')||'ton',
+    weight_kg:  find(row,'kg','netkg','weightkg','agirlikkg'),
+    origin:     find(row,'origin','mensei','menseli','country','source')||'Turkey',
+    supplier:   find(row,'supplier','tedarikci','firma','vendor')||'Erdemir',
+    buy_price:  find(row,'price','fiyat','cost','rate','usd'),
+    location:   find(row,'location','depo','konum','yard','warehouse'),
+    heat_number:find(row,'heat','seri','parti','heatseri','lot','batch'),
+    notes:      find(row,'notes','not','aciklama','remark'),
+  })).filter(r=>r.grade);
+}
+
+// ── Paste text parser ──
+function parsePaste(){
+  const text=document.getElementById('pasteInput').value.trim();
+  if(!text){alert('Please paste some text first.');return;}
+  const lines=text.split('\n').filter(l=>l.trim());
+  const items=lines.map(line=>{
+    // Try to parse: Grade  Thickness  Width  Length  Qty  Unit
+    const parts=line.trim().split(/[\t,;]+|\s{2,}/).filter(Boolean);
+    if(parts.length<2)return null;
+    // First part is grade, then numbers
+    const nums=parts.slice(1).map(p=>parseFloat(p.replace(',','.'))).filter(n=>!isNaN(n));
+    return{
+      grade:parts[0].trim(),
+      thickness:nums[0]||'',
+      width:nums[1]||'',
+      length:nums[2]||'',
+      quantity:nums[3]||nums[1]||'',
+      unit:parts.find(p=>/^(ton|kg|pcs|m|adet)$/i.test(p))||'ton',
+      origin:'Turkey',
+      supplier:'Erdemir',
+      buy_price:'',location:'',heat_number:'',notes:'',weight_kg:''
+    };
+  }).filter(Boolean);
+  if(!items.length){alert('Could not parse any items. Try the Excel upload instead.');return;}
+  convertAndShow(items);
+}
+
+// ── Convert and display ──
+function convertAndShow(items){
+  convertedData=items.map(item=>{
+    const result=lookupGrade(item.grade);
+    return{
+      ...item,
+      original_grade:item.grade,
+      grade:result.en,
+      product_type:guessProductType(result.en,item.thickness,item.width,item.length,result.cat),
+      matched:result.matched,
+      cat:result.cat,
+      available:'yes',
+    };
+  });
+
+  const matched=convertedData.filter(r=>r.matched).length;
+  const total=convertedData.length;
+
+  document.getElementById('resultsTitle').textContent=`Converted ${total} items — ${matched} grades mapped, ${total-matched} kept as-is`;
+  document.getElementById('resultsBody').innerHTML=convertedData.map((r,i)=>`
+    <tr>
+      <td class="original-grade">${r.original_grade}</td>
+      <td class="converted-grade">${r.grade}</td>
+      <td>${r.product_type}</td>
+      <td>${r.thickness||'—'}</td>
+      <td>${r.width||'—'}</td>
+      <td>${r.length||'—'}</td>
+      <td>${r.quantity||'—'}</td>
+      <td>${r.unit}</td>
+      <td>${r.origin||'—'}</td>
+      <td>${r.supplier||'—'}</td>
+      <td>${r.buy_price?'$'+r.buy_price:'—'}</td>
+      <td>${r.location||'—'}</td>
+      <td>${r.available}</td>
+      <td class="${r.matched?'match-yes':'match-no'}">${r.matched?'✓ Mapped':'~ Kept'}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('statsRow').innerHTML=`
+    <span class="stat-pill total">Total: ${total}</span>
+    <span class="stat-pill converted">Mapped: ${matched}</span>
+    <span class="stat-pill kept">Kept original: ${total-matched}</span>
+  `;
+
+  document.getElementById('resultsPanel').classList.add('visible');
+  document.getElementById('resultsPanel').scrollIntoView({behavior:'smooth'});
+}
+
+function closeResults(){
+  convertedData=[];
+  document.getElementById('resultsPanel').classList.remove('visible');
+}
+
+// ── Download converted as stock template ──
+function downloadConverted(){
+  if(!convertedData.length)return;
+  const headers=['Product Type','Grade','Thickness (mm)','Width (mm)','Length (mm)','Quantity','Unit','Weight (kg)','Origin','Supplier','Heat Number','Location','Buy Price ($/ton)','Currency','Available','Alternatives','Notes'];
+  const rows=convertedData.map(r=>[
+    r.product_type||'',r.grade||'',r.thickness||'',r.width||'',r.length||'',
+    r.quantity||'',r.unit||'ton',r.weight_kg||'',r.origin||'Turkey',
+    r.supplier||'Erdemir',r.heat_number||'',r.location||'',
+    r.buy_price||'','USD',r.available||'yes','',
+    r.notes||(r.original_grade!==r.grade?'Original: '+r.original_grade:'')
+  ]);
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
+  // Style header row
+  ws['!cols']=headers.map((_,i)=>({wch:[14,12,14,12,12,10,8,12,12,14,16,12,16,10,10,24,22][i]||12}));
+  XLSX.utils.book_append_sheet(wb,ws,'Stock');
+  XLSX.writeFile(wb,'erdemir_converted_stock.xlsx');
+}
+
+// ── Export/Import ref table ──
+function exportRefTable(){
+  const rows=refTable.map(r=>[r.from,r.to,CAT_LABELS[r.cat]||r.cat,r.notes||'']);
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet([['Erdemir Grade','EN/EU Grade','Category','Notes'],...rows]);
+  ws['!cols']=[{wch:20},{wch:20},{wch:14},{wch:40}];
+  XLSX.utils.book_append_sheet(wb,ws,'Grades');
+  XLSX.writeFile(wb,'erdemir_grade_reference.xlsx');
+}
+function importRefTable(){document.getElementById('refImportInput').click();}
+function handleRefImport(file){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const wb=XLSX.read(e.target.result,{type:'binary'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+    const catMap={'Hot Rolled':'HR','Cold Rolled':'CR','Galvanized':'GA','Structural':'ST','Plate':'PL','Other':'OT'};
+    const imported=rows.map((r,i)=>{
+      const from=String(Object.values(r)[0]||'').trim();
+      const to=String(Object.values(r)[1]||'').trim();
+      const catRaw=String(Object.values(r)[2]||'').trim();
+      const cat=catMap[catRaw]||catRaw.substring(0,2).toUpperCase()||'OT';
+      const notes=String(Object.values(r)[3]||'').trim();
+      return{from,to,cat,notes,id:Date.now()+i};
+    }).filter(r=>r.from&&r.to);
+    if(!imported.length){alert('No rows found in file.');return;}
+    refTable=[...refTable,...imported];
+    saveRef();renderRef();
+    alert(`Imported ${imported.length} grade mappings.`);
+  };
+  reader.readAsBinaryString(file);
+}
+
+// ── Drag & drop ──
+const dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');const f=e.dataTransfer.files[0];if(f)handleFile(f);});
+
+loadRef();
+</script>
+</body>
+</html>

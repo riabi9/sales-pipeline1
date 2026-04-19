@@ -8,6 +8,7 @@
 <title>Sales Pipeline</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
   --bg:#f5f5f3;--surface:#fff;--surface2:#ebebea;--border:#e5e5e3;--border2:#d0d0cc;
@@ -151,7 +152,7 @@ main{padding:12px;max-width:1400px;margin:0 auto}
 
 /* Multi-product */
 .product-list{display:flex;flex-direction:column;gap:7px;margin-bottom:8px}
-.product-entry{display:grid;grid-template-columns:1fr 60px 90px 28px;gap:5px;align-items:center}
+.product-entry{display:grid;grid-template-columns:90px 110px 80px 80px 80px 60px 64px 28px;gap:5px;align-items:center}
 .product-entry input{height:32px;font-size:12px}
 .btn-remove-prod{width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text3);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .btn-remove-prod:hover{background:var(--red-bg);color:var(--red-text);border-color:var(--red)}
@@ -226,6 +227,7 @@ main{padding:12px;max-width:1400px;margin:0 auto}
   <header>
     <span class="app-title">Sales Pipeline</span>
     <a class="nav-link" href="stock.html">📦 Stock</a>
+    <a class="nav-link" href="converter.html">🔄 Converter</a>
     <div class="header-right">
       <span class="user-badge" id="userEmail"></span>
       <span class="admin-badge" id="adminBadge" style="display:none">Admin</span>
@@ -292,7 +294,10 @@ main{padding:12px;max-width:1400px;margin:0 auto}
         <div class="smp-loading">Enter a product above and click Match Stock</div>
       </div>
     </div>
-    <button class="btn-match" onclick="runStockMatch()">🔍 Match stock</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+      <button class="btn-match" onclick="runStockMatch()">🔍 Match stock</button>
+      <button class="btn-match" style="background:var(--green-bg);border-color:var(--green);color:var(--green-text)" onclick="exportOffer()">📄 Export offer</button>
+    </div>
 
     <div class="fsec">Deal info</div>
     <div class="form-row"><label class="form-label">Deal value ($)</label><input class="form-input" type="number" id="fValue"></div>
@@ -719,7 +724,7 @@ function renderBoard(){
             ${l.email?`<div class="contact-item">${emailIcon()}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px">${l.email}</span></div>`:''}
             ${l.phone?`<div class="contact-item">${phoneIcon()}<span>${l.phone}</span></div>`:''}
           </div>
-          ${prods.length?`<div class="products-row">${prods.slice(0,3).map(p=>`<span class="product-pill">${p.name||''}${p.qty?' ×'+p.qty:''}${p.measure?' '+p.measure:''}</span>`).join('')}${prods.length>3?`<span class="product-pill">+${prods.length-3}</span>`:''}</div>`:''}
+          ${prods.length?`<div class="products-row">${prods.slice(0,3).map(p=>`<span class="product-pill">${p.grade||p.name||''}${p.thick?' '+p.thick+'mm':''}${p.width?' ×'+p.width:''}${p.reqQty?' · '+p.reqQty+'t':''}</span>`).join('')}${prods.length>3?`<span class="product-pill">+${prods.length-3}</span>`:''}</div>`:''}
           <div class="lead-meta"><span class="lead-value">${fmt(l.value)}</span><span class="badge badge-${l.priority}">${l.priority.charAt(0).toUpperCase()+l.priority.slice(1)}</span></div>
           <div class="lead-footer"><span class="lead-owner">${l.owner||'—'}</span><span class="dl ${di.cls}">${di.label}</span></div>
         </div>`;
@@ -736,19 +741,31 @@ function addProductRow(p){
   const div=document.createElement('div');
   div.className='product-entry';
   div.innerHTML=`
-    <input class="form-input prod-name" placeholder="Grade / product e.g. S235" value="${p?.name||''}">
-    <input class="form-input prod-qty" type="number" placeholder="Qty(t)" min="0" value="${p?.qty||''}">
-    <input class="form-input prod-measure" placeholder="e.g. 10x1500" value="${p?.measure||''}">
+    <input class="form-input prod-type" placeholder="Type e.g. Plate" value="${p?.type||''}">
+    <input class="form-input prod-grade" placeholder="Grade e.g. S235JR" value="${p?.name||p?.grade||''}">
+    <input class="form-input prod-thick" type="number" placeholder="Thick mm" min="0" value="${p?.thick||p?.qty||''}">
+    <input class="form-input prod-width" type="number" placeholder="Width mm" min="0" value="${p?.width||''}">
+    <input class="form-input prod-length" type="number" placeholder="Length mm" min="0" value="${p?.length||''}">
+    <input class="form-input prod-qty" type="number" placeholder="Qty" min="0" value="${p?.reqQty||p?.measure||''}">
+    <select class="form-input prod-unit" style="width:64px"><option>ton</option><option>kg</option><option>pcs</option><option>m</option></select>
     <button class="btn-remove-prod" onclick="this.parentElement.remove()">×</button>
   `;
   list.appendChild(div);
 }
 function getProductsFromForm(){
   return[...document.getElementById('productList').children].map(row=>({
-    name:row.querySelector('.prod-name').value.trim(),
-    qty:row.querySelector('.prod-qty').value.trim(),
-    measure:row.querySelector('.prod-measure').value.trim(),
-  })).filter(p=>p.name);
+    type:row.querySelector('.prod-type').value.trim(),
+    name:row.querySelector('.prod-grade').value.trim(),
+    grade:row.querySelector('.prod-grade').value.trim(),
+    thick:row.querySelector('.prod-thick').value.trim(),
+    width:row.querySelector('.prod-width').value.trim(),
+    length:row.querySelector('.prod-length').value.trim(),
+    reqQty:row.querySelector('.prod-qty').value.trim(),
+    unit:row.querySelector('.prod-unit').value,
+    // legacy compat
+    qty:row.querySelector('.prod-thick').value.trim(),
+    measure:row.querySelector('.prod-width').value.trim()?row.querySelector('.prod-thick').value.trim()+'x'+row.querySelector('.prod-width').value.trim():'',
+  })).filter(p=>p.name||p.grade);
 }
 
 // ── Notes ──
@@ -833,6 +850,94 @@ function exportCSV(){
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 
+
+// ── Offer Excel export ──
+function exportOffer(){
+  const lead={
+    name:document.getElementById('fName').value.trim()||'—',
+    company:document.getElementById('fCompany').value.trim()||'—',
+    email:document.getElementById('fEmail').value.trim()||'—',
+    owner:document.getElementById('fOwner').value.trim()||'—',
+    deadline:document.getElementById('fDeadline').value||'—',
+    value:document.getElementById('fValue').value||'0',
+  };
+  const prods=getProductsFromForm();
+  // Get matched stock for price reference
+  const matched=prods.length?matchStock(prods):[];
+
+  const today=new Date().toLocaleDateString('en-GB');
+  const offerNo='OFF-'+Date.now().toString().slice(-6);
+
+  // Build header rows
+  const rows=[
+    ['SALES OFFER','','','','','','','','','','',''],
+    ['','','','','','','','','','','',''],
+    ['Offer To:',lead.name,'','','','','Offer No:',offerNo,'','','',''],
+    ['Company:',lead.company,'','','','','Date:',today,'','','',''],
+    ['Email:',lead.email,'','','','','Owner:',lead.owner,'','','',''],
+    ['Valid Until:',lead.deadline,'','','','','','','','','',''],
+    ['','','','','','','','','','','',''],
+    ['#','Product Type','Grade','Thickness
+(mm)','Width
+(mm)','Length
+(mm)','Req. Qty','Unit','Offer $/ton','Total ($)','Origin','Supplier','Notes'],
+  ];
+
+  // Add product rows with matched stock info
+  prods.forEach((p,i)=>{
+    // Find best match for this product
+    const bestMatch=matched.find(m=>
+      (m.grade||'').toLowerCase().includes((p.grade||'').toLowerCase())||
+      (p.grade||'').toLowerCase().includes((m.grade||'').toLowerCase())
+    );
+    rows.push([
+      i+1,
+      p.type||bestMatch?.product_type||'',
+      p.grade||'',
+      p.thick||'',
+      p.width||'',
+      p.length||'',
+      p.reqQty||'',
+      p.unit||'ton',
+      bestMatch?.buy_price?Number(bestMatch.buy_price):'',
+      bestMatch?.buy_price&&p.reqQty?Number(bestMatch.buy_price)*Number(p.reqQty):'',
+      bestMatch?.origin||'',
+      bestMatch?.supplier||'',
+      bestMatch?'Stock match: '+bestMatch.grade:''
+    ]);
+  });
+
+  // If no products, add empty rows
+  if(!prods.length){
+    for(let i=0;i<3;i++) rows.push([i+1,'','','','','','','ton','','','','','']);
+  }
+
+  rows.push(['','','','','','','','','TOTAL','=SUM(J9:J'+(rows.length+1)+')','','','']);
+  rows.push(['','','','','','','','','','','','','']);
+  rows.push(['Terms:','','','','','','','','','','','','']);
+  rows.push(['Payment:','','','','','','','','','','','','']);
+  rows.push(['Delivery:','','','','','','','','','','','','']);
+  rows.push(['Incoterms:','','','','','','','','','','','','']);
+
+  // Use SheetJS to create xlsx
+  const wb=window.XLSX?XLSX.utils.book_new():null;
+  if(!wb){
+    // Fallback: CSV
+    const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob=new Blob([csv],{type:'text/csv'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='offer_'+lead.company.replace(/\s+/g,'_')+'.csv';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    return;
+  }
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:4},{wch:14},{wch:12},{wch:11},{wch:11},{wch:11},{wch:8},{wch:7},{wch:12},{wch:12},{wch:12},{wch:14},{wch:22}];
+  ws['!merges']=[
+    {s:{r:0,c:0},e:{r:0,c:11}},
+  ];
+  XLSX.utils.book_append_sheet(wb,ws,'Offer');
+  XLSX.writeFile(wb,'offer_'+lead.company.replace(/[^a-zA-Z0-9]/g,'_')+'.xlsx');
+}
 document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
 </script>
 </body>
