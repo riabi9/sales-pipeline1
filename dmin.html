@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Admin Panel</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#f5f5f3;--surface:#fff;--surface2:#ebebea;--border:#e5e5e3;--border2:#d0d0cc;--text:#1a1a1a;--text2:#555;--text3:#888;--text4:#bbb;--blue:#185FA5;--blue-bg:#E6F1FB;--blue-light:#B5D4F4;--green:#1D9E75;--green-bg:#E1F5EE;--green-text:#0F6E56;--red:#E24B4A;--red-bg:#FCEBEB;--red-text:#A32D2D;--amber:#EF9F27;--amber-bg:#FAEEDA;--amber-text:#854F0B;}
+[data-theme="dark"]{--bg:#111110;--surface:#1c1c1a;--surface2:#252523;--border:#2e2e2c;--border2:#3a3a38;--text:#f0f0ee;--text2:#c0c0bc;--text3:#888;--text4:#555;--blue:#378ADD;--blue-bg:#0C2A45;--blue-light:#185FA5;--green:#1D9E75;--green-bg:#0a2e22;--green-text:#5DCAA5;--red:#E24B4A;--red-bg:#2e0f0f;--red-text:#f09595;--amber:#EF9F27;--amber-bg:#2e1f05;--amber-text:#FAC775;}
+*{box-sizing:border-box;margin:0;padding:0;transition:background-color 0.2s,color 0.15s}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.auth-card{background:var(--surface);border-radius:16px;border:1px solid var(--border);padding:28px;width:100%;max-width:340px}
+.auth-logo{font-size:18px;font-weight:700;color:var(--blue);margin-bottom:4px}
+.auth-sub{font-size:13px;color:var(--text3);margin-bottom:20px}
+.form-row{margin-bottom:10px}
+.form-label{font-size:12px;color:var(--text3);margin-bottom:3px;display:block}
+.form-input{width:100%;height:38px;border:1px solid var(--border2);border-radius:8px;padding:0 11px;font-size:13px;background:var(--surface);color:var(--text);font-family:inherit;outline:none}
+.form-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+select.form-input{cursor:pointer}
+.auth-btn{width:100%;height:40px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--blue);color:#fff;margin-top:4px}
+.auth-btn:hover{opacity:0.9}.auth-btn:disabled{opacity:0.5;cursor:not-allowed}
+.auth-msg{font-size:12px;margin-top:10px;padding:8px;border-radius:6px;text-align:center}
+.auth-msg.error{background:var(--red-bg);color:var(--red-text)}.auth-msg.success{background:var(--green-bg);color:var(--green-text)}
+#app{display:none}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 14px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:8px}
+.app-title{font-size:15px;font-weight:700;color:var(--blue)}
+.header-right{display:flex;align-items:center;gap:6px}
+.nav-link{font-size:12px;color:var(--text3);text-decoration:none;padding:4px 8px;border-radius:6px;border:1px solid var(--border)}
+.nav-link:hover{background:var(--surface2)}
+.hbtn{height:30px;padding:0 10px;border:1px solid var(--border2);border-radius:7px;font-size:12px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit}
+.hbtn:hover{background:var(--surface2)}.hbtn-blue{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+main{padding:14px;max-width:1000px;margin:0 auto}
+.section{background:var(--surface);border-radius:12px;border:1px solid var(--border);margin-bottom:16px;overflow:hidden}
+.section-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.section-title{font-size:14px;font-weight:600;color:var(--text)}
+.section-sub{font-size:12px;color:var(--text3)}
+.user-table{width:100%;border-collapse:collapse;font-size:13px}
+.user-table th{background:var(--surface2);color:var(--text3);font-weight:600;padding:9px 14px;text-align:left;border-bottom:1px solid var(--border)}
+.user-table td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text2)}
+.user-table tr:last-child td{border-bottom:none}.user-table tr:hover td{background:var(--surface2)}
+.user-email{font-weight:500;color:var(--text)}
+.status-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.status-active{background:var(--green-bg);color:var(--green-text)}
+.status-disabled{background:var(--red-bg);color:var(--red-text)}
+.admin-tag{font-size:10px;font-weight:700;background:var(--amber-bg);color:var(--amber-text);padding:2px 6px;border-radius:20px;margin-left:6px}
+.action-btn{height:26px;padding:0 10px;border:1px solid var(--border);border-radius:6px;font-size:11px;background:transparent;color:var(--text2);cursor:pointer;font-family:inherit;margin-right:4px}
+.action-btn:hover{background:var(--surface2)}.action-btn.danger{border-color:var(--red);color:var(--red-text)}.action-btn.danger:hover{background:var(--red-bg)}.action-btn.promote{border-color:var(--amber);color:var(--amber-text)}.action-btn.promote:hover{background:var(--amber-bg)}
+.invite-form{padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.invite-form .form-row{margin:0;flex:1;min-width:200px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;padding:14px 16px}
+.stat-card{background:var(--surface2);border-radius:8px;padding:10px 14px}
+.stat-label{font-size:10px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px}
+.stat-value{font-size:20px;font-weight:700;color:var(--text)}.stat-sub{font-size:10px;color:var(--text4);margin-top:2px}
+.loading{text-align:center;padding:30px;color:var(--text3)}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-size:13px;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,0.12);display:none}
+.toast.success{border-color:var(--green);color:var(--green-text)}.toast.error{border-color:var(--red);color:var(--red-text)}
+</style>
+</head>
+<body>
+
+<div class="auth-wrap" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">Admin Panel</div>
+    <div class="auth-sub">Admin access only</div>
+    <div class="form-row"><label class="form-label">Email</label><input class="form-input" type="email" id="loginEmail" placeholder="admin@company.com"></div>
+    <div class="form-row"><label class="form-label">Password</label><input class="form-input" type="password" id="loginPassword" placeholder="••••••••"></div>
+    <button class="auth-btn" onclick="doLogin()" id="loginBtn">Sign in</button>
+    <div id="authMsg" style="display:none" class="auth-msg"></div>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <span class="app-title">⚙️ Admin Panel</span>
+    <div class="header-right">
+      <a class="nav-link" href="index.html">← Pipeline</a>
+      <a class="nav-link" href="stock.html">📦 Stock</a>
+      <button class="hbtn" id="darkBtn" onclick="toggleDark()">🌙</button>
+      <button class="hbtn" onclick="doLogout()">Sign out</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Overview stats -->
+    <div class="section">
+      <div class="section-header"><span class="section-title">Overview</span><button class="hbtn" onclick="loadAll()">Refresh</button></div>
+      <div class="stats-grid" id="overviewStats"><div class="loading">Loading...</div></div>
+    </div>
+
+    <!-- Users -->
+    <div class="section">
+      <div class="section-header">
+        <div><span class="section-title">Users</span><span class="section-sub" style="margin-left:8px">All registered accounts</span></div>
+      </div>
+      <!-- Invite form -->
+      <div class="invite-form" style="background:var(--surface2);border-bottom:1px solid var(--border)">
+        <div class="form-row"><label class="form-label">Invite by email (they register themselves)</label><input class="form-input" type="email" id="inviteEmail" placeholder="newuser@company.com" style="height:34px;font-size:13px"></div>
+        <div class="form-row" style="min-width:120px"><label class="form-label">Display name</label><input class="form-input" id="inviteName" placeholder="Their name" style="height:34px;font-size:13px"></div>
+        <button class="hbtn hbtn-blue" onclick="copyInviteLink()" style="height:34px;align-self:flex-end;margin-top:auto">Copy invite link</button>
+      </div>
+      <div id="userTable"><div class="loading">Loading users...</div></div>
+    </div>
+
+    <!-- Display name editor -->
+    <div class="section">
+      <div class="section-header"><span class="section-title">Your display name</span></div>
+      <div style="padding:14px 16px;display:flex;gap:8px">
+        <input class="form-input" id="displayNameInput" placeholder="Your display name (shown to teammates)" style="max-width:300px">
+        <button class="hbtn hbtn-blue" onclick="saveDisplayName()">Save</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL='YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY='YOUR_SUPABASE_ANON_KEY';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+let currentUser=null,profiles=[],leads=[],stockCount=0;
+
+function toggleDark(){const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',t);document.getElementById('darkBtn').textContent=t==='dark'?'☀️':'🌙';localStorage.setItem('theme',t);}
+(()=>{const s=localStorage.getItem('theme')||'light';document.documentElement.setAttribute('data-theme',s);if(s==='dark')setTimeout(()=>document.getElementById('darkBtn').textContent='☀️',0);})();
+
+function toast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'success');t.style.display='block';setTimeout(()=>t.style.display='none',3000);}
+function showMsg(m,t){const e=document.getElementById('authMsg');e.textContent=m;e.className='auth-msg '+(t||'error');e.style.display='block';}
+
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();const pass=document.getElementById('loginPassword').value;
+  if(!email||!pass)return showMsg('Please fill in all fields.');
+  const btn=document.getElementById('loginBtn');btn.disabled=true;btn.textContent='Signing in...';
+  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  btn.disabled=false;btn.textContent='Sign in';
+  if(error)return showMsg(error.message);
+  const {data:profile}=await sb.from('profiles').select('is_admin').eq('id',data.user.id).single();
+  if(!profile?.is_admin){await sb.auth.signOut();return showMsg('Admin access only.');}
+  currentUser=data.user;
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  loadAll();
+}
+async function doLogout(){await sb.auth.signOut();window.location.href='index.html';}
+sb.auth.getSession().then(async({data:{session}})=>{
+  if(session){
+    const {data:profile}=await sb.from('profiles').select('is_admin').eq('id',session.user.id).single();
+    if(profile?.is_admin){currentUser=session.user;document.getElementById('authScreen').style.display='none';document.getElementById('app').style.display='block';loadAll();}
+  }
+});
+
+async function loadAll(){
+  await Promise.all([loadProfiles(),loadStats()]);
+}
+
+async function loadProfiles(){
+  const {data,error}=await sb.from('profiles').select('*').order('created_at',{ascending:true});
+  if(error){document.getElementById('userTable').innerHTML='<div class="loading">Error: '+error.message+'</div>';return;}
+  profiles=data||[];
+  renderUsers();
+  // Pre-fill current user display name
+  const me=profiles.find(p=>p.id===currentUser?.id);
+  if(me)document.getElementById('displayNameInput').value=me.display_name||'';
+}
+
+async function loadStats(){
+  const [{data:l},{data:s},{count:u}]=await Promise.all([
+    sb.from('leads').select('stage,value'),
+    sb.from('stock').select('id',{count:'exact',head:true}),
+    sb.from('profiles').select('id',{count:'exact',head:true}),
+  ]);
+  const leads=l||[];
+  const won=leads.filter(x=>x.stage==='Closed Won');
+  const totalRev=won.reduce((s,x)=>s+Number(x.value||0),0);
+  document.getElementById('overviewStats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Total users</div><div class="stat-value">${profiles.length||u||0}</div><div class="stat-sub">registered accounts</div></div>
+    <div class="stat-card"><div class="stat-label">Total leads</div><div class="stat-value">${leads.length}</div><div class="stat-sub">${leads.filter(x=>x.stage!=='Closed Won'&&x.stage!=='Closed Lost').length} active</div></div>
+    <div class="stat-card"><div class="stat-label">Closed won</div><div class="stat-value">${won.length}</div><div class="stat-sub">$${totalRev.toLocaleString()} revenue</div></div>
+    <div class="stat-card"><div class="stat-label">Stock items</div><div class="stat-value">${s||0}</div><div class="stat-sub">in database</div></div>
+  `;
+}
+
+function renderUsers(){
+  if(!profiles.length){document.getElementById('userTable').innerHTML='<div class="loading">No users found</div>';return;}
+  document.getElementById('userTable').innerHTML=`<table class="user-table">
+    <thead><tr><th>Email</th><th>Display name</th><th>Status</th><th>Role</th><th>Joined</th><th>Actions</th></tr></thead>
+    <tbody>${profiles.map(p=>`<tr>
+      <td><span class="user-email">${p.email||'—'}</span></td>
+      <td>${p.display_name||'—'}</td>
+      <td><span class="status-badge ${p.disabled?'status-disabled':'status-active'}">${p.disabled?'Disabled':'Active'}</span></td>
+      <td>${p.is_admin?'<span class="admin-tag">Admin</span>':'User'}</td>
+      <td style="font-size:11px;color:var(--text3)">${p.created_at?new Date(p.created_at).toLocaleDateString('en-GB'):'—'}</td>
+      <td>${p.id!==currentUser?.id?`
+        <button class="action-btn ${p.disabled?'':'danger'}" onclick="${p.disabled?`enableUser('${p.id}')`:`disableUser('${p.id}')`}">${p.disabled?'Enable':'Disable'}</button>
+        <button class="action-btn promote" onclick="${p.is_admin?`removeAdmin('${p.id}')`:`makeAdmin('${p.id}')`}">${p.is_admin?'Remove admin':'Make admin'}</button>
+      `:'<span style="font-size:11px;color:var(--text4)">(you)</span>'}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+async function disableUser(id){
+  if(!confirm('Disable this user? They will not be able to sign in.'))return;
+  const {error}=await sb.from('profiles').update({disabled:true}).eq('id',id);
+  if(error)toast('Error: '+error.message,'error');else{toast('User disabled');loadProfiles();}
+}
+async function enableUser(id){
+  const {error}=await sb.from('profiles').update({disabled:false}).eq('id',id);
+  if(error)toast('Error: '+error.message,'error');else{toast('User enabled');loadProfiles();}
+}
+async function makeAdmin(id){
+  if(!confirm('Grant admin access to this user?'))return;
+  const {error}=await sb.from('profiles').update({is_admin:true}).eq('id',id);
+  if(error)toast('Error: '+error.message,'error');else{toast('Admin access granted');loadProfiles();}
+}
+async function removeAdmin(id){
+  if(!confirm('Remove admin access from this user?'))return;
+  const {error}=await sb.from('profiles').update({is_admin:false}).eq('id',id);
+  if(error)toast('Error: '+error.message,'error');else{toast('Admin access removed');loadProfiles();}
+}
+async function saveDisplayName(){
+  const name=document.getElementById('displayNameInput').value.trim();
+  const {error}=await sb.from('profiles').update({display_name:name}).eq('id',currentUser.id);
+  if(error)toast('Error: '+error.message,'error');else toast('Display name saved');
+}
+function copyInviteLink(){
+  const email=document.getElementById('inviteEmail').value.trim();
+  const name=document.getElementById('inviteName').value.trim();
+  const url=window.location.origin+window.location.pathname.replace('admin.html','index.html');
+  const msg=`You've been invited to join our Sales Pipeline.\n\nGo to: ${url}\nClick "Create account"\nUse email: ${email}${name?'\nYour name: '+name:''}`;
+  navigator.clipboard.writeText(msg).then(()=>toast('Invite message copied to clipboard')).catch(()=>{alert(msg);});
+}
+</script>
+</body>
+</html>
