@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Documents</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f5f5f3;--surface:#fff;--surface2:#ebebea;--border:#e5e5e3;--border2:#d0d0cc;--text:#1a1a1a;--text2:#555;--text3:#888;--text4:#bbb;--blue:#185FA5;--blue-bg:#E6F1FB;--blue-light:#B5D4F4;--green:#1D9E75;--green-bg:#E1F5EE;--green-text:#0F6E56;--red:#E24B4A;--red-bg:#FCEBEB;--red-text:#A32D2D;--amber:#EF9F27;--amber-bg:#FAEEDA;--amber-text:#854F0B;--sidebar-w:200px;}
+[data-theme="dark"]{--bg:#111110;--surface:#1c1c1a;--surface2:#252523;--border:#2e2e2c;--border2:#3a3a38;--text:#f0f0ee;--text2:#c0c0bc;--text3:#888;--text4:#555;--blue:#378ADD;--blue-bg:#0C2A45;--blue-light:#185FA5;--green:#1D9E75;--green-bg:#0a2e22;--green-text:#5DCAA5;--red:#E24B4A;--red-bg:#2e0f0f;--red-text:#f09595;--amber:#EF9F27;--amber-bg:#2e1f05;--amber-text:#FAC775;}
+*{box-sizing:border-box;margin:0;padding:0;transition:background-color 0.2s,color 0.15s}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.auth-card{background:var(--surface);border-radius:16px;border:1px solid var(--border);padding:28px;width:100%;max-width:340px}
+.auth-logo{font-size:18px;font-weight:700;color:var(--blue);margin-bottom:4px}
+.auth-sub{font-size:13px;color:var(--text3);margin-bottom:20px}
+.form-row{margin-bottom:10px}
+.form-label{font-size:12px;color:var(--text3);margin-bottom:3px;display:block}
+.form-input{width:100%;height:38px;border:1px solid var(--border2);border-radius:8px;padding:0 11px;font-size:13px;background:var(--surface);color:var(--text);font-family:inherit;outline:none}
+.form-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+select.form-input{cursor:pointer}
+textarea.form-input{height:auto;padding:8px 11px;line-height:1.5;resize:vertical}
+.auth-btn{width:100%;height:40px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--blue);color:#fff;margin-top:4px}
+.auth-btn:hover{opacity:0.9}.auth-btn:disabled{opacity:0.5;cursor:not-allowed}
+.auth-msg{font-size:12px;margin-top:10px;padding:8px;border-radius:6px;text-align:center;background:var(--red-bg);color:var(--red-text)}
+
+/* App layout */
+#app{display:none}
+.app-layout{display:flex;min-height:100vh}
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:150;transition:transform 0.25s}
+.sidebar-logo{padding:16px 14px 12px;border-bottom:1px solid var(--border)}
+.sidebar-logo-text{font-size:15px;font-weight:700;color:var(--blue)}
+.sidebar-logo-sub{font-size:10px;color:var(--text4);margin-top:1px}
+.sidebar-nav{flex:1;overflow-y:auto;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;font-size:13px;color:var(--text2);text-decoration:none;cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:inherit}
+.nav-item:hover{background:var(--surface2);color:var(--text)}.nav-item.active{background:var(--blue-bg);color:var(--blue);font-weight:600}
+.nav-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.nav-section{font-size:9px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:0.6px;padding:10px 14px 4px}
+.sidebar-footer{padding:10px 14px;border-top:1px solid var(--border)}
+.user-info{font-size:11px;color:var(--text3);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:140}
+@media(max-width:768px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.sidebar-overlay.open{display:block}.main-content{margin-left:0!important}}
+.main-content{margin-left:var(--sidebar-w);flex:1;min-width:0}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 14px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:8px}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.menu-btn{width:32px;height:32px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:16px;display:none;align-items:center;justify-content:center}
+@media(max-width:768px){.menu-btn{display:flex}}
+.page-title{font-size:15px;font-weight:600;color:var(--text)}
+.hbtn{height:30px;padding:0 10px;border:1px solid var(--border2);border-radius:7px;font-size:12px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;white-space:nowrap}
+.hbtn:hover{background:var(--surface2)}.hbtn-blue{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}.hbtn-blue:hover{background:var(--blue);color:#fff}
+.hbtn-green{border-color:var(--green);color:var(--green-text);background:var(--green-bg)}.hbtn-green:hover{background:var(--green);color:#fff}
+main{padding:14px;max-width:1100px;margin:0 auto;width:100%}
+
+/* Doc type tabs */
+.doc-tabs{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.doc-tab{flex:1;height:40px;border:none;background:var(--surface2);font-size:13px;font-weight:600;cursor:pointer;color:var(--text3);font-family:inherit;transition:all 0.15s}
+.doc-tab.active{background:var(--blue);color:#fff}
+.doc-section{display:none}
+.doc-section.active{display:block}
+
+/* Cards */
+.card{background:var(--surface);border-radius:12px;border:1px solid var(--border);padding:16px;margin-bottom:14px}
+.card-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:600px){.fr2,.fr3{grid-template-columns:1fr}}
+
+/* Item table */
+.items-wrap{overflow-x:auto;margin-bottom:10px}
+.items-table{width:100%;border-collapse:collapse;font-size:12px;min-width:700px}
+.items-table th{background:var(--surface2);color:var(--text3);font-weight:600;padding:7px 9px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+.items-table td{padding:5px 6px;border-bottom:1px solid var(--border)}
+.items-table tr:last-child td{border-bottom:none}
+.ii{height:30px;width:100%;border:1px solid var(--border2);border-radius:6px;padding:0 7px;font-size:12px;background:var(--surface);color:var(--text);font-family:inherit;outline:none}
+.ii:focus{border-color:var(--blue)}
+.btn-del-row{width:26px;height:26px;border:1px solid var(--border);border-radius:5px;background:transparent;color:var(--text4);cursor:pointer;font-size:14px}
+.btn-del-row:hover{background:var(--red-bg);color:var(--red-text);border-color:var(--red)}
+.btn-add-row{height:30px;width:100%;border:1px dashed var(--border2);border-radius:7px;font-size:12px;background:transparent;color:var(--text3);cursor:pointer;font-family:inherit}
+.btn-add-row:hover{border-color:var(--blue);color:var(--blue)}
+
+/* Totals */
+.totals-box{display:flex;flex-direction:column;align-items:flex-end;gap:4px;padding:10px 0;border-top:1px solid var(--border)}
+.total-row{display:flex;justify-content:space-between;gap:40px;font-size:13px;min-width:260px}
+.total-row.grand{font-weight:700;font-size:14px;color:var(--blue);border-top:1px solid var(--border);padding-top:6px;margin-top:2px}
+
+/* Print preview */
+.preview-area{background:var(--surface);border-radius:12px;border:1px solid var(--border);margin-bottom:14px;display:none;overflow:hidden}
+.preview-area.visible{display:block}
+@media print{
+  body>*{visibility:hidden}
+  .printable,.printable *{visibility:visible}
+  .printable{position:fixed;inset:0;background:#fff;padding:15mm;font-family:Arial,sans-serif;font-size:11pt}
+  .no-print{display:none!important}
+  .preview-area{display:block!important;border:none!important}
+}
+.print-doc{padding:24px;font-family:Arial,sans-serif;color:#1a1a1a;font-size:11px;background:#fff}
+.print-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid #185FA5}
+.print-co{font-size:18px;font-weight:700;color:#185FA5}
+.print-co-sub{font-size:10px;color:#888;margin-top:2px}
+.print-doc-title{font-size:16px;font-weight:700;text-align:right;color:#1a1a1a}
+.print-doc-num{font-size:11px;color:#888;text-align:right;margin-top:3px}
+.p2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px}
+.pblock strong{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.4px;display:block;margin-bottom:3px}
+.p-table{width:100%;border-collapse:collapse;font-size:10px;margin-bottom:14px}
+.p-table th{background:#185FA5;color:#fff;font-weight:600;padding:7px 8px;text-align:left}
+.p-table td{padding:6px 8px;border-bottom:1px solid #e5e5e3}
+.p-table tr:nth-child(even) td{background:#f8f8f6}
+.p-totals{text-align:right;font-size:11px}
+.p-total-row{display:flex;justify-content:flex-end;gap:50px;padding:2px 0}
+.p-grand{font-weight:700;font-size:13px;color:#185FA5;border-top:1px solid #185FA5;padding-top:5px;margin-top:4px}
+.p-footer{font-size:10px;color:#aaa;text-align:center;margin-top:16px;padding-top:10px;border-top:1px solid #e5e5e3}
+.p-bank{font-size:10px;color:#555;margin-top:12px;padding:10px;background:#f8f8f8;border-radius:4px}
+</style>
+</head>
+<body>
+
+<div class="auth-wrap" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">🧾 Documents</div>
+    <div class="auth-sub">Sign in to continue</div>
+    <div class="form-row"><label class="form-label">Email</label><input class="form-input" type="email" id="loginEmail" autocomplete="email"></div>
+    <div class="form-row"><label class="form-label">Password</label><input class="form-input" type="password" id="loginPassword" autocomplete="current-password"></div>
+    <button class="auth-btn" onclick="doLogin()" id="loginBtn">Sign in</button>
+    <div id="authMsg" style="display:none" class="auth-msg"></div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="app-layout">
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-text">Sales Pipeline</div>
+        <div class="sidebar-logo-sub">Steel Trading CRM</div>
+      </div>
+      <div class="sidebar-nav">
+        <div class="nav-section">Pipeline</div>
+        <a class="nav-item" href="index.html"><span class="nav-icon">📊</span>My Pipeline</a>
+        <a class="nav-item" href="offer.html"><span class="nav-icon">📄</span>Offer Builder</a>
+        <a class="nav-item active" href="documents.html"><span class="nav-icon">🧾</span>Documents</a>
+        <div class="nav-section">Inventory</div>
+        <a class="nav-item" href="stock.html"><span class="nav-icon">📦</span>Stock</a>
+        <a class="nav-item" href="converter.html"><span class="nav-icon">🔄</span>Converter</a>
+        <div class="nav-section" id="adminNavSection" style="display:none">Admin</div>
+        <a class="nav-item" href="admin.html" id="adminNavLink" style="display:none"><span class="nav-icon">⚙️</span>Admin Panel</a>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-info" id="userEmail">—</div>
+        <button class="hbtn" onclick="doLogout()" style="width:100%;margin-bottom:6px">Sign out</button>
+        <button class="hbtn" id="darkBtn" onclick="toggleDark()" style="width:100%">🌙 Dark mode</button>
+      </div>
+    </nav>
+
+    <div class="main-content">
+      <div class="topbar">
+        <div class="topbar-left">
+          <button class="menu-btn" onclick="openSidebar()">☰</button>
+          <span class="page-title">🧾 Documents</span>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="hbtn" onclick="togglePreview()">👁 Preview</button>
+          <button class="hbtn hbtn-green no-print" onclick="window.print()">🖨️ Print</button>
+          <button class="hbtn hbtn-blue no-print" onclick="exportExcel()">📊 Excel</button>
+        </div>
+      </div>
+
+      <main>
+        <!-- Doc type selector -->
+        <div class="doc-tabs">
+          <button class="doc-tab active" onclick="setDocType('invoice')">🧾 Invoice / Proforma</button>
+          <button class="doc-tab" onclick="setDocType('packing')">📦 Packing List</button>
+        </div>
+
+        <!-- INVOICE SECTION -->
+        <div class="doc-section active" id="sec-invoice">
+          <div class="fr2">
+            <!-- Seller info -->
+            <div class="card">
+              <div class="card-title">Seller / Issuer</div>
+              <div class="form-row"><label class="form-label">Company name</label><input class="form-input" id="inv-sellerName" placeholder="Your company"></div>
+              <div class="form-row"><label class="form-label">Address</label><textarea class="form-input" id="inv-sellerAddr" placeholder="Street, City, Country" style="height:56px"></textarea></div>
+              <div class="fr2">
+                <div class="form-row"><label class="form-label">Email</label><input class="form-input" id="inv-sellerEmail" placeholder="you@company.com"></div>
+                <div class="form-row"><label class="form-label">Phone</label><input class="form-input" id="inv-sellerPhone" placeholder="+1 555..."></div>
+              </div>
+              <div class="form-row"><label class="form-label">Bank / payment info</label><textarea class="form-input" id="inv-bankInfo" placeholder="Bank name, IBAN, SWIFT..." style="height:56px"></textarea></div>
+            </div>
+            <!-- Invoice details -->
+            <div class="card">
+              <div class="card-title">Invoice details</div>
+              <div class="fr2">
+                <div class="form-row"><label class="form-label">Invoice No.</label><input class="form-input" id="inv-num" placeholder="INV-001"></div>
+                <div class="form-row"><label class="form-label">Date</label><input class="form-input" type="date" id="inv-date"></div>
+              </div>
+              <div class="fr2">
+                <div class="form-row"><label class="form-label">Due date</label><input class="form-input" type="date" id="inv-due"></div>
+                <div class="form-row"><label class="form-label">Currency</label>
+                  <select class="form-input" id="inv-currency" onchange="recalcInv()">
+                    <option>USD</option><option>EUR</option><option>GBP</option><option>TRY</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row"><label class="form-label">Bill to (Company)</label><input class="form-input" id="inv-clientCompany" placeholder="Client company"></div>
+              <div class="form-row"><label class="form-label">Contact / attention</label><input class="form-input" id="inv-clientContact" placeholder="Contact person"></div>
+              <div class="fr2">
+                <div class="form-row"><label class="form-label">Client email</label><input class="form-input" id="inv-clientEmail" placeholder="client@co.com"></div>
+                <div class="form-row"><label class="form-label">Client phone</label><input class="form-input" id="inv-clientPhone" placeholder="+1 555..."></div>
+              </div>
+              <div class="form-row"><label class="form-label">Client address</label><input class="form-input" id="inv-clientAddr" placeholder="City, Country"></div>
+            </div>
+          </div>
+          <!-- Items -->
+          <div class="card">
+            <div class="card-title">Line items</div>
+            <div class="items-wrap">
+              <table class="items-table">
+                <thead><tr>
+                  <th>#</th><th>Description / Grade</th><th>Type</th>
+                  <th>Thick(mm)</th><th>Width(mm)</th><th>Length(mm)</th>
+                  <th>Qty</th><th>Unit</th><th>Unit Price</th><th>Total</th><th></th>
+                </tr></thead>
+                <tbody id="inv-items"></tbody>
+              </table>
+            </div>
+            <button class="btn-add-row" onclick="addInvItem()">+ Add line</button>
+            <div class="totals-box" id="inv-totals">
+              <div class="total-row"><span>Subtotal</span><span id="inv-sub">$0</span></div>
+              <div class="total-row">
+                <span style="display:flex;align-items:center;gap:8px">Tax / VAT <input type="number" id="inv-tax" value="0" min="0" max="100" step="0.5" oninput="recalcInv()" style="width:55px;height:26px;border:1px solid var(--border2);border-radius:5px;padding:0 6px;font-size:12px;background:var(--surface);color:var(--text);outline:none">%</span>
+                <span id="inv-tax-amt">$0</span>
+              </div>
+              <div class="total-row grand"><span>Total</span><span id="inv-total">$0</span></div>
+            </div>
+          </div>
+          <!-- Terms -->
+          <div class="card">
+            <div class="card-title">Terms</div>
+            <div class="fr2">
+              <div class="form-row"><label class="form-label">Payment terms</label><input class="form-input" id="inv-termPayment" placeholder="e.g. Net 30 days"></div>
+              <div class="form-row"><label class="form-label">Incoterms</label><input class="form-input" id="inv-termInco" placeholder="e.g. CIF Mersin"></div>
+            </div>
+            <div class="fr2">
+              <div class="form-row"><label class="form-label">Delivery</label><input class="form-input" id="inv-termDelivery" placeholder="e.g. 2–3 weeks"></div>
+              <div class="form-row"><label class="form-label">Origin</label><input class="form-input" id="inv-termOrigin" placeholder="e.g. Turkey"></div>
+            </div>
+            <div class="form-row"><label class="form-label">Notes</label><textarea class="form-input" id="inv-notes" placeholder="Additional notes, certificate requirements..." style="height:52px"></textarea></div>
+          </div>
+        </div><!-- end invoice section -->
+
+        <!-- PACKING LIST SECTION -->
+        <div class="doc-section" id="sec-packing">
+          <div class="fr2">
+            <div class="card">
+              <div class="card-title">Shipper / Exporter</div>
+              <div class="form-row"><label class="form-label">Company</label><input class="form-input" id="pk-shipperName" placeholder="Your company"></div>
+              <div class="form-row"><label class="form-label">Address</label><textarea class="form-input" id="pk-shipperAddr" placeholder="Address" style="height:52px"></textarea></div>
+              <div class="fr2">
+                <div class="form-row"><label class="form-label">Email</label><input class="form-input" id="pk-shipperEmail"></div>
+                <div class="form-row"><label class="form-label">Phone</label><input class="form-input" id="pk-shipperPhone"></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">Packing list details</div>
+              <div class="fr2">
+                <div class="form-row"><label class="form-label">Document No.</label><input class="form-input" id="pk-num" placeholder="PL-001"></div>
+                <div class="form-row"><label class="form-label">Date</label><input class="form-input" type="date" id="pk-date"></div>
+              </div>
+              <div class="form-row"><label class="form-label">Related invoice No.</label><input class="form-input" id="pk-invRef" placeholder="INV-001"></div>
+              <div class="form-row"><label class="form-label">Consignee (Buyer)</label><input class="form-input" id="pk-consignee" placeholder="Buyer company"></div>
+              <div class="form-row"><label class="form-label">Port of loading</label><input class="form-input" id="pk-pol" placeholder="e.g. Mersin, Turkey"></div>
+              <div class="fr2">
+                <div class="form-row"><label class="form-label">Port of discharge</label><input class="form-input" id="pk-pod" placeholder="Destination port"></div>
+                <div class="form-row"><label class="form-label">Vessel / B/L No.</label><input class="form-input" id="pk-vessel" placeholder="Vessel name or BL number"></div>
+              </div>
+            </div>
+          </div>
+          <!-- Packing items -->
+          <div class="card">
+            <div class="card-title">Packages / items</div>
+            <div class="items-wrap">
+              <table class="items-table">
+                <thead><tr>
+                  <th>#</th><th>Marks / Bundle No.</th><th>Grade</th>
+                  <th>Thick(mm)</th><th>Width(mm)</th><th>Length(mm)</th>
+                  <th>Pcs</th><th>Net Wt (kg)</th><th>Gross Wt (kg)</th><th>Heat No.</th><th></th>
+                </tr></thead>
+                <tbody id="pk-items"></tbody>
+              </table>
+            </div>
+            <button class="btn-add-row" onclick="addPkItem()">+ Add bundle/package</button>
+            <div class="totals-box" id="pk-totals" style="align-items:flex-end">
+              <div class="total-row"><span>Total pieces</span><span id="pk-tot-pcs">0</span></div>
+              <div class="total-row"><span>Total net weight</span><span id="pk-tot-net">0 kg</span></div>
+              <div class="total-row grand"><span>Total gross weight</span><span id="pk-tot-gross">0 kg</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Shipping notes</div>
+            <div class="fr2">
+              <div class="form-row"><label class="form-label">Packing type</label><input class="form-input" id="pk-packType" placeholder="e.g. Bundle, Coil, Crate"></div>
+              <div class="form-row"><label class="form-label">Container / truck No.</label><input class="form-input" id="pk-containerNo" placeholder="Container or truck number"></div>
+            </div>
+            <div class="form-row"><label class="form-label">Remarks</label><textarea class="form-input" id="pk-remarks" placeholder="Special handling, certifications, marks..." style="height:52px"></textarea></div>
+          </div>
+        </div><!-- end packing section -->
+
+        <!-- Preview -->
+        <div class="preview-area printable" id="previewArea">
+          <div class="print-doc" id="printDoc"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL='https://fmmfofjkebdsrnkchrfo.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtbWZvZmprZWJkc3Jua2NocmZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDAxNDIsImV4cCI6MjA5MjA3NjE0Mn0.bQQJt06mucLCQCrY1NgN-ed2ngDeRLmITmOfQCAM7ZU';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+let currentUser=null,userProfile=null,docType='invoice',invItemId=0,pkItemId=0;
+
+function toggleDark(){const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',t);document.getElementById('darkBtn').textContent=t==='dark'?'☀️ Light mode':'🌙 Dark mode';localStorage.setItem('theme',t);}
+(()=>{const s=localStorage.getItem('theme')||'light';document.documentElement.setAttribute('data-theme',s);if(s==='dark')setTimeout(()=>document.getElementById('darkBtn').textContent='☀️ Light mode',0);})();
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sidebarOverlay').classList.add('open');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('open');}
+
+function showMsg(m){const e=document.getElementById('authMsg');e.textContent=m;e.style.display='block';}
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPassword').value;
+  if(!email||!pass)return showMsg('Please fill in all fields.');
+  const btn=document.getElementById('loginBtn');btn.disabled=true;btn.textContent='Signing in...';
+  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  btn.disabled=false;btn.textContent='Sign in';
+  if(error)return showMsg(error.message);
+  onSignedIn(data.user);
+}
+async function doLogout(){await sb.auth.signOut();location.reload();}
+async function onSignedIn(user){
+  currentUser=user;
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('userEmail').textContent=user.email;
+  const {data:profile}=await sb.from('profiles').select('*').eq('id',user.id).single();
+  userProfile=profile||{};
+  if(profile?.is_admin){document.getElementById('adminNavSection').style.display='block';document.getElementById('adminNavLink').style.display='flex';}
+  // Pre-fill seller info from profile
+  const name=profile?.display_name||profile?.full_name||'';
+  const phone=profile?.phone||'';
+  const company=profile?.company||'';
+  ['inv-sellerName','pk-shipperName'].forEach(id=>{const el=document.getElementById(id);if(el&&company)el.value=company;});
+  ['inv-sellerEmail'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=user.email;});
+  ['inv-sellerPhone','pk-shipperPhone'].forEach(id=>{const el=document.getElementById(id);if(el&&phone)el.value=phone;});
+  // Init dates and numbers
+  const today=new Date().toISOString().slice(0,10);
+  const due=new Date(Date.now()+30*86400000).toISOString().slice(0,10);
+  document.getElementById('inv-date').value=today;
+  document.getElementById('inv-due').value=due;
+  document.getElementById('pk-date').value=today;
+  document.getElementById('inv-num').value='INV-'+Date.now().toString().slice(-5);
+  document.getElementById('pk-num').value='PL-'+Date.now().toString().slice(-5);
+  // Start with 3 invoice lines and 3 packing rows
+  for(let i=0;i<3;i++)addInvItem();
+  for(let i=0;i<3;i++)addPkItem();
+}
+sb.auth.getSession().then(({data:{session}})=>{if(session)onSignedIn(session.user);});
+
+// ── Doc type switch ──
+function setDocType(t){
+  docType=t;
+  document.querySelectorAll('.doc-tab').forEach((b,i)=>b.classList.toggle('active',(t==='invoice'&&i===0)||(t==='packing'&&i===1)));
+  document.querySelectorAll('.doc-section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+t).classList.add('active');
+  document.getElementById('previewArea').classList.remove('visible');
+}
+
+// ── Invoice items ──
+function addInvItem(p={}){
+  const id=++invItemId;
+  const tbody=document.getElementById('inv-items');
+  const tr=document.createElement('tr');
+  tr.id='inv-r-'+id;
+  tr.innerHTML=`
+    <td style="color:var(--text4);font-size:11px;text-align:center;width:28px">${id}</td>
+    <td><input class="ii inv-desc" placeholder="Grade / description" value="${p.desc||''}"></td>
+    <td><input class="ii inv-type" placeholder="Plate/Coil" value="${p.type||''}"></td>
+    <td><input class="ii inv-thick" type="number" placeholder="mm" value="${p.thick||''}" style="width:70px"></td>
+    <td><input class="ii inv-width" type="number" placeholder="mm" value="${p.width||''}" style="width:70px"></td>
+    <td><input class="ii inv-length" type="number" placeholder="mm" value="${p.length||''}" style="width:80px"></td>
+    <td><input class="ii inv-qty" type="number" placeholder="0" value="${p.qty||''}" oninput="recalcInv()" style="width:65px"></td>
+    <td><select class="ii inv-unit" style="width:65px">
+      ${['ton','kg','pcs','m'].map(u=>`<option${(p.unit||'ton')===u?' selected':''}>${u}</option>`).join('')}
+    </select></td>
+    <td><input class="ii inv-price" type="number" placeholder="0.00" value="${p.price||''}" oninput="recalcInv()" style="width:80px"></td>
+    <td style="font-weight:600;color:var(--green-text);white-space:nowrap;padding:5px 8px" id="inv-line-total-${id}">—</td>
+    <td><button class="btn-del-row" onclick="document.getElementById('inv-r-${id}').remove();recalcInv()">×</button></td>
+  `;
+  tbody.appendChild(tr);
+  recalcInv();
+}
+
+function recalcInv(){
+  let sub=0;
+  document.querySelectorAll('[id^="inv-r-"]').forEach(tr=>{
+    const id=tr.id.replace('inv-r-','');
+    const qty=Number(tr.querySelector('.inv-qty').value)||0;
+    const price=Number(tr.querySelector('.inv-price').value)||0;
+    const total=qty*price;
+    sub+=total;
+    const cell=document.getElementById('inv-line-total-'+id);
+    if(cell) cell.textContent=total?Number(total).toLocaleString(undefined,{minimumFractionDigits:2}):'—';
+  });
+  const cur=document.getElementById('inv-currency')?.value||'USD';
+  const tax=Number(document.getElementById('inv-tax').value)||0;
+  const taxAmt=sub*tax/100;
+  const total=sub+taxAmt;
+  document.getElementById('inv-sub').textContent=cur+' '+Number(sub).toLocaleString(undefined,{minimumFractionDigits:2});
+  document.getElementById('inv-tax-amt').textContent=cur+' '+Number(taxAmt).toLocaleString(undefined,{minimumFractionDigits:2});
+  document.getElementById('inv-total').textContent=cur+' '+Number(total).toLocaleString(undefined,{minimumFractionDigits:2});
+}
+
+// ── Packing list items ──
+function addPkItem(p={}){
+  const id=++pkItemId;
+  const tbody=document.getElementById('pk-items');
+  const tr=document.createElement('tr');
+  tr.id='pk-r-'+id;
+  tr.innerHTML=`
+    <td style="color:var(--text4);font-size:11px;text-align:center;width:28px">${id}</td>
+    <td><input class="ii pk-mark" placeholder="Bundle/mark" value="${p.mark||''}"></td>
+    <td><input class="ii pk-grade" placeholder="S235JR..." value="${p.grade||''}"></td>
+    <td><input class="ii pk-thick" type="number" placeholder="mm" value="${p.thick||''}" style="width:70px"></td>
+    <td><input class="ii pk-width" type="number" placeholder="mm" value="${p.width||''}" style="width:70px"></td>
+    <td><input class="ii pk-length" type="number" placeholder="mm" value="${p.length||''}" style="width:80px"></td>
+    <td><input class="ii pk-pcs" type="number" placeholder="0" value="${p.pcs||''}" oninput="recalcPk()" style="width:60px"></td>
+    <td><input class="ii pk-net" type="number" placeholder="kg" value="${p.net||''}" oninput="recalcPk()" style="width:80px"></td>
+    <td><input class="ii pk-gross" type="number" placeholder="kg" value="${p.gross||''}" oninput="recalcPk()" style="width:80px"></td>
+    <td><input class="ii pk-heat" placeholder="Heat No." value="${p.heat||''}" style="width:90px"></td>
+    <td><button class="btn-del-row" onclick="document.getElementById('pk-r-${id}').remove();recalcPk()">×</button></td>
+  `;
+  tbody.appendChild(tr);
+  recalcPk();
+}
+
+function recalcPk(){
+  let totPcs=0,totNet=0,totGross=0;
+  document.querySelectorAll('[id^="pk-r-"]').forEach(tr=>{
+    totPcs+=Number(tr.querySelector('.pk-pcs').value)||0;
+    totNet+=Number(tr.querySelector('.pk-net').value)||0;
+    totGross+=Number(tr.querySelector('.pk-gross').value)||0;
+  });
+  document.getElementById('pk-tot-pcs').textContent=totPcs.toLocaleString();
+  document.getElementById('pk-tot-net').textContent=totNet.toLocaleString()+' kg';
+  document.getElementById('pk-tot-gross').textContent=totGross.toLocaleString()+' kg';
+}
+
+// ── Get form data helpers ──
+function getInvLines(){
+  const rows=[];
+  document.querySelectorAll('[id^="inv-r-"]').forEach((tr,i)=>{
+    const desc=tr.querySelector('.inv-desc').value.trim();
+    const qty=Number(tr.querySelector('.inv-qty').value)||0;
+    const price=Number(tr.querySelector('.inv-price').value)||0;
+    rows.push({
+      num:i+1,
+      desc,type:tr.querySelector('.inv-type').value,
+      thick:tr.querySelector('.inv-thick').value,width:tr.querySelector('.inv-width').value,length:tr.querySelector('.inv-length').value,
+      qty,unit:tr.querySelector('.inv-unit').value,price,total:qty*price
+    });
+  });
+  return rows;
+}
+function getPkLines(){
+  const rows=[];
+  document.querySelectorAll('[id^="pk-r-"]').forEach((tr,i)=>{
+    rows.push({
+      num:i+1,
+      mark:tr.querySelector('.pk-mark').value,grade:tr.querySelector('.pk-grade').value,
+      thick:tr.querySelector('.pk-thick').value,width:tr.querySelector('.pk-width').value,length:tr.querySelector('.pk-length').value,
+      pcs:tr.querySelector('.pk-pcs').value,net:tr.querySelector('.pk-net').value,
+      gross:tr.querySelector('.pk-gross').value,heat:tr.querySelector('.pk-heat').value
+    });
+  });
+  return rows;
+}
+
+// ── Preview ──
+function togglePreview(){
+  const panel=document.getElementById('previewArea');
+  if(panel.classList.toggle('visible')) buildPreview();
+}
+function g(id){return(document.getElementById(id)||{}).value||'';}
+
+function buildPreview(){
+  if(docType==='invoice') buildInvoicePreview();
+  else buildPackingPreview();
+}
+
+function buildInvoicePreview(){
+  const lines=getInvLines();
+  const cur=g('inv-currency')||'USD';
+  const sub=lines.reduce((s,l)=>s+l.total,0);
+  const tax=Number(g('inv-tax'))||0;
+  const taxAmt=sub*tax/100;
+  const total=sub+taxAmt;
+  const fmt=(n)=>cur+' '+Number(n).toLocaleString(undefined,{minimumFractionDigits:2});
+
+  document.getElementById('printDoc').innerHTML=`
+    <div class="print-header">
+      <div>
+        <div class="print-co">${g('inv-sellerName')||'Your Company'}</div>
+        <div class="print-co-sub">${g('inv-sellerEmail')} · ${g('inv-sellerPhone')}</div>
+      </div>
+      <div>
+        <div class="print-doc-title">COMMERCIAL INVOICE</div>
+        <div class="print-doc-num">${g('inv-num')}</div>
+      </div>
+    </div>
+    <div class="p2">
+      <div class="pblock">
+        <strong>Bill to</strong>
+        <b>${g('inv-clientCompany')}</b><br>
+        ${g('inv-clientContact')?g('inv-clientContact')+'<br>':''}
+        ${g('inv-clientEmail')?g('inv-clientEmail')+'<br>':''}
+        ${g('inv-clientPhone')?g('inv-clientPhone')+'<br>':''}
+        ${g('inv-clientAddr')||''}
+      </div>
+      <div class="pblock">
+        <strong>Invoice details</strong>
+        Date: <b>${g('inv-date')}</b><br>
+        Due date: ${g('inv-due')}<br>
+        Currency: ${cur}<br>
+        ${g('inv-termInco')?'Incoterms: '+g('inv-termInco')+'<br>':''}
+        ${g('inv-termOrigin')?'Origin: '+g('inv-termOrigin')+'<br>':''}
+        ${g('inv-termPayment')?'Payment: '+g('inv-termPayment'):''}
+      </div>
+    </div>
+    <table class="p-table">
+      <thead><tr>
+        <th>#</th><th>Description</th><th>Type</th>
+        <th>Thick</th><th>Width</th><th>Length</th>
+        <th>Qty</th><th>Unit</th><th>Unit Price</th><th>Total</th>
+      </tr></thead>
+      <tbody>
+        ${lines.map(l=>`<tr>
+          <td>${l.num}</td><td><b>${l.desc}</b></td><td>${l.type||'—'}</td>
+          <td>${l.thick||'—'}</td><td>${l.width||'—'}</td><td>${l.length||'—'}</td>
+          <td>${l.qty}</td><td>${l.unit}</td>
+          <td>${l.price?Number(l.price).toLocaleString():'-'}</td>
+          <td><b>${l.total?Number(l.total).toLocaleString():'-'}</b></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    <div class="p-totals">
+      <div class="p-total-row"><span>Subtotal</span><span>${fmt(sub)}</span></div>
+      <div class="p-total-row"><span>Tax/VAT (${tax}%)</span><span>${fmt(taxAmt)}</span></div>
+      <div class="p-total-row p-grand"><span>TOTAL</span><span>${fmt(total)}</span></div>
+    </div>
+    ${g('inv-bankInfo')?`<div class="p-bank"><strong>Payment instructions:</strong><br>${g('inv-bankInfo').replace(/\n/g,'<br>')}</div>`:''}
+    ${g('inv-notes')?`<div class="p-bank"><strong>Notes:</strong> ${g('inv-notes')}</div>`:''}
+    <div class="p-footer">Invoice issued by ${g('inv-sellerName')} · ${g('inv-date')}</div>
+  `;
+}
+
+function buildPackingPreview(){
+  const lines=getPkLines();
+  const totPcs=lines.reduce((s,l)=>s+Number(l.pcs||0),0);
+  const totNet=lines.reduce((s,l)=>s+Number(l.net||0),0);
+  const totGross=lines.reduce((s,l)=>s+Number(l.gross||0),0);
+
+  document.getElementById('printDoc').innerHTML=`
+    <div class="print-header">
+      <div>
+        <div class="print-co">${g('pk-shipperName')||'Your Company'}</div>
+        <div class="print-co-sub">${g('pk-shipperEmail')} · ${g('pk-shipperPhone')}</div>
+      </div>
+      <div>
+        <div class="print-doc-title">PACKING LIST</div>
+        <div class="print-doc-num">${g('pk-num')}${g('pk-invRef')?' · Ref: '+g('pk-invRef'):''}</div>
+      </div>
+    </div>
+    <div class="p2">
+      <div class="pblock">
+        <strong>Consignee</strong>
+        <b>${g('pk-consignee')}</b>
+      </div>
+      <div class="pblock">
+        <strong>Shipment details</strong>
+        Date: <b>${g('pk-date')}</b><br>
+        Port of loading: ${g('pk-pol')||'—'}<br>
+        Port of discharge: ${g('pk-pod')||'—'}<br>
+        ${g('pk-vessel')?'Vessel/B/L: '+g('pk-vessel'):''}
+      </div>
+    </div>
+    <table class="p-table">
+      <thead><tr>
+        <th>#</th><th>Marks / Bundle</th><th>Grade</th>
+        <th>Thick(mm)</th><th>Width(mm)</th><th>Length(mm)</th>
+        <th>Pcs</th><th>Net Wt(kg)</th><th>Gross Wt(kg)</th><th>Heat No.</th>
+      </tr></thead>
+      <tbody>
+        ${lines.map(l=>`<tr>
+          <td>${l.num}</td><td><b>${l.mark||'—'}</b></td><td>${l.grade||'—'}</td>
+          <td>${l.thick||'—'}</td><td>${l.width||'—'}</td><td>${l.length||'—'}</td>
+          <td>${l.pcs||'—'}</td><td>${l.net?Number(l.net).toLocaleString():'—'}</td>
+          <td>${l.gross?Number(l.gross).toLocaleString():'—'}</td>
+          <td style="font-size:10px">${l.heat||'—'}</td>
+        </tr>`).join('')}
+        <tr style="background:#185FA5;color:#fff;font-weight:600">
+          <td colspan="6">TOTALS</td>
+          <td>${totPcs.toLocaleString()}</td>
+          <td>${totNet.toLocaleString()} kg</td>
+          <td>${totGross.toLocaleString()} kg</td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+    ${g('pk-packType')?`<div class="p-bank"><b>Packing:</b> ${g('pk-packType')}${g('pk-containerNo')?' · Container/Truck: '+g('pk-containerNo'):''}</div>`:''}
+    ${g('pk-remarks')?`<div class="p-bank"><b>Remarks:</b> ${g('pk-remarks')}</div>`:''}
+    <div class="p-footer">Packing list issued by ${g('pk-shipperName')} · ${g('pk-date')}</div>
+  `;
+}
+
+// ── Export Excel ──
+function exportExcel(){
+  if(docType==='invoice') exportInvoiceExcel();
+  else exportPackingExcel();
+}
+
+function exportInvoiceExcel(){
+  const lines=getInvLines();
+  const cur=g('inv-currency')||'USD';
+  const sub=lines.reduce((s,l)=>s+l.total,0);
+  const tax=Number(g('inv-tax'))||0;
+  const total=sub+sub*tax/100;
+  const rows=[
+    ['COMMERCIAL INVOICE','','','','','','','','',''],
+    [''],
+    ['Invoice No:',g('inv-num'),'','','Date:',g('inv-date'),'','','',''],
+    ['From:',g('inv-sellerName'),'','','Due:',g('inv-due'),'','','',''],
+    ['Email:',g('inv-sellerEmail'),'','','Phone:',g('inv-sellerPhone'),'','','',''],
+    [''],
+    ['Bill To:',g('inv-clientCompany'),'','','Incoterms:',g('inv-termInco'),'','','',''],
+    ['Contact:',g('inv-clientContact'),'','','Payment:',g('inv-termPayment'),'','','',''],
+    ['Email:',g('inv-clientEmail'),'','','Origin:',g('inv-termOrigin'),'','','',''],
+    [''],
+    ['#','Description','Type','Thick(mm)','Width(mm)','Length(mm)','Qty','Unit',`Unit Price(${cur})`,`Total(${cur})`],
+    ...lines.map(l=>[l.num,l.desc,l.type,l.thick,l.width,l.length,l.qty,l.unit,l.price,l.total]),
+    [''],
+    ['','','','','','','','','Subtotal',sub],
+    ['','','','','','','','',`Tax/VAT (${tax}%)`,sub*tax/100],
+    ['','','','','','','','','TOTAL',total],
+    [''],
+    g('inv-bankInfo')?['Payment info:',g('inv-bankInfo'),'','','','','','','','']:null,
+    g('inv-notes')?['Notes:',g('inv-notes'),'','','','','','','','']:null,
+  ].filter(Boolean);
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:4},{wch:22},{wch:12},{wch:10},{wch:10},{wch:10},{wch:8},{wch:6},{wch:14},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws,'Invoice');
+  XLSX.writeFile(wb,'invoice_'+(g('inv-clientCompany')||'client').replace(/[^a-zA-Z0-9]/g,'_')+'_'+g('inv-num').replace(/[^a-zA-Z0-9]/g,'-')+'.xlsx');
+}
+
+function exportPackingExcel(){
+  const lines=getPkLines();
+  const totPcs=lines.reduce((s,l)=>s+Number(l.pcs||0),0);
+  const totNet=lines.reduce((s,l)=>s+Number(l.net||0),0);
+  const totGross=lines.reduce((s,l)=>s+Number(l.gross||0),0);
+  const rows=[
+    ['PACKING LIST','','','','','','','','',''],
+    [''],
+    ['Document No:',g('pk-num'),'','','Date:',g('pk-date'),'','','',''],
+    ['Shipper:',g('pk-shipperName'),'','','Invoice Ref:',g('pk-invRef'),'','','',''],
+    ['Consignee:',g('pk-consignee'),'','','','','','','',''],
+    ['Port of Loading:',g('pk-pol'),'','','Port of Discharge:',g('pk-pod'),'','','',''],
+    g('pk-vessel')?['Vessel/B/L:',g('pk-vessel'),'','','','','','','','']:null,
+    [''],
+    ['#','Marks/Bundle','Grade','Thick(mm)','Width(mm)','Length(mm)','Pcs','Net Wt(kg)','Gross Wt(kg)','Heat No.'],
+    ...lines.map(l=>[l.num,l.mark,l.grade,l.thick,l.width,l.length,l.pcs,l.net,l.gross,l.heat]),
+    ['TOTALS','','','','','',totPcs,totNet,totGross,''],
+    [''],
+    g('pk-packType')?['Packing:',g('pk-packType'),'','','Container/Truck:',g('pk-containerNo'),'','','','']:null,
+    g('pk-remarks')?['Remarks:',g('pk-remarks'),'','','','','','','','']:null,
+  ].filter(Boolean);
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:4},{wch:16},{wch:12},{wch:10},{wch:10},{wch:10},{wch:7},{wch:12},{wch:13},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws,'Packing List');
+  XLSX.writeFile(wb,'packing_'+(g('pk-consignee')||'consignee').replace(/[^a-zA-Z0-9]/g,'_')+'_'+g('pk-num').replace(/[^a-zA-Z0-9]/g,'-')+'.xlsx');
+}
+</script>
+</body>
+</html>
