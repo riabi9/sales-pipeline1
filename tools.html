@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Tools — Steel Platform</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#f5f5f3;--surface:#fff;--surface2:#ebebea;--border:#e5e5e3;--border2:#d0d0cc;
+  --text:#1a1a1a;--text2:#555;--text3:#888;--text4:#bbb;
+  --blue:#185FA5;--blue-bg:#E6F1FB;--blue-light:#B5D4F4;
+  --green:#1D9E75;--green-bg:#E1F5EE;--green-text:#0F6E56;
+  --red:#E24B4A;--red-bg:#FCEBEB;--red-text:#A32D2D;
+  --amber:#EF9F27;--amber-bg:#FAEEDA;--amber-text:#854F0B;
+  --purple:#7F77DD;--purple-bg:#EEEDFE;--purple-text:#534AB7;
+  --sidebar-w:200px;
+}
+[data-theme="dark"]{
+  --bg:#111110;--surface:#1c1c1a;--surface2:#252523;--border:#2e2e2c;--border2:#3a3a38;
+  --text:#f0f0ee;--text2:#c0c0bc;--text3:#888;--text4:#555;
+  --blue:#378ADD;--blue-bg:#0C2A45;--blue-light:#185FA5;
+  --green:#1D9E75;--green-bg:#0a2e22;--green-text:#5DCAA5;
+}
+*{box-sizing:border-box;margin:0;padding:0;transition:background-color 0.2s,color 0.15s}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── Sidebar ── */
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:150;transition:transform 0.25s}
+.sidebar-logo{padding:16px 14px 12px;border-bottom:1px solid var(--border)}
+.sidebar-logo-text{font-size:15px;font-weight:700;color:var(--blue)}
+.sidebar-logo-sub{font-size:10px;color:var(--text4);margin-top:1px}
+.sidebar-nav{flex:1;overflow-y:auto;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;font-size:13px;color:var(--text2);cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:inherit;text-decoration:none}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--blue-bg);color:var(--blue);font-weight:600}
+.nav-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.nav-section{font-size:9px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:0.6px;padding:10px 14px 4px}
+.sidebar-footer{padding:10px 14px;border-top:1px solid var(--border)}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:140}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay.open{display:block}
+  .main-content{margin-left:0!important}
+}
+
+/* ── Layout ── */
+.main-content{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 14px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:8px}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.menu-btn{width:32px;height:32px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:16px;display:none;align-items:center;justify-content:center}
+@media(max-width:768px){.menu-btn{display:flex}}
+.page-title{font-size:15px;font-weight:600;color:var(--text)}
+.topbar-right{display:flex;align-items:center;gap:6px}
+.hbtn{height:30px;padding:0 10px;border:1px solid var(--border2);border-radius:7px;font-size:12px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;white-space:nowrap}
+.hbtn:hover{background:var(--surface2)}
+main{padding:14px;max-width:1100px;margin:0 auto;width:100%}
+
+/* ── Tool Tabs ── */
+.tool-tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+.tool-tab{height:34px;padding:0 14px;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text2);transition:all 0.12s}
+.tool-tab:hover{background:var(--surface2)}
+.tool-tab.active{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+.tool-section{display:none}
+.tool-section.active{display:block}
+
+/* ── Cards ── */
+.card{background:var(--surface);border-radius:12px;border:1px solid var(--border);padding:18px;margin-bottom:16px}
+.card-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-title span{font-size:16px}
+
+/* ── Form rows ── */
+.form-row{margin-bottom:12px}
+.form-label{font-size:12px;color:var(--text3);margin-bottom:4px;display:block;font-weight:500}
+.form-input{width:100%;height:38px;border:1px solid var(--border2);border-radius:8px;padding:0 11px;font-size:13px;background:var(--surface);color:var(--text);font-family:inherit;outline:none}
+.form-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+select.form-input{cursor:pointer}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:600px){.grid2,.grid3{grid-template-columns:1fr}}
+
+/* ── Calc button ── */
+.calc-btn{height:44px;width:100%;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--blue);color:#fff;margin-top:8px;letter-spacing:0.02em}
+.calc-btn:hover{opacity:0.9}
+
+/* ── Result ── */
+.result-panel{display:none;margin-top:16px;background:var(--blue-bg);border:1px solid var(--blue-light);border-radius:10px;padding:16px}
+.result-panel.show{display:block}
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.result-item{background:var(--surface);border-radius:8px;padding:12px;text-align:center}
+.result-label{font-size:11px;color:var(--text3);text-transform:uppercase;font-weight:700;letter-spacing:0.05em}
+.result-value{font-size:24px;font-weight:800;color:var(--blue);margin-top:4px}
+.result-unit{font-size:12px;color:var(--text3);margin-top:2px}
+.result-formula{font-size:11px;color:var(--text4);margin-top:10px;text-align:center;font-style:italic}
+
+/* ── Tolerance Table ── */
+.tol-select-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.tol-type-btn{height:32px;padding:0 14px;border:1px solid var(--border2);border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface2);color:var(--text2)}
+.tol-type-btn.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.tol-table{width:100%;border-collapse:collapse;font-size:12px}
+.tol-table th{background:var(--surface2);color:var(--text2);font-weight:700;padding:8px 10px;text-align:left;border-bottom:2px solid var(--border)}
+.tol-table td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text2)}
+.tol-table tr:last-child td{border-bottom:none}
+.tol-table .highlight{background:var(--amber-bg);font-weight:700;color:var(--amber-text)}
+.tol-table .tol-range{color:var(--text3);font-size:11px}
+.tol-note{font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5;font-style:italic}
+.thickness-check-row{display:flex;gap:8px;margin-bottom:14px;align-items:flex-end}
+.thickness-check-row .form-input{max-width:160px;flex-shrink:0}
+
+/* ── Floating Converter ── */
+.conv-float-btn{
+  position:fixed;right:20px;bottom:20px;z-index:500;
+  width:52px;height:52px;border-radius:50%;border:none;
+  background:var(--blue);color:#fff;font-size:20px;cursor:pointer;
+  box-shadow:0 4px 16px rgba(24,95,165,0.4);transition:transform 0.15s,box-shadow 0.15s;
+  display:flex;align-items:center;justify-content:center
+}
+.conv-float-btn:hover{transform:scale(1.08);box-shadow:0 6px 24px rgba(24,95,165,0.5)}
+.conv-float-btn .conv-label{
+  position:absolute;right:60px;top:50%;transform:translateY(-50%);
+  background:#1a1a1a;color:#fff;font-size:11px;font-weight:600;
+  padding:4px 8px;border-radius:5px;white-space:nowrap;pointer-events:none;
+  opacity:0;transition:opacity 0.15s
+}
+.conv-float-btn:hover .conv-label{opacity:1}
+
+.conv-panel{
+  position:fixed;right:0;top:0;bottom:0;z-index:600;
+  width:400px;max-width:100vw;
+  background:var(--surface);border-left:1px solid var(--border);
+  box-shadow:-4px 0 24px rgba(0,0,0,0.12);
+  transform:translateX(100%);transition:transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  display:flex;flex-direction:column;
+}
+.conv-panel.open{transform:translateX(0)}
+.conv-panel-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0
+}
+.conv-panel-title{font-size:14px;font-weight:700;color:var(--blue)}
+.conv-panel-close{width:30px;height:30px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+.conv-panel-iframe{flex:1;border:none;width:100%;display:block}
+.conv-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:590}
+.conv-overlay.open{display:block}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-text">⚙️ Steel Platform</div>
+    <div class="sidebar-logo-sub">Export Management Suite</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Pipeline</div>
+    <a href="index.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
+    <a href="index.html" class="nav-item"><span class="nav-icon">🎯</span>CRM / Leads</a>
+    <div class="nav-section">Documents</div>
+    <a href="documents.html" class="nav-item"><span class="nav-icon">📄</span>Invoices & Packing</a>
+    <a href="offer.html" class="nav-item"><span class="nav-icon">📋</span>Offers</a>
+    <div class="nav-section">Inventory</div>
+    <a href="stock.html" class="nav-item"><span class="nav-icon">📦</span>Stock</a>
+    <div class="nav-section">Tools</div>
+    <a href="tools.html" class="nav-item active"><span class="nav-icon">🔧</span>Tools</a>
+    <a href="library.html" class="nav-item"><span class="nav-icon">📚</span>Library</a>
+    <a href="logistics.html" class="nav-item"><span class="nav-icon">🚢</span>Logistics</a>
+    <a href="converter.html" class="nav-item"><span class="nav-icon">⚡</span>Grade Converter</a>
+    <a href="cont.html" class="nav-item"><span class="nav-icon">👥</span>Contacts</a>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="hbtn" onclick="toggleTheme()">🌙 Theme</button>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="menu-btn" onclick="openSidebar()">☰</button>
+      <span class="page-title">🔧 Tools</span>
+    </div>
+    <div class="topbar-right">
+      <button class="hbtn" onclick="toggleConverter()" style="border-color:var(--blue);color:var(--blue);background:var(--blue-bg)">⚙️ Grade Converter</button>
+    </div>
+  </div>
+
+  <main>
+    <div class="tool-tabs">
+      <button class="tool-tab active" onclick="showTool('weight')">⚖️ Weight Calculator</button>
+      <button class="tool-tab" onclick="showTool('tolerance')">📐 Tolerance Reference</button>
+    </div>
+
+    <!-- ── Weight Calculator ── -->
+    <div class="tool-section active" id="tool-weight">
+      <div class="card">
+        <div class="card-title"><span>⚖️</span> Steel Weight Calculator</div>
+        <div class="grid2">
+          <div class="form-row">
+            <label class="form-label">Product Type</label>
+            <select class="form-input" id="wc-type" onchange="onTypeChange()">
+              <optgroup label="Flat Products">
+                <option value="sheet">Sheet / Plate</option>
+                <option value="coil">Coil (Strip)</option>
+              </optgroup>
+              <optgroup label="Tubular">
+                <option value="round-tube">Round Tube (CHS)</option>
+                <option value="square-tube">Square / Rectangular Tube (RHS/SHS)</option>
+              </optgroup>
+              <optgroup label="Structural Profiles">
+                <option value="hea">HEA Beam (Wide Flange)</option>
+                <option value="heb">HEB Beam</option>
+                <option value="ipe">IPE Beam</option>
+                <option value="upn">UPN Channel</option>
+                <option value="equal-angle">Equal Angle (L)</option>
+                <option value="unequal-angle">Unequal Angle</option>
+                <option value="flat-bar">Flat Bar</option>
+                <option value="round-bar">Round Bar</option>
+                <option value="square-bar">Square Bar</option>
+              </optgroup>
+              <optgroup label="Other">
+                <option value="bulb-flat">Bulb Flat (HP)</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="form-row">
+            <label class="form-label">Material / Density (kg/m³)</label>
+            <select class="form-input" id="wc-density" onchange="onDensityChange()">
+              <optgroup label="Carbon &amp; Structural Steel">
+                <option value="7850" selected>Carbon Steel — 7850</option>
+                <option value="7800">Low-Carbon Steel (mild) — 7800</option>
+                <option value="7850">Structural Steel S235/S355 — 7850</option>
+                <option value="7860">High-Strength Steel S690 — 7860</option>
+              </optgroup>
+              <optgroup label="Stainless Steel">
+                <option value="7900">Stainless Steel 304 (18/8) — 7900</option>
+                <option value="7930">Stainless Steel 316L — 7930</option>
+                <option value="7750">Stainless Steel 430 (ferritic) — 7750</option>
+                <option value="8000">Stainless Steel 310 — 8000</option>
+                <option value="7800">Duplex 2205 — 7800</option>
+              </optgroup>
+              <optgroup label="Tool &amp; Alloy Steel">
+                <option value="7850">Alloy Steel 42CrMo4 — 7850</option>
+                <option value="7870">Tool Steel H13 — 7870</option>
+                <option value="8000">Tool Steel M2 (HSS) — 8000</option>
+              </optgroup>
+              <optgroup label="Cast Iron">
+                <option value="7200">Grey Cast Iron — 7200</option>
+                <option value="7100">Ductile Cast Iron — 7100</option>
+                <option value="7150">White Cast Iron — 7150</option>
+              </optgroup>
+              <optgroup label="Aluminium &amp; Alloys">
+                <option value="2700">Aluminium (pure) — 2700</option>
+                <option value="2710">Aluminium 6061 — 2710</option>
+                <option value="2780">Aluminium 7075 — 2780</option>
+                <option value="2680">Aluminium 5083 — 2680</option>
+              </optgroup>
+              <optgroup label="Copper &amp; Brass">
+                <option value="8960">Copper (pure) — 8960</option>
+                <option value="8500">Brass (CuZn37) — 8500</option>
+                <option value="8800">Bronze (CuSn8) — 8800</option>
+              </optgroup>
+              <optgroup label="Titanium">
+                <option value="4510">Titanium Grade 2 (cp) — 4510</option>
+                <option value="4430">Titanium Grade 5 (Ti6Al4V) — 4430</option>
+              </optgroup>
+              <optgroup label="Nickel Alloys">
+                <option value="8440">Inconel 625 — 8440</option>
+                <option value="8190">Inconel 718 — 8190</option>
+                <option value="8890">Monel 400 — 8890</option>
+              </optgroup>
+              <optgroup label="Other Metals">
+                <option value="11340">Lead — 11340</option>
+                <option value="7130">Zinc — 7130</option>
+                <option value="8900">Nickel — 8900</option>
+                <option value="10490">Silver — 10490</option>
+                <option value="19300">Gold — 19300</option>
+                <option value="21450">Platinum — 21450</option>
+              </optgroup>
+              <optgroup label="Custom">
+                <option value="custom">Custom value…</option>
+              </optgroup>
+            </select>
+            <input class="form-input" type="number" id="wc-density-custom" placeholder="Enter kg/m³" style="display:none;margin-top:6px" min="500" max="25000">
+          </div>
+        </div>
+
+        <!-- Dynamic dimension fields -->
+        <div id="wc-dims">
+          <!-- filled by JS -->
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">Length (m)</label>
+          <input class="form-input" type="number" id="wc-length" placeholder="e.g. 6.000" step="0.001" min="0">
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">Quantity (pieces)</label>
+          <input class="form-input" type="number" id="wc-qty" value="1" min="1">
+        </div>
+
+        <button class="calc-btn" onclick="calculateWeight()">Calculate Weight</button>
+      </div>
+
+      <div class="result-panel" id="wc-result">
+        <div class="result-grid">
+          <div class="result-item">
+            <div class="result-label">Single Piece</div>
+            <div class="result-value" id="wc-out-kg">—</div>
+            <div class="result-unit">kilograms</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Single Piece</div>
+            <div class="result-value" id="wc-out-t">—</div>
+            <div class="result-unit">tonnes</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Total (all pieces)</div>
+            <div class="result-value" id="wc-out-tot-kg">—</div>
+            <div class="result-unit">kilograms</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Total (all pieces)</div>
+            <div class="result-value" id="wc-out-tot-t">—</div>
+            <div class="result-unit">tonnes</div>
+          </div>
+        </div>
+        <div class="result-formula" id="wc-formula">—</div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="card-title"><span>ℹ️</span> Formula Notes</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.7">
+          <p><strong>Sheet/Plate:</strong> W = Thickness(m) × Width(m) × Length(m) × 7850</p>
+          <p><strong>Round Tube:</strong> W = π/4 × [(OD² − ID²)] × Length × 7850</p>
+          <p><strong>Square/Rect Tube:</strong> W = [(a × b) − (a−2t)(b−2t)] × Length × 7850</p>
+          <p><strong>Round Bar:</strong> W = π/4 × D² × Length × 7850</p>
+          <p><strong>Flat Bar:</strong> W = Width(m) × Thickness(m) × Length × 7850</p>
+          <p style="margin-top:8px;color:var(--text3)">Default density 7850 kg/m³ (steel). Adjust for stainless (7900-8000) or alloys.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tolerance Reference ── -->
+    <div class="tool-section" id="tool-tolerance">
+      <div class="card">
+        <div class="card-title"><span>📐</span> Tolerance Reference</div>
+
+        <div class="tol-select-row">
+          <button class="tol-type-btn active" onclick="setTolType('hr',this)">EN 10051 — Hot Rolled</button>
+          <button class="tol-type-btn" onclick="setTolType('cr',this)">EN 10131 — Cold Rolled</button>
+          <button class="tol-type-btn" onclick="setTolType('plate',this)">EN 10029 — Plates</button>
+        </div>
+
+        <div class="thickness-check-row">
+          <div style="flex:1">
+            <label class="form-label">Check a specific thickness (mm)</label>
+            <input class="form-input" type="number" id="tol-check-thick" placeholder="e.g. 3.5" step="0.1" oninput="highlightRow()" style="max-width:180px">
+          </div>
+          <div style="flex:1;max-width:180px">
+            <label class="form-label">Width range (mm)</label>
+            <select class="form-input" id="tol-width" onchange="renderTolTable()">
+              <option value="0">≤ 1200 mm</option>
+              <option value="1">1200 – 1500 mm</option>
+              <option value="2">1500 – 1800 mm</option>
+              <option value="3">&gt; 1800 mm</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto">
+          <table class="tol-table" id="tol-table"></table>
+        </div>
+        <p class="tol-note" id="tol-note"></p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Floating Converter Button -->
+<button class="conv-float-btn" onclick="toggleConverter()" title="Grade Converter">
+  ⚙️
+  <span class="conv-label">Grade Converter</span>
+</button>
+
+<!-- Converter Slide Panel -->
+<div class="conv-overlay" id="convOverlay" onclick="toggleConverter()"></div>
+<div class="conv-panel" id="convPanel">
+  <div class="conv-panel-header">
+    <span class="conv-panel-title">⚙️ Grade Converter</span>
+    <button class="conv-panel-close" onclick="toggleConverter()">×</button>
+  </div>
+  <iframe class="conv-panel-iframe" id="convIframe" src="" title="Grade Converter"></iframe>
+</div>
+
+<script>
+// ── Theme ──
+function toggleTheme(){
+  const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  localStorage.setItem('theme',t);
+}
+document.documentElement.setAttribute('data-theme', localStorage.getItem('theme')||'light');
+
+// ── Density selector ──
+function onDensityChange(){
+  const sel=document.getElementById('wc-density');
+  const custom=document.getElementById('wc-density-custom');
+  if(sel.value==='custom'){
+    custom.style.display='block';custom.focus();
+  } else {
+    custom.style.display='none';
+  }
+}
+function getDensity(){
+  const sel=document.getElementById('wc-density');
+  if(sel.value==='custom'){
+    return Number(document.getElementById('wc-density-custom').value)||7850;
+  }
+  return Number(sel.value)||7850;
+}
+
+// ── Sidebar ──
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sidebarOverlay').classList.add('open');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('open');}
+
+// ── Tool Tabs ──
+function showTool(id){
+  document.querySelectorAll('.tool-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tool-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tool-'+id).classList.add('active');
+  event.target.classList.add('active');
+  if(id==='tolerance') renderTolTable();
+}
+
+// ── Floating Converter ──
+let convOpen = false;
+function toggleConverter(){
+  convOpen = !convOpen;
+  document.getElementById('convPanel').classList.toggle('open', convOpen);
+  document.getElementById('convOverlay').classList.toggle('open', convOpen);
+  if(convOpen){
+    const iframe = document.getElementById('convIframe');
+    if(!iframe.src || iframe.src==='about:blank' || iframe.src===window.location.href){
+      iframe.src = 'converter.html';
+    }
+    iframe.onload = function(){
+      try{ iframe.contentWindow.postMessage({type:'themeChange',theme:localStorage.getItem('theme')||'light'},'*'); }catch(e){}
+    };
+  }
+}
+
+// ── Weight Calculator ──
+const DIM_CONFIGS = {
+  'sheet':[{id:'wc-thick',label:'Thickness (mm)',ph:'e.g. 5.0'},{id:'wc-width',label:'Width (mm)',ph:'e.g. 1500'}],
+  'coil':[{id:'wc-thick',label:'Thickness (mm)',ph:'e.g. 3.0'},{id:'wc-width',label:'Width (mm)',ph:'e.g. 1250'}],
+  'round-tube':[{id:'wc-od',label:'Outer Diameter OD (mm)',ph:'e.g. 114.3'},{id:'wc-thick',label:'Wall Thickness (mm)',ph:'e.g. 5.0'}],
+  'square-tube':[{id:'wc-a',label:'Width A (mm)',ph:'e.g. 100'},{id:'wc-b',label:'Height B (mm)',ph:'e.g. 100'},{id:'wc-thick',label:'Wall Thickness (mm)',ph:'e.g. 5.0'}],
+  'hea':[{id:'wc-profile',label:'Profile Size',type:'select',opts:['HEA 100','HEA 120','HEA 140','HEA 160','HEA 180','HEA 200','HEA 220','HEA 240','HEA 260','HEA 280','HEA 300','HEA 320','HEA 340','HEA 360','HEA 400','HEA 450','HEA 500','HEA 550','HEA 600']}],
+  'heb':[{id:'wc-profile',label:'Profile Size',type:'select',opts:['HEB 100','HEB 120','HEB 140','HEB 160','HEB 180','HEB 200','HEB 220','HEB 240','HEB 260','HEB 280','HEB 300','HEB 320','HEB 340','HEB 360','HEB 400','HEB 450','HEB 500','HEB 550','HEB 600']}],
+  'ipe':[{id:'wc-profile',label:'Profile Size',type:'select',opts:['IPE 80','IPE 100','IPE 120','IPE 140','IPE 160','IPE 180','IPE 200','IPE 220','IPE 240','IPE 270','IPE 300','IPE 330','IPE 360','IPE 400','IPE 450','IPE 500','IPE 550','IPE 600']}],
+  'upn':[{id:'wc-profile',label:'Profile Size',type:'select',opts:['UPN 50','UPN 65','UPN 80','UPN 100','UPN 120','UPN 140','UPN 160','UPN 180','UPN 200','UPN 220','UPN 240','UPN 260','UPN 280','UPN 300','UPN 320','UPN 350','UPN 380','UPN 400']}],
+  'equal-angle':[{id:'wc-a',label:'Side A (mm)',ph:'e.g. 60'},{id:'wc-thick',label:'Thickness (mm)',ph:'e.g. 6'}],
+  'unequal-angle':[{id:'wc-a',label:'Side A (mm)',ph:'e.g. 80'},{id:'wc-b',label:'Side B (mm)',ph:'e.g. 50'},{id:'wc-thick',label:'Thickness (mm)',ph:'e.g. 8'}],
+  'flat-bar':[{id:'wc-width',label:'Width (mm)',ph:'e.g. 100'},{id:'wc-thick',label:'Thickness (mm)',ph:'e.g. 10'}],
+  'round-bar':[{id:'wc-od',label:'Diameter (mm)',ph:'e.g. 50'}],
+  'square-bar':[{id:'wc-a',label:'Side (mm)',ph:'e.g. 30'}],
+  'bulb-flat':[{id:'wc-profile',label:'HP Profile',type:'select',opts:['HP 80×5','HP 100×7','HP 120×7','HP 140×7','HP 160×9','HP 180×9','HP 200×10','HP 220×10','HP 260×10','HP 280×10','HP 300×11','HP 320×11','HP 340×12','HP 370×13','HP 400×16','HP 430×20']}],
+};
+
+// Weight per meter (kg/m) for standard profiles
+const PROFILE_WEIGHTS = {
+  'HEA 100':16.7,'HEA 120':19.9,'HEA 140':24.7,'HEA 160':30.4,'HEA 180':35.5,'HEA 200':42.3,
+  'HEA 220':50.5,'HEA 240':60.3,'HEA 260':68.2,'HEA 280':76.4,'HEA 300':88.3,'HEA 320':97.6,
+  'HEA 340':105.0,'HEA 360':112.5,'HEA 400':125.0,'HEA 450':140.0,'HEA 500':155.0,'HEA 550':166.0,'HEA 600':178.0,
+  'HEB 100':20.4,'HEB 120':26.7,'HEB 140':33.7,'HEB 160':42.6,'HEB 180':51.2,'HEB 200':61.3,
+  'HEB 220':71.5,'HEB 240':83.2,'HEB 260':93.0,'HEB 280':103.0,'HEB 300':117.0,'HEB 320':127.0,
+  'HEB 340':134.0,'HEB 360':142.0,'HEB 400':155.0,'HEB 450':171.0,'HEB 500':187.0,'HEB 550':199.0,'HEB 600':212.0,
+  'IPE 80':6.0,'IPE 100':8.1,'IPE 120':10.4,'IPE 140':12.9,'IPE 160':15.8,'IPE 180':18.8,
+  'IPE 200':22.4,'IPE 220':26.2,'IPE 240':30.7,'IPE 270':36.1,'IPE 300':42.2,'IPE 330':49.1,
+  'IPE 360':57.1,'IPE 400':66.3,'IPE 450':77.6,'IPE 500':90.7,'IPE 550':106.0,'IPE 600':122.0,
+  'UPN 50':4.85,'UPN 65':7.09,'UPN 80':8.64,'UPN 100':10.6,'UPN 120':13.4,'UPN 140':16.0,
+  'UPN 160':18.8,'UPN 180':22.0,'UPN 200':25.3,'UPN 220':29.4,'UPN 240':33.2,'UPN 260':37.9,
+  'UPN 280':41.8,'UPN 300':46.2,'UPN 320':59.5,'UPN 350':60.6,'UPN 380':63.1,'UPN 400':71.8,
+  'HP 80×5':4.34,'HP 100×7':6.82,'HP 120×7':7.85,'HP 140×7':8.96,'HP 160×9':13.4,'HP 180×9':15.0,
+  'HP 200×10':18.5,'HP 220×10':20.0,'HP 260×10':24.1,'HP 280×10':25.9,'HP 300×11':30.7,
+  'HP 320×11':31.2,'HP 340×12':35.4,'HP 370×13':43.7,'HP 400×16':57.8,'HP 430×20':78.4,
+};
+
+function onTypeChange(){
+  const type = document.getElementById('wc-type').value;
+  const config = DIM_CONFIGS[type] || [];
+  const container = document.getElementById('wc-dims');
+  container.innerHTML = '';
+  
+  config.forEach(field => {
+    const div = document.createElement('div');
+    div.className = 'form-row';
+    if(field.type === 'select'){
+      div.innerHTML = `<label class="form-label">${field.label}</label>
+        <select class="form-input" id="${field.id}">${field.opts.map(o=>`<option>${o}</option>`).join('')}</select>`;
+    } else {
+      div.innerHTML = `<label class="form-label">${field.label}</label>
+        <input class="form-input" type="number" id="${field.id}" placeholder="${field.ph||''}" step="0.01" min="0">`;
+    }
+    container.appendChild(div);
+  });
+  document.getElementById('wc-result').classList.remove('show');
+}
+
+function val(id){ const el=document.getElementById(id); return el?Number(el.value)||0:0; }
+
+function calculateWeight(){
+  const type = document.getElementById('wc-type').value;
+  const L = val('wc-length');
+  const qty = val('wc-qty') || 1;
+  const density = getDensity();
+  
+  let areaM2 = 0;
+  let formula = '';
+  let usingProfileTable = false;
+  let kgPerM = 0;
+
+  if(type === 'sheet' || type === 'coil'){
+    const t = val('wc-thick')/1000;
+    const w = val('wc-width')/1000;
+    areaM2 = t * w;
+    formula = `${val('wc-thick')} mm × ${val('wc-width')} mm × ${L} m × ${density} kg/m³`;
+  } else if(type === 'round-tube'){
+    const OD = val('wc-od')/1000;
+    const t = val('wc-thick')/1000;
+    const ID = OD - 2*t;
+    areaM2 = Math.PI/4 * (OD*OD - ID*ID);
+    formula = `π/4 × (OD²−ID²) = π/4 × (${val('wc-od')}²−${(val('wc-od')-2*val('wc-thick')).toFixed(1)}²) mm²`;
+  } else if(type === 'square-tube'){
+    const a = val('wc-a')/1000;
+    const b = val('wc-b')/1000;
+    const t = val('wc-thick')/1000;
+    areaM2 = a*b - (a-2*t)*(b-2*t);
+    formula = `(${val('wc-a')}×${val('wc-b')}) − (${val('wc-a')-2*val('wc-thick')}×${val('wc-b')-2*val('wc-thick')}) mm²`;
+  } else if(type === 'equal-angle'){
+    const a = val('wc-a')/1000;
+    const t = val('wc-thick')/1000;
+    areaM2 = (2*a - t) * t;
+    formula = `2×(a−t/2)×t = 2×(${val('wc-a')}−${val('wc-thick')/2})×${val('wc-thick')} mm²`;
+  } else if(type === 'unequal-angle'){
+    const a = val('wc-a')/1000;
+    const b = val('wc-b')/1000;
+    const t = val('wc-thick')/1000;
+    areaM2 = (a + b - t) * t;
+    formula = `(A+B−t)×t = (${val('wc-a')}+${val('wc-b')}−${val('wc-thick')})×${val('wc-thick')} mm²`;
+  } else if(type === 'flat-bar'){
+    const w = val('wc-width')/1000;
+    const t = val('wc-thick')/1000;
+    areaM2 = w * t;
+    formula = `${val('wc-width')} mm × ${val('wc-thick')} mm`;
+  } else if(type === 'round-bar'){
+    const d = val('wc-od')/1000;
+    areaM2 = Math.PI/4 * d*d;
+    formula = `π/4 × D² = π/4 × ${val('wc-od')}² mm²`;
+  } else if(type === 'square-bar'){
+    const a = val('wc-a')/1000;
+    areaM2 = a*a;
+    formula = `${val('wc-a')} × ${val('wc-a')} mm²`;
+  } else {
+    // Profile from table
+    const sel = document.getElementById('wc-profile');
+    if(sel){
+      kgPerM = PROFILE_WEIGHTS[sel.value] || 0;
+      usingProfileTable = true;
+      formula = `Standard profile ${sel.value} = ${kgPerM} kg/m (tabulated value)`;
+    }
+  }
+
+  let kg;
+  if(usingProfileTable){
+    kg = kgPerM * L;
+  } else {
+    if(L <= 0 || areaM2 <= 0){ alert('Please fill in all dimensions.'); return; }
+    kg = areaM2 * L * density;
+  }
+
+  const tonnes = kg / 1000;
+  const totKg = kg * qty;
+  const totT = tonnes * qty;
+
+  document.getElementById('wc-out-kg').textContent = kg.toFixed(1);
+  document.getElementById('wc-out-t').textContent = tonnes.toFixed(3);
+  document.getElementById('wc-out-tot-kg').textContent = totKg.toFixed(1);
+  document.getElementById('wc-out-tot-t').textContent = totT.toFixed(3);
+  document.getElementById('wc-formula').textContent = `Formula: ${formula} × L ${L}m = ${kg.toFixed(1)} kg`;
+  document.getElementById('wc-result').classList.add('show');
+}
+
+// ── Tolerance Reference ──
+let tolType = 'hr';
+
+const TOL_DATA = {
+  hr: {
+    note: 'EN 10051:2010 — Continuously hot-rolled strip and plate/sheet. Tolerances on thickness for widths ≤ 2500 mm. Normal (N) tolerance class.',
+    cols: ['Thickness Range (mm)', 'Width ≤1200 mm', '1200–1500 mm', '1500–1800 mm', '>1800 mm'],
+    rows: [
+      ['1.50 – 2.00', '±0.14', '±0.16', '±0.18', '±0.20'],
+      ['2.00 – 2.50', '±0.16', '±0.17', '±0.19', '±0.21'],
+      ['2.50 – 3.00', '±0.17', '±0.19', '±0.20', '±0.22'],
+      ['3.00 – 4.00', '±0.19', '±0.21', '±0.23', '±0.25'],
+      ['4.00 – 5.00', '±0.22', '±0.24', '±0.26', '±0.28'],
+      ['5.00 – 6.30', '±0.25', '±0.27', '±0.30', '±0.32'],
+      ['6.30 – 8.00', '±0.30', '±0.33', '±0.36', '±0.38'],
+      ['8.00 – 10.0', '±0.36', '±0.39', '±0.42', '±0.45'],
+      ['10.0 – 12.5', '±0.42', '±0.45', '±0.49', '±0.52'],
+      ['12.5 – 16.0', '±0.50', '±0.54', '±0.58', '±0.62'],
+      ['16.0 – 20.0', '±0.60', '±0.65', '±0.70', '±0.74'],
+      ['20.0 – 25.0', '±0.72', '±0.77', '±0.83', '±0.88'],
+      ['25.0 – 40.0', '±0.90', '±0.95', '±1.02', '±1.08'],
+    ],
+    ranges: [[1.5,2],[2,2.5],[2.5,3],[3,4],[4,5],[5,6.3],[6.3,8],[8,10],[10,12.5],[12.5,16],[16,20],[20,25],[25,40]]
+  },
+  cr: {
+    note: 'EN 10131:2006 — Cold-rolled uncoated low carbon and HSLA strip and sheet. Thickness tolerances for Normal (N) tolerance class.',
+    cols: ['Thickness Range (mm)', 'Width ≤1000 mm', '1000–1200 mm', '1200–1500 mm', '>1500 mm'],
+    rows: [
+      ['0.35 – 0.40', '±0.030', '±0.030', '±0.035', '±0.035'],
+      ['0.40 – 0.60', '±0.035', '±0.035', '±0.040', '±0.040'],
+      ['0.60 – 0.80', '±0.040', '±0.040', '±0.045', '±0.050'],
+      ['0.80 – 1.00', '±0.050', '±0.050', '±0.055', '±0.060'],
+      ['1.00 – 1.20', '±0.060', '±0.060', '±0.065', '±0.070'],
+      ['1.20 – 1.60', '±0.070', '±0.075', '±0.080', '±0.090'],
+      ['1.60 – 2.00', '±0.090', '±0.095', '±0.100', '±0.110'],
+      ['2.00 – 2.50', '±0.110', '±0.115', '±0.120', '±0.130'],
+      ['2.50 – 3.00', '±0.130', '±0.140', '±0.150', '±0.160'],
+      ['3.00 – 3.50', '±0.150', '±0.160', '±0.170', '±0.180'],
+    ],
+    ranges: [[0.35,0.4],[0.4,0.6],[0.6,0.8],[0.8,1],[1,1.2],[1.2,1.6],[1.6,2],[2,2.5],[2.5,3],[3,3.5]]
+  },
+  plate: {
+    note: 'EN 10029:2011 — Hot-rolled steel plates 3 mm and above. Tolerances on thickness, class A (±) and class B (−tol/+tol).',
+    cols: ['Thickness Range (mm)', 'Class A (±)', 'Class B (−/+)'],
+    rows: [
+      ['3 – 5', '±0.40', '0 / +0.80'],
+      ['5 – 8', '±0.50', '0 / +1.00'],
+      ['8 – 15', '±0.60', '0 / +1.20'],
+      ['15 – 25', '±0.80', '0 / +1.60'],
+      ['25 – 40', '±1.00', '0 / +2.00'],
+      ['40 – 80', '±1.20', '0 / +2.40'],
+      ['80 – 150', '±1.50', '0 / +3.00'],
+      ['150 – 250', '±2.00', '0 / +4.00'],
+      ['250 – 400', '±2.50', '0 / +5.00'],
+    ],
+    ranges: [[3,5],[5,8],[8,15],[15,25],[25,40],[40,80],[80,150],[150,250],[250,400]]
+  }
+};
+
+function setTolType(type, btn){
+  tolType = type;
+  document.querySelectorAll('.tol-type-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTolTable();
+}
+
+function renderTolTable(){
+  const data = TOL_DATA[tolType];
+  const table = document.getElementById('tol-table');
+  const thick = parseFloat(document.getElementById('tol-check-thick')?.value) || null;
+  const widthIdx = parseInt(document.getElementById('tol-width')?.value) || 0;
+
+  let html = '<thead><tr>';
+  data.cols.forEach((c,i) => {
+    const hi = i>0 && i-1===widthIdx ? ' style="background:var(--blue-bg);color:var(--blue)"' : '';
+    html += `<th${hi}>${c}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  data.rows.forEach((row, ri) => {
+    const [lo, hi] = data.ranges[ri];
+    const isHighlighted = thick !== null && thick >= lo && thick < hi;
+    html += `<tr class="${isHighlighted?'highlight':''}">`;
+    row.forEach((cell, ci) => {
+      const isWid = ci>0 && ci-1===widthIdx;
+      let style = '';
+      if(isHighlighted && isWid) style = ' style="background:var(--green-bg);color:var(--green-text);font-weight:800"';
+      else if(isHighlighted) style = ' style="background:var(--amber-bg);font-weight:700"';
+      else if(isWid) style = ' style="background:var(--blue-bg)"';
+      html += `<td${style}>${cell}</td>`;
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody>';
+  table.innerHTML = html;
+  document.getElementById('tol-note').textContent = data.note;
+}
+
+function highlightRow(){
+  renderTolTable();
+}
+
+// Init
+onTypeChange();
+document.documentElement.setAttribute('data-theme', localStorage.getItem('theme')||'light');
+</script>
+</body>
+</html>

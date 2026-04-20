@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Steel Grade Navigator</title>
+<style>
+:root{
+  --bg:#f5f5f3;--surface:#fff;--surface2:#ebebea;--border:#e5e5e3;--border2:#d0d0cc;
+  --text:#1a1a1a;--text2:#555;--text3:#888;--text4:#bbb;
+  --blue:#185FA5;--blue-bg:#E6F1FB;--blue-light:#B5D4F4;
+  --green:#1D9E75;--green-bg:#E1F5EE;--green-text:#0F6E56;
+  --amber:#EF9F27;--amber-bg:#FAEEDA;--amber-text:#854F0B;
+  --red:#E24B4A;--red-bg:#FCEBEB;--red-text:#A32D2D;
+}
+[data-theme="dark"]{
+  --bg:#111110;--surface:#1c1c1a;--surface2:#252523;--border:#2e2e2c;--border2:#3a3a38;
+  --text:#f0f0ee;--text2:#c0c0bc;--text3:#888;--text4:#555;
+  --blue:#378ADD;--blue-bg:#0C2A45;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text)}
+body.standalone{display:flex;justify-content:center;padding:24px 16px;min-height:100vh;background:var(--bg)}
+body.standalone .app-card{background:var(--surface);padding:24px;border-radius:16px;border:1px solid var(--border);width:100%;max-width:600px}
+body.panel-mode{padding:0;background:var(--surface);overflow-y:auto;height:100%;min-height:100%}
+body.panel-mode .app-card{border-radius:0;border:none;max-width:100%;padding:14px;box-shadow:none;background:transparent}
+.header{margin-bottom:14px}
+.header h1{font-size:15px;font-weight:700;color:var(--blue);margin-bottom:2px}
+.header p{font-size:11px;color:var(--text3)}
+.search-box{position:relative;margin-bottom:8px}
+.search-input{width:100%;height:40px;border:2px solid var(--border2);border-radius:10px;padding:0 14px;font-size:14px;background:var(--surface);color:var(--text);font-family:inherit;outline:none;transition:border-color 0.15s}
+.search-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+.search-hint{font-size:11px;color:var(--text4);text-align:center;margin-bottom:12px}
+.result-container{display:none;margin-top:12px}
+.badge{display:inline-flex;align-items:center;gap:5px;background:var(--green-bg);color:var(--green-text);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.standard-card{background:var(--surface2);border:1px solid var(--border);padding:9px 11px;border-radius:8px}
+.label{font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:700;letter-spacing:0.04em}
+.value{font-size:13px;color:var(--text);font-weight:600;margin-top:2px}
+.mill-section{background:var(--amber-bg);border:1px solid rgba(239,159,39,0.3);border-radius:8px;padding:10px;display:flex;justify-content:space-around;margin-bottom:12px}
+.mill-item{text-align:center}
+.mill-label{font-size:10px;color:var(--amber-text);font-weight:700}
+.mill-val{font-size:13px;color:var(--amber-text);font-weight:700;margin-top:2px}
+.action-bar{display:flex;gap:6px;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--border)}
+.abtn{height:30px;padding:0 10px;border-radius:7px;border:1px solid var(--border2);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;background:var(--surface2);color:var(--text2);transition:all 0.12s}
+.abtn:hover{background:var(--surface);color:var(--text)}
+.abtn-blue{background:var(--blue-bg);border-color:var(--blue);color:var(--blue)}.abtn-blue:hover{background:var(--blue);color:#fff}
+.abtn-green{background:var(--green-bg);border-color:var(--green);color:var(--green-text)}.abtn-green:hover{background:var(--green);color:#fff}
+.abtn-amber{background:var(--amber-bg);border-color:var(--amber);color:var(--amber-text)}.abtn-amber:hover{background:var(--amber);color:#fff}
+.added-confirm{display:none;background:var(--green-bg);color:var(--green-text);padding:8px 12px;border-radius:7px;font-size:12px;font-weight:600;margin-top:8px;text-align:center}
+.error-box{display:none;background:var(--red-bg);color:var(--red-text);padding:10px 12px;border-radius:8px;margin-top:10px;font-size:13px;text-align:center}
+/* Custom equivalences */
+.custom-section{margin-top:14px;border-top:1px solid var(--border);padding-top:12px}
+.custom-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.custom-toggle{font-size:11px;color:var(--blue);cursor:pointer;font-weight:600;background:none;border:none;font-family:inherit;padding:0}
+.custom-body{display:none}
+.custom-body.open{display:block}
+.custom-table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:8px}
+.custom-table th{background:var(--surface2);color:var(--text3);font-weight:700;padding:5px 8px;text-align:left;border-bottom:1px solid var(--border)}
+.custom-table td{padding:5px 8px;border-bottom:1px solid var(--border);color:var(--text2)}
+.custom-table tr:last-child td{border-bottom:none}
+.custom-add-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:5px;margin-bottom:8px}
+.ci{height:28px;border:1px solid var(--border2);border-radius:6px;padding:0 7px;font-size:11px;background:var(--surface);color:var(--text);font-family:inherit;outline:none;width:100%}
+.ci:focus{border-color:var(--blue)}
+.btn-add-eq{height:28px;padding:0 10px;border:none;border-radius:6px;font-size:11px;font-weight:700;background:var(--blue);color:#fff;cursor:pointer;white-space:nowrap}
+.cdel{width:22px;height:22px;border:none;background:transparent;color:var(--text4);cursor:pointer;font-size:13px;border-radius:4px}
+.cdel:hover{background:var(--red-bg);color:var(--red-text)}
+.toast{position:fixed;bottom:16px;right:16px;background:#1a1a1a;color:#fff;padding:9px 14px;border-radius:8px;font-size:12px;font-weight:500;opacity:0;transform:translateY(6px);transition:all 0.2s;z-index:9999;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+<div class="app-card">
+  <div class="header">
+    <h1>⚙️ Steel Grade Navigator</h1>
+    <p>Backward &amp; forward mapping — Mill Codes ↔ International Standards</p>
+  </div>
+  <div class="search-box">
+    <input type="text" class="search-input" id="searchInput"
+      placeholder="Search EN, ASTM, DIN, JIS or Mill Code (e.g. 3237, S235JR, A36…)"
+      oninput="handleSearch()" autocomplete="off" spellcheck="false">
+  </div>
+  <div class="search-hint">Erdemir · Çolakoğlu · Tosyalı · EN · ASTM · DIN · JIS · UNI · NF</div>
+  <div id="errorBox" class="error-box">Grade not found — try a different code, or add a custom equivalence below.</div>
+  <div id="result" class="result-container">
+    <div id="outProd" class="badge">—</div>
+    <div class="grid">
+      <div class="standard-card"><div class="label">Euro (EN)</div><div id="outEN" class="value">—</div></div>
+      <div class="standard-card"><div class="label">American (ASTM)</div><div id="outASTM" class="value">—</div></div>
+      <div class="standard-card"><div class="label">German (DIN)</div><div id="outDIN" class="value">—</div></div>
+      <div class="standard-card"><div class="label">Japanese (JIS)</div><div id="outJIS" class="value">—</div></div>
+      <div class="standard-card"><div class="label">Italian (UNI)</div><div id="outUNI" class="value">—</div></div>
+      <div class="standard-card"><div class="label">French (NF)</div><div id="outNF" class="value">—</div></div>
+    </div>
+    <div class="mill-section">
+      <div class="mill-item"><div class="mill-label">Erdemir</div><div id="outErd" class="mill-val">—</div></div>
+      <div class="mill-item"><div class="mill-label">Çolakoğlu</div><div id="outCol" class="mill-val">—</div></div>
+      <div class="mill-item"><div class="mill-label">Tosyalı</div><div id="outTos" class="mill-val">—</div></div>
+    </div>
+    <div class="action-bar">
+      <button class="abtn" onclick="copyAll()">📋 Copy All</button>
+      <button class="abtn abtn-blue" onclick="copyEN()">Copy EN</button>
+      <button class="abtn abtn-green" onclick="addToInvoice()">📄 → Invoice</button>
+      <button class="abtn abtn-amber" onclick="addToPackingList()">📦 → Packing</button>
+    </div>
+    <div id="addedConfirm" class="added-confirm"></div>
+  </div>
+  <!-- Custom Equivalences -->
+  <div class="custom-section">
+    <div class="custom-title">
+      <span>Custom Equivalences</span>
+      <button class="custom-toggle" onclick="toggleCustom()" id="customToggleBtn">▼ Add / Manage</button>
+    </div>
+    <div class="custom-body" id="customBody">
+      <div class="custom-add-row">
+        <input class="ci" id="newFrom" placeholder="Your code">
+        <input class="ci" id="newEN" placeholder="EN grade">
+        <input class="ci" id="newNote" placeholder="Note (opt.)">
+        <button class="btn-add-eq" onclick="addCustom()">+ Add</button>
+      </div>
+      <div id="customTable"></div>
+    </div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+<script>
+const database={"3008":{"prod":"HR Carbon Steel","en":"C8E","it":"C8","de":"CK8","us":"SAE1008","fr":"-","jp":"-","erd":"6408","col":"91008","tos":"-"},"91008":{"prod":"HR Carbon Steel","en":"C8E","it":"C8","de":"CK8","us":"SAE1008","fr":"-","jp":"-","erd":"6408","col":"91008","tos":"-"},"C8E":{"prod":"HR Carbon Steel","en":"C8E","it":"C8","de":"CK8","us":"SAE1008","fr":"-","jp":"-","erd":"6408","col":"91008","tos":"-"},"SAE1008":{"prod":"HR Carbon Steel","en":"C8E","it":"C8","de":"CK8","us":"SAE1008","fr":"-","jp":"-","erd":"6408","col":"91008","tos":"-"},"3010":{"prod":"HR Carbon Steel","en":"C10E","it":"C10","de":"CK10","us":"SAE1010","fr":"-","jp":"-","erd":"3010","col":"91010","tos":"-"},"C10E":{"prod":"HR Carbon Steel","en":"C10E","it":"C10","de":"CK10","us":"SAE1010","fr":"-","jp":"-","erd":"3010","col":"91010","tos":"-"},"SAE1010":{"prod":"HR Carbon Steel","en":"C10E","it":"C10","de":"CK10","us":"SAE1010","fr":"-","jp":"-","erd":"3010","col":"91010","tos":"-"},"3137":{"prod":"Structural Steel","en":"S235JR","it":"FE360B","de":"ST37-2","us":"A36","fr":"E24-2","jp":"SS400","erd":"5437","col":"51235","tos":"TOS-3750"},"S235JR":{"prod":"Structural Steel","en":"S235JR","it":"FE360B","de":"ST37-2","us":"A36","fr":"E24-2","jp":"SS400","erd":"5437","col":"51235","tos":"TOS-3750"},"FE360B":{"prod":"Structural Steel","en":"S235JR","it":"FE360B","de":"ST37-2","us":"A36","fr":"E24-2","jp":"SS400","erd":"5437","col":"51235","tos":"TOS-3750"},"ST37-2":{"prod":"Structural Steel","en":"S235JR","it":"FE360B","de":"ST37-2","us":"A36","fr":"E24-2","jp":"SS400","erd":"5437","col":"51235","tos":"TOS-3750"},"ST37":{"prod":"Structural Steel","en":"S235JR","it":"FE360B","de":"ST37-2","us":"A36","fr":"E24-2","jp":"SS400","erd":"5437","col":"51235","tos":"TOS-3750"},"A36":{"prod":"Structural Steel","en":"S235JR","it":"FE360B","de":"ST37-2","us":"A36","fr":"E24-2","jp":"SS400","erd":"5437","col":"51235","tos":"TOS-3750"},"SS400":{"prod":"Structural Steel","en":"S235JR","it":"FE360B","de":"ST37-2","us":"A36","fr":"E24-2","jp":"SS400","erd":"5437","col":"51235","tos":"TOS-3750"},"3237":{"prod":"Structural Steel","en":"S235JR","it":"FE360B","de":"ST37-2","us":"A36","fr":"E24-2","jp":"SS400","erd":"5437","col":"51235","tos":"TOS-3750"},"51235":{"prod":"Structural Steel","en":"S235JR","it":"FE360B","de":"ST37-2","us":"A36","fr":"E24-2","jp":"SS400","erd":"5437","col":"51235","tos":"TOS-3750"},"TOS-3750":{"prod":"Structural Steel","en":"S235JR","it":"FE360B","de":"ST37-2","us":"A36","fr":"E24-2","jp":"SS400","erd":"5437","col":"51235","tos":"TOS-3750"},"3244":{"prod":"Structural Steel","en":"S275JR","it":"FE430B","de":"ST44-2","us":"A529 GR.42","fr":"E28-2","jp":"SS490","erd":"4244","col":"54275","tos":"TOS-4450"},"S275JR":{"prod":"Structural Steel","en":"S275JR","it":"FE430B","de":"ST44-2","us":"A529 GR.42","fr":"E28-2","jp":"SS490","erd":"4244","col":"54275","tos":"TOS-4450"},"FE430B":{"prod":"Structural Steel","en":"S275JR","it":"FE430B","de":"ST44-2","us":"A529 GR.42","fr":"E28-2","jp":"SS490","erd":"4244","col":"54275","tos":"TOS-4450"},"ST44-2":{"prod":"Structural Steel","en":"S275JR","it":"FE430B","de":"ST44-2","us":"A529 GR.42","fr":"E28-2","jp":"SS490","erd":"4244","col":"54275","tos":"TOS-4450"},"TOS-4450":{"prod":"Structural Steel","en":"S275JR","it":"FE430B","de":"ST44-2","us":"A529 GR.42","fr":"E28-2","jp":"SS490","erd":"4244","col":"54275","tos":"TOS-4450"},"3252":{"prod":"Structural Steel","en":"S355JR","it":"FE510B","de":"ST52-3","us":"A572 GR.50","fr":"E36-2","jp":"SM490A","erd":"6050","col":"51355","tos":"TOS-5250"},"S355JR":{"prod":"Structural Steel","en":"S355JR","it":"FE510B","de":"ST52-3","us":"A572 GR.50","fr":"E36-2","jp":"SM490A","erd":"6050","col":"51355","tos":"TOS-5250"},"FE510B":{"prod":"Structural Steel","en":"S355JR","it":"FE510B","de":"ST52-3","us":"A572 GR.50","fr":"E36-2","jp":"SM490A","erd":"6050","col":"51355","tos":"TOS-5250"},"ST52-3":{"prod":"Structural Steel","en":"S355JR","it":"FE510B","de":"ST52-3","us":"A572 GR.50","fr":"E36-2","jp":"SM490A","erd":"6050","col":"51355","tos":"TOS-5250"},"ST52":{"prod":"Structural Steel","en":"S355JR","it":"FE510B","de":"ST52-3","us":"A572 GR.50","fr":"E36-2","jp":"SM490A","erd":"6050","col":"51355","tos":"TOS-5250"},"TOS-5250":{"prod":"Structural Steel","en":"S355JR","it":"FE510B","de":"ST52-3","us":"A572 GR.50","fr":"E36-2","jp":"SM490A","erd":"6050","col":"51355","tos":"TOS-5250"},"S355J2":{"prod":"Structural Steel","en":"S355J2","it":"-","de":"ST52-3N","us":"A572 GR.50","fr":"A52FP","jp":"SM490YA","erd":"6252","col":"52355","tos":"-"},"S355J2N":{"prod":"Normalized Structural","en":"S355J2N","it":"-","de":"ST52-3N","us":"A572 GR.50","fr":"E36-3","jp":"SM490YA","erd":"6052","col":"44355","tos":"-"},"S355MC":{"prod":"HSLA Steel","en":"S355MC","it":"FEE355","de":"QSTE360TM","us":"GR50","fr":"E360D","jp":"SPFH540","erd":"4936","col":"36355","tos":"TOS-5260"},"S420MC":{"prod":"HSLA Steel","en":"S420MC","it":"FEE420","de":"QSTE420TM","us":"GR60","fr":"E420D","jp":"SPFH590","erd":"4942","col":"36420","tos":"-"},"S460MC":{"prod":"HSLA Steel","en":"S460MC","it":"FEE460","de":"QSTE460TM","us":"GR65","fr":"E445D","jp":"-","erd":"4946","col":"36460","tos":"-"},"S500MC":{"prod":"HSLA Steel","en":"S500MC","it":"FEE490","de":"QSTE500TM","us":"GR70","fr":"E490D","jp":"-","erd":"4950","col":"36500","tos":"-"},"S550MC":{"prod":"HSLA Steel","en":"S550MC","it":"FEE560","de":"OSTE550TM","us":"GR80","fr":"E560D","jp":"-","erd":"4955","col":"36550","tos":"-"},"S700MC":{"prod":"HSLA Steel","en":"S700MC","it":"-","de":"OSTE690TM","us":"-","fr":"E690D","jp":"-","erd":"-","col":"-","tos":"-"},"S315MC":{"prod":"HSLA Steel","en":"S315MC","it":"FEE315","de":"QSTE300TM","us":"045XLK","fr":"E315D","jp":"SPFH490","erd":"4932","col":"36315","tos":"TOS-4460"},"P235GH":{"prod":"Pressure Vessel Steel","en":"P235GH","it":"FE360-1KW","de":"HI","us":"A285 GR.C","fr":"A37CP","jp":"SPV24","erd":"6335","col":"86235","tos":"-"},"P265GH":{"prod":"Pressure Vessel Steel","en":"P265GH","it":"FE410-1KW","de":"HII","us":"A516 GR.60","fr":"A42CP","jp":"SGV42","erd":"6341","col":"86265","tos":"-"},"P355GH":{"prod":"Pressure Vessel Steel","en":"P355GH","it":"FE510-1KW","de":"19MN6","us":"A516 GR.70","fr":"A52CP","jp":"SGV49","erd":"6352","col":"86355","tos":"-"},"16Mo3":{"prod":"Pressure Vessel Steel","en":"16Mo3","it":"16Mo3","de":"15Mo3","us":"A204 GR.B","fr":"15D3","jp":"-","erd":"6345","col":"-","tos":"-"},"16MO3":{"prod":"Pressure Vessel Steel","en":"16Mo3","it":"16Mo3","de":"15Mo3","us":"A204 GR.B","fr":"15D3","jp":"-","erd":"6345","col":"-","tos":"-"},"A516 GR.70":{"prod":"Pressure Vessel Steel","en":"P355GH","it":"FE510-1KW","de":"19MN6","us":"A516 GR.70","fr":"A52CP","jp":"SGV49","erd":"6352","col":"86355","tos":"-"},"DC01":{"prod":"Cold Rolled Steel","en":"DC01","it":"FEP01","de":"ST12","us":"A366/CQ","fr":"C","jp":"SPCC","erd":"7122","col":"-","tos":"-"},"DC03":{"prod":"Cold Rolled Steel","en":"DC03","it":"FEPO02","de":"ST13","us":"A619/DQ","fr":"TO","jp":"SPCD","erd":"7123","col":"-","tos":"-"},"DC04":{"prod":"Cold Rolled Steel","en":"DC04","it":"FEPE04","de":"ST14","us":"A620/DQSK","fr":"SPOUSE","jp":"SPCE","erd":"7314","col":"-","tos":"-"},"DC05":{"prod":"Cold Rolled Steel","en":"DC05","it":"FEPO05","de":"ST15","us":"-","fr":"SOUND","jp":"-","erd":"7315","col":"-","tos":"-"},"DC06":{"prod":"Cold Rolled Steel","en":"DC06","it":"FEPO06","de":"IF18","us":"EDDS","fr":"IF","jp":"-","erd":"7316","col":"-","tos":"-"},"DX51D+Z":{"prod":"Hot-Dip Galvanized","en":"DX51D+Z","it":"FEP02G","de":"ST02Z","us":"LFQ","fr":"GC","jp":"SGCC","erd":"1311","col":"-","tos":"-"},"DX51D":{"prod":"Hot-Dip Galvanized","en":"DX51D+Z","it":"FEP02G","de":"ST02Z","us":"LFQ","fr":"GC","jp":"SGCC","erd":"1311","col":"-","tos":"-"},"DX52D+Z":{"prod":"Hot-Dip Galvanized","en":"DX52D+Z","it":"FEP03G","de":"ST03Z","us":"DQ","fr":"GE","jp":"SGCD1","erd":"1312","col":"-","tos":"-"},"DX53D+Z":{"prod":"Hot-Dip Galvanized","en":"DX53D+Z","it":"FEP05G","de":"ST04Z","us":"DQSK","fr":"GES","jp":"SGCD2","erd":"1313","col":"-","tos":"-"},"DX54D+Z":{"prod":"Hot-Dip Galvanized","en":"DX54D+Z","it":"FEP06G","de":"ST06Z","us":"DDS","fr":"-","jp":"SGCD3","erd":"1314","col":"-","tos":"-"},"DX56D+Z":{"prod":"Hot-Dip Galvanized","en":"DX56D+Z","it":"-","de":"-","us":"-","fr":"-","jp":"-","erd":"1315","col":"-","tos":"-"},"S220GD+Z":{"prod":"Structural Galvanized","en":"S220GD+Z","it":"-","de":"-","us":"SQ230","fr":"C230","jp":"-","erd":"1322","col":"-","tos":"-"},"S250GD+Z":{"prod":"Structural Galvanized","en":"S250GD+Z","it":"FEE250G","de":"STE250-2Z","us":"SQ255","fr":"C250","jp":"SGC340","erd":"1325","col":"-","tos":"-"},"S280GD+Z":{"prod":"Structural Galvanized","en":"S280GD+Z","it":"FEE280G","de":"STE280-2Z","us":"SQ275","fr":"C280","jp":"SGC400","erd":"1328","col":"-","tos":"-"},"S320GD+Z":{"prod":"Structural Galvanized","en":"S320GD+Z","it":"FEE320G","de":"STE320-3Z","us":"-","fr":"C320","jp":"SGC440","erd":"1332","col":"-","tos":"-"},"S350GD+Z":{"prod":"Structural Galvanized","en":"S350GD+Z","it":"FEE350G","de":"STE350-3Z","us":"SQ340","fr":"C350","jp":"SGC490","erd":"1335","col":"-","tos":"-"},"C35E":{"prod":"Carbon Steel","en":"C35E","it":"C35","de":"CK35","us":"SAE1035","fr":"XC38","jp":"S35C","erd":"5035","col":"91035","tos":"-"},"C45E":{"prod":"Carbon Steel","en":"C45E","it":"C45","de":"CK45","us":"SAE1045","fr":"XC48","jp":"S45C","erd":"8440","col":"91045","tos":"TOS-8045"},"SAE1045":{"prod":"Carbon Steel","en":"C45E","it":"C45","de":"CK45","us":"SAE1045","fr":"XC48","jp":"S45C","erd":"8440","col":"91045","tos":"TOS-8045"},"C50E":{"prod":"Carbon Steel","en":"C50E","it":"C50","de":"CK50","us":"SAE1050","fr":"-","jp":"S50C","erd":"5050","col":"91050","tos":"-"},"C60E":{"prod":"Carbon Steel","en":"C60E","it":"C60","de":"CK60","us":"SAE1060","fr":"-","jp":"S58C","erd":"5060","col":"91060","tos":"-"},"C70E":{"prod":"Carbon Steel","en":"C70E","it":"C70","de":"CK70","us":"SAE1070","fr":"XC70","jp":"S70C","erd":"5070","col":"91070","tos":"-"},"42CrMo4":{"prod":"Alloy Steel","en":"42CrMo4","it":"42CrMo4","de":"42CrMo4","us":"SAE4142","fr":"42CD4","jp":"SCM440H","erd":"-","col":"98442","tos":"-"},"SAE4142":{"prod":"Alloy Steel","en":"42CrMo4","it":"42CrMo4","de":"42CrMo4","us":"SAE4142","fr":"42CD4","jp":"SCM440H","erd":"-","col":"98442","tos":"-"},"41Cr4":{"prod":"Alloy Steel","en":"41Cr4","it":"41Cr4","de":"41Cr4","us":"-","fr":"42C4","jp":"SCr440H","erd":"-","col":"-","tos":"-"},"34CrMo4":{"prod":"Alloy Steel","en":"34CrMo4","it":"34CrMo4","de":"34CrMo4","us":"-","fr":"34CD4","jp":"SCM435H","erd":"-","col":"-","tos":"-"},"51CrV4":{"prod":"Spring Steel","en":"51CrV4","it":"51CrV4","de":"50CrV4","us":"50C4V2","fr":"50CV4","jp":"SUP10","erd":"8412","col":"-","tos":"-"},"S355N":{"prod":"Normalized Structural","en":"S355N","it":"FEE355KGN","de":"STE355","us":"-","fr":"E355R","jp":"SM490B","erd":"9355","col":"-","tos":"-"},"S355NL":{"prod":"Normalized Structural","en":"S355NL","it":"FEE355KTN","de":"TSTE355","us":"A633 GR.C","fr":"E355FP","jp":"-","erd":"9356","col":"-","tos":"-"},"S275N":{"prod":"Normalized Structural","en":"S275N","it":"-","de":"STE285","us":"-","fr":"-","jp":"SM400B","erd":"-","col":"-","tos":"-"},"S460Q":{"prod":"Q&T Steel","en":"S460Q","it":"-","de":"-","us":"A537A2","fr":"E460TR","jp":"SM58","erd":"-","col":"-","tos":"-"},"S690Q":{"prod":"Q&T Steel","en":"S690Q","it":"-","de":"STE690V","us":"A514F","fr":"E690TR","jp":"-","erd":"-","col":"-","tos":"-"},"S690QL":{"prod":"Q&T Steel","en":"S690QL","it":"-","de":"TSTE690V","us":"A709100","fr":"E690TFP","jp":"-","erd":"-","col":"-","tos":"-"},"DD11":{"prod":"HR Forming Steel","en":"DD11","it":"FEP11","de":"STW22","us":"CS","fr":"1C","jp":"SPHD","erd":"6422","col":"20122","tos":"TOS-2711"},"DD12":{"prod":"HR Forming Steel","en":"DD12","it":"FEP12","de":"STW23","us":"-","fr":"-","jp":"-","erd":"6223","col":"30112","tos":"-"},"DD13":{"prod":"HR Forming Steel","en":"DD13","it":"FEP13","de":"STW24","us":"DS","fr":"3C","jp":"SPHE","erd":"6224","col":"30113","tos":"-"},"20MnB5":{"prod":"Boron Steel","en":"20MnB5","it":"21B3","de":"22B2","us":"-","fr":"20MnB5RR","jp":"10B21","erd":"5620","col":"-","tos":"-"},"S235J0":{"prod":"Structural Steel","en":"S235J0","it":"FE360C","de":"ST37-3U","us":"-","fr":"E24-3","jp":"SM400B","erd":"-","col":"50235","tos":"-"},"S275J2":{"prod":"Structural Steel","en":"S275J2","it":"-","de":"ST44-2","us":"-","fr":"E28-2","jp":"-","erd":"3946","col":"82290","tos":"-"},"S355J0":{"prod":"Structural Steel","en":"S355J0","it":"Fe510C","de":"St52-3U","us":"-","fr":"E36-3","jp":"SS490B","erd":"5252","col":"50355","tos":"-"},"S235JRC":{"prod":"Structural Steel","en":"S235JRC","it":"-","de":"RST37-2","us":"-","fr":"E24-2NE","jp":"-","erd":"3937","col":"81235","tos":"-"},"S355J2WP":{"prod":"Weathering Steel","en":"S355J2WP","it":"-","de":"-","us":"-","fr":"E36W-A4","jp":"-","erd":"9960","col":"93125","tos":"SPA-H"},"16MO3":{"prod":"Pressure Vessel Steel","en":"16Mo3","it":"16Mo3","de":"15Mo3","us":"A204 GR.B","fr":"15D3","jp":"-","erd":"6345","col":"-","tos":"-"},"42CRMO4":{"prod":"Alloy Steel","en":"42CrMo4","it":"42CrMo4","de":"42CrMo4","us":"SAE4142","fr":"42CD4","jp":"SCM440H","erd":"-","col":"98442","tos":"-"},"51CRV4":{"prod":"Spring Steel","en":"51CrV4","it":"51CrV4","de":"50CrV4","us":"50C4V2","fr":"50CV4","jp":"SUP10","erd":"8412","col":"-","tos":"-"},"20MNB5":{"prod":"Boron Steel","en":"20MnB5","it":"21B3","de":"22B2","us":"-","fr":"20MnB5RR","jp":"10B21","erd":"5620","col":"-","tos":"-"}};
+
+const CUSTOM_KEY='conv_custom_eqs';
+let customEqs=[];
+
+function loadCustom(){
+  try{customEqs=JSON.parse(localStorage.getItem(CUSTOM_KEY)||'[]');}catch(e){customEqs=[];}
+  renderCustomTable();
+}
+function saveCustom(){localStorage.setItem(CUSTOM_KEY,JSON.stringify(customEqs));}
+function toggleCustom(){
+  const body=document.getElementById('customBody');
+  const open=body.classList.toggle('open');
+  document.getElementById('customToggleBtn').textContent=open?'▲ Close':'▼ Add / Manage';
+}
+function addCustom(){
+  const from=document.getElementById('newFrom').value.trim();
+  const en=document.getElementById('newEN').value.trim();
+  const note=document.getElementById('newNote').value.trim();
+  if(!from||!en){alert('Enter both a source code and EN equivalent.');return;}
+  customEqs.unshift({id:Date.now(),from,en,note});
+  saveCustom();renderCustomTable();
+  document.getElementById('newFrom').value='';
+  document.getElementById('newEN').value='';
+  document.getElementById('newNote').value='';
+  showToast('✓ Custom equivalence added');
+  // Re-run search if active
+  if(document.getElementById('searchInput').value) handleSearch();
+}
+function deleteCustom(id){
+  customEqs=customEqs.filter(e=>e.id!==id);
+  saveCustom();renderCustomTable();
+}
+function renderCustomTable(){
+  const el=document.getElementById('customTable');
+  if(!customEqs.length){
+    el.innerHTML='<div style="font-size:11px;color:var(--text4);padding:8px 0">No custom equivalences yet.</div>';
+    return;
+  }
+  el.innerHTML=`<table class="custom-table">
+    <thead><tr><th>Your Code</th><th>EN Grade</th><th>Note</th><th></th></tr></thead>
+    <tbody>${customEqs.map(e=>`<tr>
+      <td style="font-weight:600">${e.from}</td>
+      <td style="color:var(--blue);font-weight:600">${e.en}</td>
+      <td style="color:var(--text4)">${e.note||''}</td>
+      <td><button class="cdel" onclick="deleteCustom(${e.id})">×</button></td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+let currentMatch=null,currentQuery='';
+
+function handleSearch(){
+  const raw=document.getElementById('searchInput').value.trim();
+  const upper=raw.toUpperCase().replace(/\s+/g,'');
+  const res=document.getElementById('result');
+  const err=document.getElementById('errorBox');
+  document.getElementById('addedConfirm').style.display='none';
+  if(!raw){res.style.display='none';err.style.display='none';currentMatch=null;return;}
+  currentQuery=upper;
+
+  // 1. Exact (case-insensitive, no spaces)
+  let match=null;
+  const dbKey=Object.keys(database).find(k=>k.toUpperCase().replace(/\s+/g,'')===upper);
+  if(dbKey) match=database[dbKey];
+
+  // 2. Custom equivalences
+  if(!match){
+    const custom=customEqs.find(e=>e.from.toUpperCase().replace(/\s+/g,'')===upper||e.en.toUpperCase().replace(/\s+/g,'')===upper);
+    if(custom) match={prod:'Custom Equivalence',en:custom.en,it:'-',de:'-',us:'-',fr:'-',jp:'-',erd:'-',col:'-',tos:'-'};
+  }
+
+  // 3. Partial match
+  if(!match){
+    const partial=Object.keys(database).find(k=>{
+      const ku=k.toUpperCase().replace(/\s+/g,'');
+      return ku.includes(upper)||upper.includes(ku);
+    });
+    if(partial) match=database[partial];
+  }
+
+  if(match){
+    currentMatch=match;
+    document.getElementById('outProd').textContent=match.prod||'—';
+    document.getElementById('outEN').textContent=match.en||'—';
+    document.getElementById('outASTM').textContent=match.us||'—';
+    document.getElementById('outDIN').textContent=match.de||'—';
+    document.getElementById('outJIS').textContent=match.jp||'—';
+    document.getElementById('outUNI').textContent=match.it||'—';
+    document.getElementById('outNF').textContent=match.fr||'—';
+    document.getElementById('outErd').textContent=match.erd||'—';
+    document.getElementById('outCol').textContent=match.col||'—';
+    document.getElementById('outTos').textContent=match.tos||'—';
+    res.style.display='block';err.style.display='none';
+  } else {
+    currentMatch=null;res.style.display='none';err.style.display='block';
+  }
+}
+
+document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')handleSearch();});
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+function copyAll(){
+  if(!currentMatch)return;
+  const m=currentMatch;
+  const text=[`Grade: ${currentQuery}`,`Product: ${m.prod}`,`EN: ${m.en}  |  ASTM: ${m.us}  |  DIN: ${m.de}`,`JIS: ${m.jp}  |  UNI: ${m.it}  |  NF: ${m.fr}`,`Erdemir: ${m.erd}  |  Çolakoğlu: ${m.col}  |  Tosyalı: ${m.tos}`].join('\n');
+  navigator.clipboard.writeText(text).then(()=>showToast('✓ Copied to clipboard'));
+}
+function copyEN(){
+  if(!currentMatch)return;
+  navigator.clipboard.writeText(currentMatch.en||currentQuery).then(()=>showToast('✓ EN grade copied'));
+}
+function addToInvoice(){
+  if(!currentMatch)return;
+  const item={type:'converter',searchQuery:currentQuery,grade:currentMatch.en||currentQuery,productType:currentMatch.prod,en:currentMatch.en,astm:currentMatch.us,din:currentMatch.de,erd:currentMatch.erd,timestamp:Date.now()};
+  let p=[];try{p=JSON.parse(localStorage.getItem('conv_invoice_pending')||'[]');}catch(e){}
+  p.push(item);localStorage.setItem('conv_invoice_pending',JSON.stringify(p));
+  if(window.parent!==window)window.parent.postMessage({type:'addToInvoice',item},'*');
+  const c=document.getElementById('addedConfirm');
+  c.textContent='✓ Added to Invoice queue — open Documents tab to review';
+  c.style.display='block';showToast('✓ Added to Invoice queue');
+}
+function addToPackingList(){
+  if(!currentMatch)return;
+  const item={type:'converter_packing',grade:currentMatch.en||currentQuery,productType:currentMatch.prod,timestamp:Date.now()};
+  let p=[];try{p=JSON.parse(localStorage.getItem('conv_packing_pending')||'[]');}catch(e){}
+  p.push(item);localStorage.setItem('conv_packing_pending',JSON.stringify(p));
+  if(window.parent!==window)window.parent.postMessage({type:'addToPackingList',item},'*');
+  const c=document.getElementById('addedConfirm');
+  c.textContent='✓ Added to Packing List queue — open Documents tab to review';
+  c.style.display='block';showToast('✓ Added to Packing List queue');
+}
+
+// Mode: panel or standalone
+(function(){
+  if(window.self!==window.top){
+    document.body.classList.add('panel-mode');
+    try{
+      const t=window.parent.localStorage.getItem('theme')||localStorage.getItem('theme')||'light';
+      document.documentElement.setAttribute('data-theme',t);
+    }catch(e){document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'light');}
+  } else {
+    document.body.classList.add('standalone');
+    document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'light');
+  }
+  // Listen for theme sync
+  window.addEventListener('message',e=>{
+    if(e.data&&e.data.type==='themeChange')
+      document.documentElement.setAttribute('data-theme',e.data.theme);
+  });
+})();
+
+loadCustom();
+</script>
+</body>
+</html>
