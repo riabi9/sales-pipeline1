@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Steel Grade Converter PRO+</title>
+
+<style>
+body {font-family: Arial; background:#f4f4f4; text-align:center; padding:20px;}
+input {padding:10px; margin:5px;}
+button {padding:10px 15px; margin:5px; cursor:pointer;}
+table {margin:20px auto; border-collapse:collapse; width:95%;}
+th, td {border:1px solid #ccc; padding:8px;}
+th {background:#222; color:white;}
+.form {background:#fff; padding:15px; margin:20px auto; width:95%; box-shadow:0 0 10px #ccc;}
+</style>
+
+<!-- Excel Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+</head>
+
+<body>
+
+<h2>Steel Grade Converter (CSV + Excel Enabled)</h2>
+
+<input type="text" id="search" placeholder="Search any grade">
+<br>
+<button onclick="searchGrade()">Search</button>
+<button onclick="resetTable()">Reset</button>
+
+<div class="form">
+<h3>Add Single Grade</h3>
+<input id="e" placeholder="Erdemir">
+<input id="t" placeholder="Tosyalı">
+<input id="en" placeholder="EN">
+<input id="din" placeholder="DIN">
+<input id="astm" placeholder="ASTM">
+<input id="jis" placeholder="JIS">
+<br>
+<button onclick="addGrade()">Add</button>
+</div>
+
+<div class="form">
+<h3>Import CSV</h3>
+<input type="file" id="csvFile" accept=".csv">
+<br>
+<button onclick="importCSV()">Upload CSV</button>
+<button onclick="clearCustom()">Clear All Data</button>
+</div>
+
+<div class="form">
+<h3>Convert Excel (KALITE → EN)</h3>
+<input type="file" id="excelFile" accept=".xlsx">
+<br>
+<button onclick="convertExcel()">Upload & Convert</button>
+</div>
+
+<table id="result">
+<tr>
+<th>Erdemir</th><th>Tosyalı</th><th>EN</th><th>DIN</th><th>ASTM</th><th>JIS</th>
+</tr>
+</table>
+
+<script>
+
+// BASE DATA
+const baseData = [
+{e:"3237",t:"TOS-3750",en:"S235JR",din:"St37-2",astm:"A36",jis:"SM400A"},
+{e:"3244",t:"TOS-4450",en:"S275JR",din:"St44-2",astm:"A283",jis:""}
+];
+
+// STORAGE
+function getCustomData(){
+return JSON.parse(localStorage.getItem("steelData") || "[]");
+}
+function saveCustomData(data){
+localStorage.setItem("steelData", JSON.stringify(data));
+}
+function getAllData(){
+return [...baseData, ...getCustomData()];
+}
+
+// SEARCH
+function searchGrade(){
+let input = document.getElementById("search").value.toLowerCase();
+let table = document.getElementById("result");
+
+table.innerHTML = `
+<tr>
+<th>Erdemir</th><th>Tosyalı</th><th>EN</th><th>DIN</th><th>ASTM</th><th>JIS</th>
+</tr>`;
+
+getAllData().forEach(row=>{
+if(
+(row.e||"").toLowerCase().includes(input) ||
+(row.t||"").toLowerCase().includes(input) ||
+(row.en||"").toLowerCase().includes(input) ||
+(row.din||"").toLowerCase().includes(input) ||
+(row.astm||"").toLowerCase().includes(input) ||
+(row.jis||"").toLowerCase().includes(input)
+){
+let r = table.insertRow();
+r.innerHTML = `<td>${row.e}</td><td>${row.t}</td><td>${row.en}</td><td>${row.din}</td><td>${row.astm}</td><td>${row.jis}</td>`;
+}
+});
+}
+
+// ADD SINGLE
+function addGrade(){
+let newEntry = {
+e: e.value,
+t: t.value,
+en: en.value,
+din: din.value,
+astm: astm.value,
+jis: jis.value
+};
+
+let data = getCustomData();
+data.push(newEntry);
+saveCustomData(data);
+
+alert("Added!");
+document.querySelectorAll(".form input").forEach(i=>i.value="");
+searchGrade();
+}
+
+// CSV IMPORT
+function importCSV(){
+let file = document.getElementById("csvFile").files[0];
+if(!file){ alert("Select CSV file"); return; }
+
+let reader = new FileReader();
+reader.onload = function(e){
+let lines = e.target.result.split("\n");
+let data = getCustomData();
+
+lines.forEach((line, index)=>{
+if(index === 0 && line.includes("e")) return;
+
+let cols = line.split(",");
+
+if(cols.length >= 6){
+data.push({
+e: cols[0].trim(),
+t: cols[1].trim(),
+en: cols[2].trim(),
+din: cols[3].trim(),
+astm: cols[4].trim(),
+jis: cols[5].trim()
+});
+}
+});
+
+saveCustomData(data);
+alert("CSV Imported!");
+searchGrade();
+};
+
+reader.readAsText(file);
+}
+
+// EXCEL CONVERSION
+function convertExcel(){
+let file = document.getElementById("excelFile").files[0];
+if(!file){ alert("Select Excel file"); return; }
+
+let reader = new FileReader();
+
+reader.onload = function(e){
+let data = new Uint8Array(e.target.result);
+let workbook = XLSX.read(data, {type: 'array'});
+
+let sheet = workbook.Sheets[workbook.SheetNames[0]];
+let json = XLSX.utils.sheet_to_json(sheet, {defval:""});
+
+let allData = getAllData();
+
+// Find KALITE column
+let headers = Object.keys(json[0] || {});
+let kaliteKey = headers.find(h => h.toLowerCase() === "kalite");
+
+if(!kaliteKey){
+alert("No 'KALITE' column found");
+return;
+}
+
+// Convert values
+json.forEach(row=>{
+let value = (row[kaliteKey] || "").toString().trim();
+
+let match = allData.find(d =>
+d.e === value ||
+d.t === value ||
+d.din === value ||
+d.astm === value ||
+d.jis === value ||
+d.en === value
+);
+
+if(match){
+row[kaliteKey] = match.en || value;
+}
+});
+
+// Export new Excel
+let newSheet = XLSX.utils.json_to_sheet(json);
+let newBook = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(newBook, newSheet, "Converted");
+
+XLSX.writeFile(newBook, "converted_en.xlsx");
+
+alert("Conversion completed!");
+};
+
+reader.readAsArrayBuffer(file);
+}
+
+// RESET
+function resetTable(){
+document.getElementById("search").value="";
+searchGrade();
+}
+
+// CLEAR
+function clearCustom(){
+if(confirm("Delete ALL data?")){
+localStorage.removeItem("steelData");
+searchGrade();
+}
+}
+
+// INIT
+searchGrade();
+
+</script>
+
+</body>
+</html>
