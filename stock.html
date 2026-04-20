@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Stock Manager</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f5f5f3;--surface:#fff;--surface2:#ebebea;--border:#e5e5e3;--border2:#d0d0cc;
+  --text:#1a1a1a;--text2:#555;--text3:#888;--text4:#bbb;
+  --blue:#185FA5;--blue-bg:#E6F1FB;--blue-light:#B5D4F4;
+  --green:#1D9E75;--green-bg:#E1F5EE;--green-text:#0F6E56;
+  --red:#E24B4A;--red-bg:#FCEBEB;--red-text:#A32D2D;
+  --amber:#EF9F27;--amber-bg:#FAEEDA;--amber-text:#854F0B;
+  --purple:#7F77DD;--purple-bg:#EEEDFE;--purple-text:#534AB7;
+}
+[data-theme="dark"]{
+  --bg:#111110;--surface:#1c1c1a;--surface2:#252523;--border:#2e2e2c;--border2:#3a3a38;
+  --text:#f0f0ee;--text2:#c0c0bc;--text3:#888;--text4:#555;
+  --blue:#378ADD;--blue-bg:#0C2A45;--blue-light:#185FA5;
+  --green:#1D9E75;--green-bg:#0a2e22;--green-text:#5DCAA5;
+  --red:#E24B4A;--red-bg:#2e0f0f;--red-text:#f09595;
+  --amber:#EF9F27;--amber-bg:#2e1f05;--amber-text:#FAC775;
+  --purple:#AFA9EC;--purple-bg:#1e1b3a;--purple-text:#AFA9EC;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background 0.2s,color 0.15s}
+
+/* Auth */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.auth-card{background:var(--surface);border-radius:16px;border:1px solid var(--border);padding:28px;width:100%;max-width:340px}
+.auth-logo{font-size:18px;font-weight:700;color:var(--blue);margin-bottom:4px}
+.auth-sub{font-size:13px;color:var(--text3);margin-bottom:20px}
+.form-row{margin-bottom:10px}
+.form-label{font-size:12px;color:var(--text3);margin-bottom:3px;display:block}
+.form-input{width:100%;height:38px;border:1px solid var(--border2);border-radius:8px;padding:0 11px;font-size:13px;background:var(--surface);color:var(--text);font-family:inherit;outline:none;transition:border-color 0.15s}
+.form-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+select.form-input{cursor:pointer}
+textarea.form-input{padding:8px 11px;line-height:1.5;resize:vertical}
+.auth-btn{width:100%;height:40px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--blue);color:#fff;margin-top:4px}
+.auth-btn:hover{opacity:0.9}
+.auth-btn:disabled{opacity:0.5;cursor:not-allowed}
+.auth-msg{font-size:12px;margin-top:10px;padding:8px;border-radius:6px;text-align:center}
+.auth-msg.error{background:var(--red-bg);color:var(--red-text)}
+.auth-msg.success{background:var(--green-bg);color:var(--green-text)}
+
+/* ── Sidebar ── */
+:root{--sidebar-w:200px}
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:150;transition:transform 0.25s}
+.sidebar-logo{padding:16px 14px 12px;border-bottom:1px solid var(--border)}
+.sidebar-logo-text{font-size:15px;font-weight:700;color:var(--blue)}
+.sidebar-logo-sub{font-size:10px;color:var(--text4);margin-top:1px}
+.sidebar-nav{flex:1;overflow-y:auto;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;font-size:13px;color:var(--text2);text-decoration:none;cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:inherit}
+.nav-item:hover{background:var(--surface2);color:var(--text)}.nav-item.active{background:var(--blue-bg);color:var(--blue);font-weight:600}
+.nav-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.nav-section{font-size:9px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:0.6px;padding:10px 14px 4px}
+.sidebar-footer{padding:10px 14px;border-top:1px solid var(--border)}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:140}
+@media(max-width:768px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.sidebar-overlay.open{display:block}main{margin-left:0!important}}
+.menu-btn{width:32px;height:32px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:16px;display:none;align-items:center;justify-content:center}
+@media(max-width:768px){.menu-btn{display:flex}}
+
+
+/* Header */
+#app{display:none}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 14px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:8px}
+.app-title{font-size:15px;font-weight:700;color:var(--blue);white-space:nowrap}
+.nav-link{font-size:12px;color:var(--text3);text-decoration:none;padding:4px 8px;border-radius:6px;border:1px solid var(--border);white-space:nowrap}
+.nav-link:hover{background:var(--surface2)}
+.header-right{display:flex;align-items:center;gap:5px}
+.hbtn{height:30px;padding:0 10px;border:1px solid var(--border2);border-radius:7px;font-size:12px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;white-space:nowrap}
+.hbtn:hover{background:var(--surface2)}
+.hbtn-blue{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.hbtn-blue:hover{background:var(--blue-light);color:#fff}
+main{padding:14px;max-width:1400px;margin:0 auto;margin-left:var(--sidebar-w)}
+
+/* Stats */
+.stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px;margin-bottom:14px}
+.stat-card{background:var(--surface);border-radius:10px;border:1px solid var(--border);padding:10px 14px}
+.stat-label{font-size:10px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px}
+.stat-value{font-size:20px;font-weight:700;color:var(--text)}
+.stat-sub{font-size:10px;color:var(--text4);margin-top:2px}
+
+/* Upload panel */
+.upload-panel{background:var(--surface);border-radius:12px;border:2px dashed var(--border2);padding:24px;margin-bottom:14px;text-align:center;cursor:pointer;transition:border-color 0.15s,background 0.15s}
+.upload-panel:hover,.upload-panel.dragover{border-color:var(--blue);background:var(--blue-bg)}
+.upload-icon{font-size:32px;margin-bottom:10px}
+.upload-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px}
+.upload-sub{font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.6}
+.upload-status{font-size:12px;margin-top:10px;min-height:18px;font-weight:500}
+.upload-status.success{color:var(--green-text)}
+.upload-status.error{color:var(--red-text)}
+.upload-status.loading{color:var(--blue)}
+.upload-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.upload-btn{height:34px;padding:0 16px;border:1px solid var(--border2);border-radius:8px;font-size:12px;background:var(--surface);color:var(--text2);cursor:pointer;font-family:inherit}
+.upload-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.upload-btn.primary{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}
+.upload-btn.primary:hover{opacity:0.9}
+
+/* Preview */
+.preview-panel{background:var(--surface);border-radius:12px;border:1px solid var(--green);padding:14px;margin-bottom:14px;display:none}
+.preview-panel.visible{display:block}
+.preview-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.preview-title{font-size:13px;font-weight:600;color:var(--text)}
+.preview-meta{font-size:12px;color:var(--text3)}
+.preview-actions{display:flex;gap:8px;align-items:center}
+.btn-confirm{height:32px;padding:0 16px;border:none;border-radius:7px;font-size:12px;font-weight:600;background:var(--green);color:#fff;cursor:pointer;font-family:inherit}
+.btn-confirm:disabled{opacity:0.5;cursor:not-allowed}
+.btn-discard{height:32px;padding:0 12px;border:1px solid var(--border);border-radius:7px;font-size:12px;background:transparent;color:var(--text3);cursor:pointer;font-family:inherit}
+.preview-warn{font-size:11px;color:var(--amber-text);background:var(--amber-bg);padding:6px 10px;border-radius:6px;margin-bottom:10px}
+.preview-table-wrap{overflow-x:auto;max-height:280px;overflow-y:auto;border-radius:8px;border:1px solid var(--border)}
+.preview-table{width:100%;border-collapse:collapse;font-size:11px}
+.preview-table th{background:var(--surface2);color:var(--text3);font-weight:600;padding:7px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border);position:sticky;top:0}
+.preview-table td{padding:5px 10px;border-bottom:1px solid var(--border);color:var(--text2);white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+.preview-table tr:last-child td{border-bottom:none}
+.preview-table tr:hover td{background:var(--surface2)}
+.avail-yes{color:var(--green-text);font-weight:600}
+.avail-no{color:var(--red-text);font-weight:600}
+
+/* Toolbar */
+.toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.search-input,.filter-select{height:34px;border:1px solid var(--border2);border-radius:8px;padding:0 10px;font-size:13px;background:var(--surface);color:var(--text);outline:none;font-family:inherit}
+.search-input{flex:1;min-width:140px}
+.search-input:focus,.filter-select:focus{border-color:var(--blue)}
+.sort-btn{height:34px;padding:0 10px;border:1px solid var(--border2);border-radius:8px;font-size:12px;background:var(--surface);color:var(--text3);cursor:pointer;font-family:inherit;white-space:nowrap}
+.sort-btn:hover,.sort-btn.active{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+
+/* Stock table */
+.stock-table-wrap{background:var(--surface);border-radius:12px;border:1px solid var(--border);overflow:hidden}
+.stock-table{width:100%;border-collapse:collapse;font-size:12px}
+.stock-table th{background:var(--surface2);color:var(--text3);font-weight:600;padding:9px 12px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+.stock-table th:hover{color:var(--blue)}
+.stock-table th .sort-arrow{font-size:10px;margin-left:3px;opacity:0.4}
+.stock-table th.sorted .sort-arrow{opacity:1;color:var(--blue)}
+.stock-table td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text2);white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis}
+.stock-table tr:last-child td{border-bottom:none}
+.stock-table tr:hover td{background:var(--surface2)}
+.stock-table tr.unavailable td{opacity:0.45}
+.type-pill{font-size:10px;background:var(--purple-bg);color:var(--purple-text);padding:2px 7px;border-radius:20px;font-weight:600;white-space:nowrap}
+.grade-text{font-weight:600;color:var(--text)}
+.alt-pill{font-size:10px;background:var(--amber-bg);color:var(--amber-text);padding:2px 6px;border-radius:4px;white-space:nowrap;cursor:help}
+.price-text{font-weight:600;color:var(--green-text)}
+.avail-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;flex-shrink:0}
+.avail-dot.yes{background:var(--green)}
+.avail-dot.no{background:var(--red)}
+
+/* Match panel */
+.match-panel{background:var(--surface);border-radius:12px;border:2px solid var(--blue);padding:16px;margin-bottom:14px;display:none}
+.match-panel.visible{display:block}
+.match-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.match-title{font-size:13px;font-weight:600;color:var(--blue)}
+.match-enquiry-box{font-size:12px;color:var(--text3);background:var(--blue-bg);padding:8px 12px;border-radius:7px;margin-bottom:12px}
+.match-results{display:flex;flex-direction:column;gap:7px}
+.match-item{border-radius:8px;padding:10px 14px;border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.match-item.strong{border-color:var(--green);background:var(--green-bg)}
+.match-item.close{border-color:var(--amber);background:var(--amber-bg)}
+.match-item.alternative{border-color:var(--purple);background:var(--purple-bg)}
+.match-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;color:#fff}
+.match-badge.strong{background:var(--green)}
+.match-badge.close{background:var(--amber)}
+.match-badge.alternative{background:var(--purple)}
+.match-info{font-size:12px;color:var(--text2)}
+.match-info strong{color:var(--text);font-size:13px}
+.match-price{font-size:14px;font-weight:700;color:var(--green-text)}
+.no-match{text-align:center;padding:20px;color:var(--text4);font-size:13px}
+
+/* Modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:flex-end;justify-content:center;z-index:200;padding:0}
+@media(min-width:600px){.modal-backdrop{align-items:center;padding:16px}}
+.modal{background:var(--surface);border-radius:16px 16px 0 0;border:1px solid var(--border);padding:20px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto}
+@media(min-width:600px){.modal{border-radius:14px}}
+.modal-drag{width:40px;height:4px;background:var(--border2);border-radius:4px;margin:0 auto 14px;display:block}
+@media(min-width:600px){.modal-drag{display:none}}
+.modal-title{font-size:15px;font-weight:600;margin-bottom:14px;color:var(--text)}
+.fsec{font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:0.5px;margin:12px 0 7px;padding-top:10px;border-top:1px solid var(--border)}
+.fsec:first-of-type{border-top:none;padding-top:0;margin-top:0}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;align-items:center}
+.btn-cancel{height:32px;padding:0 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:transparent;color:var(--text3);cursor:pointer;font-family:inherit}
+.btn-save{height:32px;padding:0 14px;border:none;border-radius:8px;font-size:12px;background:var(--blue);color:#fff;cursor:pointer;font-weight:600;font-family:inherit}
+.btn-delete{height:32px;padding:0 12px;border:1px solid var(--red);border-radius:8px;font-size:12px;background:var(--red-bg);color:var(--red-text);cursor:pointer;margin-right:auto;font-family:inherit}
+.loading{text-align:center;padding:40px;color:var(--text3);font-size:14px}
+.empty{text-align:center;padding:40px;color:var(--text4);font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="auth-wrap" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">Stock Manager</div>
+    <div class="auth-sub">Sign in to continue</div>
+    <div class="form-row"><label class="form-label">Email</label><input class="form-input" type="email" id="loginEmail" placeholder="you@company.com"></div>
+    <div class="form-row"><label class="form-label">Password</label><input class="form-input" type="password" id="loginPassword" placeholder="••••••••"></div>
+    <button class="auth-btn" onclick="doLogin()" id="loginBtn">Sign in</button>
+    <div id="authMsg" style="display:none" class="auth-msg"></div>
+  </div>
+</div>
+
+<div id="app">
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-text">⚙️ Steel Platform</div>
+    <div class="sidebar-logo-sub">Export Management Suite</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section">Pipeline</div>
+    <a href="index.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard / CRM</a>
+    <a href="offer.html" class="nav-item"><span class="nav-icon">📋</span>Offers</a>
+    <div class="nav-section">Documents</div>
+    <a href="documents.html" class="nav-item"><span class="nav-icon">📄</span>Invoices &amp; Packing</a>
+    <div class="nav-section">Inventory</div>
+    <a href="stock.html" class="nav-item active"><span class="nav-icon">📦</span>Stock</a>
+    <div class="nav-section">Tools</div>
+    <a href="tools.html" class="nav-item"><span class="nav-icon">🔧</span>Tools</a>
+    <a href="library.html" class="nav-item"><span class="nav-icon">📚</span>Library</a>
+    <a href="logistics.html" class="nav-item"><span class="nav-icon">🚢</span>Logistics</a>
+    <a href="converter.html" class="nav-item"><span class="nav-icon">⚡</span>Grade Converter</a>
+    <a href="cont.html" class="nav-item"><span class="nav-icon">👥</span>Contacts</a>
+  </div>
+  <div class="sidebar-footer">
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="userEmail">—</div>
+    <button class="hbtn" onclick="doLogout()" style="width:100%;margin-bottom:6px">Sign out</button>
+    <button class="hbtn" id="darkBtn" onclick="toggleDark()" style="width:100%">🌙 Dark mode</button>
+  </div>
+</nav>
+  <header style="margin-left:var(--sidebar-w)">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="menu-btn" onclick="openSidebar()">☰</button>
+      <span class="app-title">📦 Stock Manager</span>
+    </div>
+    <div class="header-right">
+      <button class="hbtn hbtn-blue" id="addManualBtn" onclick="openAddManual()" style="display:none">+ Add item</button>
+      <button class="hbtn" onclick="exportStockCSV()">Export CSV</button>
+    </div>
+  </header>
+
+  <main style="margin-left:var(--sidebar-w)">
+    <div class="stats-bar" id="statsBar"></div>
+
+    <!-- Match panel -->
+    <div class="match-panel" id="matchPanel">
+      <div class="match-header">
+        <span class="match-title">Stock matches</span>
+        <button class="btn-cancel" onclick="closeMatch()">Close</button>
+      </div>
+      <div class="match-enquiry-box" id="matchEnquiryBox"></div>
+      <div class="match-results" id="matchResults"></div>
+    </div>
+
+    <!-- Upload panel — admin only -->
+    <div class="upload-panel" id="dropZone" style="display:none" onclick="document.getElementById('fileInput').click()">
+      <div class="upload-icon">📊</div>
+      <div class="upload-title">Upload your stock Excel</div>
+      <div class="upload-sub">Drop your Excel or CSV file here, or click to browse<br>Your existing stock will be replaced with the new list</div>
+      <div class="upload-btns" onclick="event.stopPropagation()">
+        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Choose file</button>
+        <button class="upload-btn" onclick="downloadTemplate()">Download template</button>
+      </div>
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFile(this.files[0]);this.value=''">
+      <div class="upload-status" id="uploadStatus"></div>
+    </div>
+
+    <!-- Preview panel -->
+    <div class="preview-panel" id="previewPanel">
+      <div class="preview-header">
+        <div>
+          <div class="preview-title">Review before saving</div>
+          <div class="preview-meta" id="previewMeta"></div>
+        </div>
+        <div class="preview-actions">
+          <button class="btn-discard" onclick="discardPreview()">Discard</button>
+          <button class="btn-confirm" id="confirmBtn" onclick="confirmImport()">Replace stock list</button>
+        </div>
+      </div>
+      <div class="preview-warn">⚠️ This will replace all your current stock with the items below. Make sure the list is complete.</div>
+      <div class="preview-table-wrap">
+        <table class="preview-table" id="previewTable">
+          <thead><tr>
+            <th>Type</th><th>Grade</th><th>Thick</th><th>Width</th><th>Length</th>
+            <th>Qty</th><th>Unit</th><th>Origin</th><th>Supplier</th>
+            <th>Buy$/ton</th><th>Available</th><th>Alternatives</th><th>Notes</th>
+          </tr></thead>
+          <tbody id="previewBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <input class="search-input" id="stockSearch" placeholder="Search grade, type, origin, supplier..." oninput="renderTable()">
+      <select class="filter-select" id="typeFilter" onchange="renderTable()"><option value="">All types</option></select>
+      <select class="filter-select" id="availFilter" onchange="renderTable()">
+        <option value="">All</option>
+        <option value="yes">Available</option>
+        <option value="no">Unavailable</option>
+      </select>
+    </div>
+
+    <!-- Stock table -->
+    <div class="stock-table-wrap">
+      <table class="stock-table">
+        <thead><tr>
+          <th onclick="setSort('product_type')">Type <span class="sort-arrow">↕</span></th>
+          <th onclick="setSort('grade')">Grade <span class="sort-arrow">↕</span></th>
+          <th onclick="setSort('thickness')">Thick(mm) <span class="sort-arrow">↕</span></th>
+          <th onclick="setSort('width')">Width(mm) <span class="sort-arrow">↕</span></th>
+          <th onclick="setSort('length')">Length(mm) <span class="sort-arrow">↕</span></th>
+          <th onclick="setSort('quantity')">Qty <span class="sort-arrow">↕</span></th>
+          <th>Unit</th>
+          <th onclick="setSort('origin')">Origin <span class="sort-arrow">↕</span></th>
+          <th onclick="setSort('supplier')">Supplier <span class="sort-arrow">↕</span></th>
+          <th onclick="setSort('buy_price')">Buy$/ton <span class="sort-arrow">↕</span></th>
+          <th>Location</th>
+          <th>Heat #</th>
+          <th>Available</th>
+          <th>Alternatives</th>
+          <th>Notes</th>
+        </tr></thead>
+        <tbody id="stockTableBody"><tr><td colspan="15" class="loading">Loading stock...</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- Manual add/edit modal -->
+<div class="modal-backdrop" id="modal" style="display:none">
+  <div class="modal">
+    <span class="modal-drag"></span>
+    <p class="modal-title" id="modalTitle">Add stock item</p>
+    <div class="fsec">Product</div>
+    <div class="fr2">
+      <div class="form-row"><label class="form-label">Product type</label><input class="form-input" id="mType" placeholder="Plate, Coil, Pipe..."></div>
+      <div class="form-row"><label class="form-label">Grade</label><input class="form-input" id="mGrade" placeholder="S235, A36..."></div>
+    </div>
+    <div class="fsec">Dimensions</div>
+    <div class="fr3">
+      <div class="form-row"><label class="form-label">Thickness (mm)</label><input class="form-input" type="number" id="mThick"></div>
+      <div class="form-row"><label class="form-label">Width (mm)</label><input class="form-input" type="number" id="mWidth"></div>
+      <div class="form-row"><label class="form-label">Length (mm)</label><input class="form-input" type="number" id="mLength"></div>
+    </div>
+    <div class="fsec">Stock</div>
+    <div class="fr3">
+      <div class="form-row"><label class="form-label">Quantity</label><input class="form-input" type="number" id="mQty"></div>
+      <div class="form-row"><label class="form-label">Unit</label>
+        <select class="form-input" id="mUnit"><option>ton</option><option>kg</option><option>pcs</option><option>m</option></select>
+      </div>
+      <div class="form-row"><label class="form-label">Weight (kg)</label><input class="form-input" type="number" id="mWeight"></div>
+    </div>
+    <div class="fsec">Sourcing & Pricing</div>
+    <div class="fr2">
+      <div class="form-row"><label class="form-label">Origin</label><input class="form-input" id="mOrigin" placeholder="Ukraine, Turkey..."></div>
+      <div class="form-row"><label class="form-label">Supplier</label><input class="form-input" id="mSupplier"></div>
+    </div>
+    <div class="fr2">
+      <div class="form-row"><label class="form-label">Buy price / ton ($)</label><input class="form-input" type="number" id="mPrice"></div>
+      <div class="form-row"><label class="form-label">Location</label><input class="form-input" id="mLocation"></div>
+    </div>
+    <div class="fr2">
+      <div class="form-row"><label class="form-label">Heat number</label><input class="form-input" id="mHeat"></div>
+      <div class="form-row"><label class="form-label">Currency</label>
+        <select class="form-input" id="mCurrency"><option>USD</option><option>EUR</option><option>GBP</option><option>TRY</option></select>
+      </div>
+    </div>
+    <div class="form-row"><label class="form-label">Alternatives (separate with /)</label><input class="form-input" id="mAlts" placeholder="S275JR / A36 / Q235"></div>
+    <div class="form-row"><label class="form-label">Notes</label><textarea class="form-input" id="mNotes" style="height:56px"></textarea></div>
+    <div class="form-row" id="mAvailRow" style="display:none">
+      <label class="form-label">Availability</label>
+      <select class="form-input" id="mAvail"><option value="yes">Available</option><option value="no">Sold / Reserved</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-delete" id="mDeleteBtn" style="display:none" onclick="deleteStock()">Delete</button>
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveManual()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://fmmfofjkebdsrnkchrfo.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_WQDKUjUAKV1da7raU1W68A_5PwnKXxS';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let stock=[], currentUser=null, editingId=null, previewData=[];
+let sortCol='grade', sortAsc=true;
+
+// ── Dark mode ──
+function toggleDark(){
+  const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  const db=document.getElementById('darkBtn');if(db)db.textContent=t==='dark'?'☀️ Light mode':'🌙 Dark mode';
+  localStorage.setItem('theme',t);
+}
+(()=>{
+  const s=localStorage.getItem('theme')||'light';
+  document.documentElement.setAttribute('data-theme',s);
+  if(s==='dark') setTimeout(()=>document.getElementById('darkBtn').textContent='☀️',0);
+})();
+
+// ── Auth ──
+function showMsg(m,t){const e=document.getElementById('authMsg');e.textContent=m;e.className='auth-msg '+(t||'error');e.style.display='block';}
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPassword').value;
+  if(!email||!pass)return showMsg('Please fill in all fields.');
+  const btn=document.getElementById('loginBtn');btn.disabled=true;btn.textContent='Signing in...';
+  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  btn.disabled=false;btn.textContent='Sign in';
+  if(error)return showMsg(error.message);
+  onSignedIn(data.user);
+}
+async function doLogout(){
+  await sb.auth.signOut();currentUser=null;
+  document.getElementById('app').style.display='none';
+  document.getElementById('authScreen').style.display='flex';
+}
+async function onSignedIn(user){
+  currentUser=user;
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  const ue=document.getElementById('userEmail');if(ue)ue.textContent=user.email;
+  const {data:prof}=await sb.from('profiles').select('is_admin').eq('id',user.id).single();
+  if(prof?.is_admin){
+    document.getElementById('dropZone').style.display='block';
+    const ab=document.getElementById('addManualBtn');if(ab)ab.style.display='inline-block';
+    const al=document.getElementById('adminNavLink');if(al)al.style.display='inline-block';
+    // Show export and delete buttons
+    document.querySelectorAll('.admin-only').forEach(el=>el.style.display='inline-block');
+  }
+  loadStock();
+}
+sb.auth.getSession().then(({data:{session}})=>{if(session)onSignedIn(session.user);});
+
+// ── Load stock ──
+async function loadStock(){
+  // Load stock in pages for large datasets (20k+ rows)
+  let allStock=[],page=0,pageSize=1000;
+  while(true){
+    const from=page*pageSize,to=from+pageSize-1;
+    const {data,error}=await sb.from('stock').select('*').order('grade').range(from,to);
+    if(error||!data||data.length===0)break;
+    allStock=[...allStock,...data];
+    if(data.length<pageSize)break;
+    page++;
+  }
+  const data=allStock,error=null;
+  if(error){console.error(error);return;}
+  stock=data||[];
+  renderStats();
+  renderTypeFilter();
+  renderTable();
+}
+
+// ── Stats ──
+function renderStats(){
+  const avail=stock.filter(s=>s.available!=='no'&&s.available!==false);
+  const totalTons=avail.reduce((s,i)=>{
+    const q=Number(i.quantity||0);
+    if(i.unit==='ton')return s+q;
+    if(i.unit==='kg')return s+q/1000;
+    return s;
+  },0);
+  const totalVal=avail.reduce((s,i)=>s+Number(i.buy_price||0)*Number(i.quantity||0),0);
+  const types=[...new Set(stock.map(s=>s.product_type).filter(Boolean))].length;
+  document.getElementById('statsBar').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Total items</div><div class="stat-value">${stock.length}</div><div class="stat-sub">${avail.length} available</div></div>
+    <div class="stat-card"><div class="stat-label">Avail. tons</div><div class="stat-value">${Math.round(totalTons).toLocaleString()}</div><div class="stat-sub">approx.</div></div>
+    <div class="stat-card"><div class="stat-label">Stock value</div><div class="stat-value">$${Math.round(totalVal).toLocaleString()}</div><div class="stat-sub">buy price</div></div>
+    <div class="stat-card"><div class="stat-label">Product types</div><div class="stat-value">${types}</div><div class="stat-sub">distinct</div></div>
+  `;
+}
+
+function renderTypeFilter(){
+  const sel=document.getElementById('typeFilter');const cur=sel.value;
+  const types=[...new Set(stock.map(s=>s.product_type).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">All types</option>';
+  types.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;if(t===cur)o.selected=true;sel.appendChild(o);});
+}
+
+// ── Sort & filter ──
+function setSort(col){
+  if(sortCol===col) sortAsc=!sortAsc;
+  else{sortCol=col;sortAsc=true;}
+  document.querySelectorAll('.stock-table th').forEach(th=>{
+    th.classList.remove('sorted');
+    const arr=th.querySelector('.sort-arrow');
+    if(arr) arr.textContent='↕';
+  });
+  const ths=document.querySelectorAll('.stock-table th');
+  const cols=['product_type','grade','thickness','width','length','quantity','unit','origin','supplier','buy_price','location','heat_number','available','alternatives','notes'];
+  const idx=cols.indexOf(col);
+  if(idx>=0&&ths[idx]){
+    ths[idx].classList.add('sorted');
+    const arr=ths[idx].querySelector('.sort-arrow');
+    if(arr) arr.textContent=sortAsc?'↑':'↓';
+  }
+  renderTable();
+}
+
+function filteredStock(){
+  const q=document.getElementById('stockSearch').value.toLowerCase();
+  const tp=document.getElementById('typeFilter').value;
+  const av=document.getElementById('availFilter').value;
+  return stock.filter(s=>{
+    const mq=!q||[s.grade,s.product_type,s.origin,s.supplier,s.heat_number,s.location,s.alternatives,s.notes].join(' ').toLowerCase().includes(q);
+    const mt=!tp||s.product_type===tp;
+    const ma=!av||(av==='yes'?s.available!=='no':s.available==='no');
+    return mq&&mt&&ma;
+  }).sort((a,b)=>{
+    let va=a[sortCol]??'',vb=b[sortCol]??'';
+    if(!isNaN(Number(va))&&!isNaN(Number(vb))){va=Number(va);vb=Number(vb);}
+    else{va=String(va).toLowerCase();vb=String(vb).toLowerCase();}
+    return sortAsc?(va>vb?1:va<vb?-1:0):(va<vb?1:va>vb?-1:0);
+  });
+}
+
+function renderTable(){
+  const fl=filteredStock();
+  const tbody=document.getElementById('stockTableBody');
+  if(!fl.length){tbody.innerHTML=`<tr><td colspan="15" class="empty">No stock items found</td></tr>`;return;}
+  tbody.innerHTML=fl.map(s=>`
+    <tr class="${s.available==='no'?'unavailable':''}" onclick="openEdit('${s.id}')" style="cursor:pointer">
+      <td>${s.product_type?`<span class="type-pill">${s.product_type}</span>`:'-'}</td>
+      <td class="grade-text">${s.grade||'-'}</td>
+      <td>${s.thickness||'-'}</td>
+      <td>${s.width||'-'}</td>
+      <td>${s.length||'-'}</td>
+      <td>${s.quantity||0}</td>
+      <td>${s.unit||'ton'}</td>
+      <td>${s.origin||'-'}</td>
+      <td>${s.supplier||'-'}</td>
+      <td>${s.buy_price?`<span class="price-text">$${Number(s.buy_price).toLocaleString()}</span>`:'-'}</td>
+      <td>${s.location||'-'}</td>
+      <td>${s.heat_number||'-'}</td>
+      <td><span class="avail-dot ${s.available==='no'?'no':'yes'}"></span>${s.available==='no'?'No':'Yes'}</td>
+      <td>${s.alternatives?`<span class="alt-pill" title="${s.alternatives}">${s.alternatives.length>20?s.alternatives.substring(0,20)+'...':s.alternatives}</span>`:'-'}</td>
+      <td style="color:var(--text3)">${s.notes||'-'}</td>
+    </tr>
+  `).join('');
+}
+
+// ── Excel upload ──
+function handleFile(file){
+  if(!file)return;
+  const status=document.getElementById('uploadStatus');
+  status.textContent='Reading file...';status.className='upload-status loading';
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'binary'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+      if(!rows.length){status.textContent='No data found in file.';status.className='upload-status error';return;}
+
+      // Flexible column mapper
+      function findVal(row,...names){
+        for(const n of names){
+          const key=Object.keys(row).find(k=>k.toLowerCase().replace(/[\s\/\(\)_\-\.]/g,'').includes(n.replace(/[\s\/\(\)_\-\.]/g,'').toLowerCase()));
+          if(key&&row[key]!==''&&row[key]!==null&&row[key]!==undefined) return String(row[key]).trim();
+        }
+        return '';
+      }
+
+      const mapped=rows.map(row=>({
+        product_type: findVal(row,'producttype','product','type','category','item','profile','section','description','desc'),
+        grade:        findVal(row,'grade','spec','quality','material','steel','standard','norm'),
+        thickness:    findVal(row,'thickness','thick','thk','tmm','t(mm)','thkness','ep'),
+        width:        findVal(row,'width','wid','wmm','w(mm)','largeur'),
+        length:       findVal(row,'length','len','lmm','l(mm)','longueur'),
+        quantity:     findVal(row,'quantity','qty','tons','mt','amount','qte','weight'),
+        unit:         findVal(row,'unit','uom','um')||'ton',
+        weight_kg:    findVal(row,'weightkg','kgs','netkg','grosskg','netweight','wkg'),
+        origin:       findVal(row,'origin','country','mill','source','made','provenance'),
+        supplier:     findVal(row,'supplier','vendor','seller','manufacturer','fournisseur'),
+        buy_price:    findVal(row,'buyprice','price','cost','rate','usd','$/ton','pertontryeur'),
+        currency:     findVal(row,'currency','cur','ccy')||'USD',
+        location:     findVal(row,'location','yard','warehouse','store','depot'),
+        heat_number:  findVal(row,'heatnumber','heat','cert','batch','certificate','heatno'),
+        available:    (()=>{const v=findVal(row,'available','avail','status','instock');return v.toLowerCase().startsWith('n')?'no':'yes';})(),
+        alternatives: findVal(row,'alternatives','alternative','alt','substitute','equiv','equivalent'),
+        notes:        findVal(row,'notes','note','remark','comment','remarks'),
+      })).filter(r=>r.grade||r.product_type);
+
+      if(!mapped.length){status.textContent='Could not map any columns. Please use the template.';status.className='upload-status error';return;}
+      status.textContent=`Found ${mapped.length} items — review below`;status.className='upload-status success';
+      showPreview(mapped);
+    }catch(err){
+      status.textContent='Error reading file: '+err.message;status.className='upload-status error';
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+// ── Preview ──
+function showPreview(items){
+  previewData=items;
+  document.getElementById('previewMeta').textContent=`${items.length} items · ${items.filter(i=>i.available!=='no').length} available`;
+  document.getElementById('previewBody').innerHTML=items.map(i=>`<tr>
+    <td>${i.product_type||'-'}</td>
+    <td><strong>${i.grade||'-'}</strong></td>
+    <td>${i.thickness||'-'}</td>
+    <td>${i.width||'-'}</td>
+    <td>${i.length||'-'}</td>
+    <td>${i.quantity||0}</td>
+    <td>${i.unit}</td>
+    <td>${i.origin||'-'}</td>
+    <td>${i.supplier||'-'}</td>
+    <td>${i.buy_price?'$'+i.buy_price:'-'}</td>
+    <td class="${i.available==='no'?'avail-no':'avail-yes'}">${i.available==='no'?'No':'Yes'}</td>
+    <td>${i.alternatives||'-'}</td>
+    <td>${i.notes||'-'}</td>
+  </tr>`).join('');
+  document.getElementById('previewPanel').classList.add('visible');
+  document.getElementById('previewPanel').scrollIntoView({behavior:'smooth'});
+}
+
+function discardPreview(){
+  previewData=[];
+  document.getElementById('previewPanel').classList.remove('visible');
+}
+
+async function confirmImport(){
+  if(!previewData.length)return;
+  const btn=document.getElementById('confirmBtn');
+  btn.disabled=true;btn.textContent='Deleting old stock...';
+  const status=document.getElementById('uploadStatus');
+
+  // ── Step 1: Delete all existing stock in batches ──
+  while(true){
+    const {data:toDel,error:selErr}=await sb.from('stock').select('id').limit(500);
+    if(selErr){alert('Error reading stock: '+selErr.message);btn.disabled=false;btn.textContent='Replace stock list';return;}
+    if(!toDel||toDel.length===0)break;
+    const ids=toDel.map(r=>r.id);
+    const {error:delErr}=await sb.from('stock').delete().in('id',ids);
+    if(delErr){alert('Error deleting stock: '+delErr.message);btn.disabled=false;btn.textContent='Replace stock list';return;}
+    if(toDel.length<500)break;
+  }
+
+  // ── Step 2: Build rows ──
+  const rows=previewData.map(i=>({
+    user_id:currentUser.id,
+    product_type:i.product_type||'',
+    grade:i.grade||'',
+    thickness:Number(i.thickness)||null,
+    width:Number(i.width)||null,
+    length:Number(i.length)||null,
+    quantity:Number(i.quantity)||0,
+    unit:i.unit||'ton',
+    weight_kg:Number(i.weight_kg)||null,
+    origin:i.origin||'',
+    supplier:i.supplier||'',
+    buy_price:Number(i.buy_price)||0,
+    currency:i.currency||'USD',
+    location:i.location||'',
+    heat_number:i.heat_number||'',
+    available:i.available||'yes',
+    alternatives:i.alternatives||'',
+    notes:i.notes||'',
+    source:'excel',
+  }));
+
+  // ── Step 3: Insert in batches of 200 ──
+  const BATCH=200;
+  for(let i=0;i<rows.length;i+=BATCH){
+    const chunk=rows.slice(i,i+BATCH);
+    btn.textContent=`Saving... ${Math.min(i+BATCH,rows.length)}/${rows.length}`;
+    status.textContent=`Uploading rows ${i+1}–${Math.min(i+BATCH,rows.length)} of ${rows.length}...`;
+    status.className='upload-status loading';
+    const {error}=await sb.from('stock').insert(chunk);
+    if(error){
+      alert(`Error saving batch starting at row ${i+1}: ${error.message}`);
+      btn.disabled=false;btn.textContent='Replace stock list';
+      return;
+    }
+  }
+
+  btn.disabled=false;btn.textContent='Replace stock list';
+  discardPreview();
+  status.textContent=`✓ ${rows.length} items saved to stock`;
+  status.className='upload-status success';
+  loadStock();
+}
+
+// ── Stock matching ──
+function matchStock(enquiry){
+  const results=[];
+  stock.filter(s=>s.available!=='no').forEach(s=>{
+    let score=0;const reasons=[];
+    // Grade match
+    const eg=(enquiry.grade||'').toLowerCase();
+    const sg=(s.grade||'').toLowerCase();
+    if(eg&&sg){
+      if(sg===eg){score+=40;reasons.push('Exact grade');}
+      else if(sg.includes(eg)||eg.includes(sg)){score+=25;reasons.push('Grade match');}
+    }
+    // Thickness
+    if(enquiry.thickness&&s.thickness){
+      const diff=Math.abs(Number(s.thickness)-Number(enquiry.thickness));
+      if(diff===0){score+=30;reasons.push('Exact thickness');}
+      else if(diff<=0.5){score+=18;reasons.push('Near thickness');}
+      else if(diff<=2){score+=8;reasons.push('Close thickness');}
+    }
+    // Width
+    if(enquiry.width&&s.width){
+      const diff=Math.abs(Number(s.width)-Number(enquiry.width));
+      if(diff===0){score+=20;reasons.push('Exact width');}
+      else if(diff<=50){score+=10;reasons.push('Near width');}
+    }
+    // Product type
+    if(enquiry.type&&s.product_type&&s.product_type.toLowerCase().includes((enquiry.type||'').toLowerCase())){
+      score+=10;reasons.push('Type match');
+    }
+    if(score>0) results.push({...s,score,reasons,matchType:score>=70?'strong':score>=35?'close':'close'});
+  });
+
+  // Also check alternatives
+  stock.filter(s=>s.available!=='no'&&s.alternatives).forEach(s=>{
+    if(results.find(r=>r.id===s.id)) return;
+    const alts=(s.alternatives||'').toLowerCase().split('/').map(a=>a.trim());
+    const eg=(enquiry.grade||'').toLowerCase();
+    if(eg&&alts.some(a=>a.includes(eg)||eg.includes(a))){
+      results.push({...s,score:20,reasons:['Alternative grade'],matchType:'alternative'});
+    }
+  });
+
+  results.sort((a,b)=>b.score-a.score);
+  return results.slice(0,10);
+}
+
+function showMatchPanel(enquiry){
+  const panel=document.getElementById('matchPanel');
+  document.getElementById('matchEnquiryBox').innerHTML=
+    `<strong>Enquiry:</strong> ${enquiry.grade||'Any grade'} · ${enquiry.thickness||'?'}mm · ${enquiry.width?enquiry.width+'mm wide':''} ${enquiry.length?'× '+enquiry.length+'mm':''} · ${enquiry.quantity||'?'} ${enquiry.unit||'ton'}`.replace(/ +/g,' ');
+  const results=matchStock(enquiry);
+  if(!results.length){
+    document.getElementById('matchResults').innerHTML='<div class="no-match">No matching stock found</div>';
+  } else {
+    document.getElementById('matchResults').innerHTML=results.map(s=>`
+      <div class="match-item ${s.matchType}">
+        <div>
+          <span class="match-badge ${s.matchType}">${s.matchType==='strong'?'Strong match':s.matchType==='alternative'?'Alternative':'Close match'}</span>
+          <div class="match-info" style="margin-top:5px">
+            <strong>${s.grade}</strong> ${s.product_type?'· '+s.product_type:''} · ${s.thickness||'?'}mm${s.width?' × '+s.width+'mm':''}${s.length?' × '+s.length+'mm':''}
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">
+            ${s.quantity} ${s.unit} · ${s.origin||'—'} · ${s.supplier||'—'} ${s.location?'· '+s.location:''}
+          </div>
+          <div style="font-size:10px;color:var(--text4);margin-top:2px">${s.reasons.join(' · ')}</div>
+          ${s.alternatives?`<div style="font-size:10px;color:var(--amber-text);margin-top:2px">Alts: ${s.alternatives}</div>`:''}
+        </div>
+        <span class="match-price">${s.buy_price?'$'+Number(s.buy_price).toLocaleString()+'/ton':''}</span>
+      </div>
+    `).join('');
+  }
+  panel.classList.add('visible');
+  panel.scrollIntoView({behavior:'smooth'});
+}
+
+function closeMatch(){document.getElementById('matchPanel').classList.remove('visible');}
+
+// ── Template download ──
+function downloadTemplate(){
+  window.open('stock_template.xlsx','_blank');
+}
+
+// ── Manual add/edit ──
+function openAddManual(){
+  editingId=null;
+  document.getElementById('modalTitle').textContent='Add stock item';
+  ['mType','mGrade','mOrigin','mSupplier','mLocation','mHeat','mNotes','mAlts'].forEach(id=>document.getElementById(id).value='');
+  ['mThick','mWidth','mLength','mQty','mWeight','mPrice'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mUnit').value='ton';
+  document.getElementById('mCurrency').value='USD';
+  document.getElementById('mDeleteBtn').style.display='none';
+  document.getElementById('mAvailRow').style.display='none';
+  document.getElementById('modal').style.display='flex';
+}
+
+function openEdit(id){
+  const s=stock.find(x=>x.id===id);if(!s)return;
+  editingId=id;
+  document.getElementById('modalTitle').textContent='Edit stock item';
+  document.getElementById('mType').value=s.product_type||'';
+  document.getElementById('mGrade').value=s.grade||'';
+  document.getElementById('mThick').value=s.thickness||'';
+  document.getElementById('mWidth').value=s.width||'';
+  document.getElementById('mLength').value=s.length||'';
+  document.getElementById('mQty').value=s.quantity||'';
+  document.getElementById('mUnit').value=s.unit||'ton';
+  document.getElementById('mWeight').value=s.weight_kg||'';
+  document.getElementById('mOrigin').value=s.origin||'';
+  document.getElementById('mSupplier').value=s.supplier||'';
+  document.getElementById('mPrice').value=s.buy_price||'';
+  document.getElementById('mLocation').value=s.location||'';
+  document.getElementById('mHeat').value=s.heat_number||'';
+  document.getElementById('mCurrency').value=s.currency||'USD';
+  document.getElementById('mAlts').value=s.alternatives||'';
+  document.getElementById('mNotes').value=s.notes||'';
+  document.getElementById('mAvail').value=s.available||'yes';
+  document.getElementById('mDeleteBtn').style.display='block';
+  document.getElementById('mAvailRow').style.display='block';
+  document.getElementById('modal').style.display='flex';
+}
+
+function closeModal(){document.getElementById('modal').style.display='none';}
+
+async function saveManual(){
+  const obj={
+    user_id:currentUser.id,
+    product_type:document.getElementById('mType').value.trim(),
+    grade:document.getElementById('mGrade').value.trim(),
+    thickness:Number(document.getElementById('mThick').value)||null,
+    width:Number(document.getElementById('mWidth').value)||null,
+    length:Number(document.getElementById('mLength').value)||null,
+    quantity:Number(document.getElementById('mQty').value)||0,
+    unit:document.getElementById('mUnit').value,
+    weight_kg:Number(document.getElementById('mWeight').value)||null,
+    origin:document.getElementById('mOrigin').value.trim(),
+    supplier:document.getElementById('mSupplier').value.trim(),
+    buy_price:Number(document.getElementById('mPrice').value)||0,
+    currency:document.getElementById('mCurrency').value,
+    location:document.getElementById('mLocation').value.trim(),
+    heat_number:document.getElementById('mHeat').value.trim(),
+    available:editingId?document.getElementById('mAvail').value:'yes',
+    alternatives:document.getElementById('mAlts').value.trim(),
+    notes:document.getElementById('mNotes').value.trim(),
+    source:'manual',
+  };
+  let error;
+  if(editingId){({error}=await sb.from('stock').update(obj).eq('id',editingId));}
+  else{({error}=await sb.from('stock').insert(obj));}
+  if(error){alert('Save failed: '+error.message);return;}
+  closeModal();loadStock();
+}
+
+async function deleteStock(){
+  if(!confirm('Delete this item?'))return;
+  await sb.from('stock').delete().eq('id',editingId);
+  closeModal();loadStock();
+}
+
+// ── Export CSV ──
+function exportStockCSV(){
+  const headers=['Type','Grade','Thick(mm)','Width(mm)','Length(mm)','Qty','Unit','Weight(kg)','Origin','Supplier','Buy$/ton','Currency','Location','Heat#','Available','Alternatives','Notes'];
+  const rows=stock.map(s=>[`"${s.product_type||''}"`,`"${s.grade||''}"`,s.thickness||'',s.width||'',s.length||'',s.quantity||0,s.unit||'ton',s.weight_kg||'',`"${s.origin||''}"`,`"${s.supplier||''}"`,s.buy_price||0,s.currency||'USD',`"${s.location||''}"`,`"${s.heat_number||''}"`,s.available||'yes',`"${s.alternatives||''}"`,`"${s.notes||''}"`]);
+  const csv=[headers.join(','),...rows.map(r=>r.join(','))].join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='stock.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
+// ── Drag & drop ──
+const dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');const f=e.dataTransfer.files[0];if(f)handleFile(f);});
+
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+// ── Listen for match requests from pipeline page ──
+window.addEventListener('message',e=>{if(e.data?.type==='MATCH_ENQUIRY')showMatchPanel(e.data.enquiry);});
+
+// Sidebar
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sidebarOverlay').classList.add('open');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('open');}
+</script>
+
+<!-- Floating Grade Converter -->
+<button class="conv-float-btn" onclick="toggleConverter()" title="Grade Converter" style="position:fixed;right:20px;bottom:20px;z-index:500;width:52px;height:52px;border-radius:50%;border:none;background:var(--blue);color:#fff;font-size:20px;cursor:pointer;box-shadow:0 4px 16px rgba(24,95,165,0.4);display:flex;align-items:center;justify-content:center">⚡</button>
+<div id="convOverlay" onclick="toggleConverter()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:490"></div>
+<div id="convPanel" style="position:fixed;right:0;top:0;bottom:0;z-index:600;width:400px;max-width:100vw;background:var(--surface);border-left:1px solid var(--border);box-shadow:-4px 0 24px rgba(0,0,0,0.12);transform:translateX(100%);transition:transform 0.25s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0">
+    <span style="font-size:14px;font-weight:700;color:var(--blue)">⚡ Grade Converter</span>
+    <button onclick="toggleConverter()" style="width:30px;height:30px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center">×</button>
+  </div>
+  <iframe id="convIframe" src="" style="flex:1;border:none;width:100%;display:block" title="Grade Converter"></iframe>
+</div>
+</body>
+</html>
