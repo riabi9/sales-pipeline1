@@ -401,6 +401,7 @@ function toggleTheme(){
   const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
   document.documentElement.setAttribute('data-theme',t);
   localStorage.setItem('theme',t);
+  document.querySelectorAll('iframe').forEach(f=>{try{f.contentWindow.postMessage({type:'themeChange',theme:t},'*');}catch(e){}});
 }
 document.documentElement.setAttribute('data-theme', localStorage.getItem('theme')||'light');
 
