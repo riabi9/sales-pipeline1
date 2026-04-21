@@ -160,7 +160,32 @@ searchGrade();
 reader.readAsText(file);
 }
 
-// EXCEL CONVERSION
+// ===== SMART NORMALIZATION =====
+function normalize(str){
+return str
+.toLowerCase()
+.replace(/[\/]/g,"")
+.replace(/ı/g,"i")
+.replace(/i̇/g,"i")
+.replace(/ğ/g,"g")
+.replace(/ü/g,"u")
+.replace(/ş/g,"s")
+.replace(/ö/g,"o")
+.replace(/ç/g,"c")
+.replace(/\s+/g,"")
+.trim();
+}
+
+function findKey(obj, possibleNames){
+let keys = Object.keys(obj);
+for(let name of possibleNames){
+let found = keys.find(k => normalize(k) === normalize(name));
+if(found) return found;
+}
+return null;
+}
+
+// ===== EXCEL TRANSFORM =====
 function convertExcel(){
 let file = document.getElementById("excelFile").files[0];
 if(!file){ alert("Select Excel file"); return; }
@@ -175,54 +200,74 @@ let sheet = workbook.Sheets[workbook.SheetNames[0]];
 let json = XLSX.utils.sheet_to_json(sheet, {defval:""});
 
 let allData = getAllData();
+let output = [];
 
-// Find KALITE column
-let headers = Object.keys(json[0] || {});
-let kaliteKey = headers.find(h => h.toLowerCase() === "kalite");
-
-if(!kaliteKey){
-alert("No 'KALITE' column found");
-return;
-}
-
-// Convert values
 json.forEach(row=>{
-let value = (row[kaliteKey] || "").toString().trim();
 
+let sekil = row[findKey(row, ["sekil","şekil"])] || "";
+let kalite = row[findKey(row, ["kalite"])] || "";
+let kalinlik = row[findKey(row, ["kalinlik","kalınlık"])] || "";
+let genislik = row[findKey(row, ["genislik","genişlik"])] || "";
+let boy = row[findKey(row, ["boy"])] || "";
+let lokasyon = row[findKey(row, ["lokasyon"])] || "";
+let tonaj = row[findKey(row, ["satilabilirtonaj","satılabilirtonaj"])] || "";
+let fiyat = row[findKey(row, ["istenenfiyat","istenen fiyat"])] || "";
+
+// EN CONVERSION
 let match = allData.find(d =>
-d.e === value ||
-d.t === value ||
-d.din === value ||
-d.astm === value ||
-d.jis === value ||
-d.en === value
+d.e === kalite ||
+d.t === kalite ||
+d.din === kalite ||
+d.astm === kalite ||
+d.jis === kalite ||
+d.en === kalite
 );
 
-if(match){
-row[kaliteKey] = match.en || value;
-}
+let enGrade = match ? match.en : kalite;
+
+// OUTPUT STRUCTURE
+output.push({
+product_type: sekil,
+grade: enGrade,
+thickness: kalinlik,
+width: genislik,
+length: boy,
+supplier: lokasyon,
+location: lokasyon,
+quantity: tonaj,
+unit: "",
+buy_price: fiyat,
+currency: "",
+origin: "",
+heat_number: "",
+available: "",
+weight_kg: "",
+alternatives: "",
+notes: ""
 });
 
-// Export new Excel
-let newSheet = XLSX.utils.json_to_sheet(json);
+});
+
+// EXPORT
+let newSheet = XLSX.utils.json_to_sheet(output);
 let newBook = XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(newBook, newSheet, "Converted");
+XLSX.utils.book_append_sheet(newBook, newSheet, "Formatted");
 
-XLSX.writeFile(newBook, "converted_en.xlsx");
+XLSX.writeFile(newBook, "formatted_output.xlsx");
 
-alert("Conversion completed!");
+alert("Excel transformed successfully!");
 };
 
 reader.readAsArrayBuffer(file);
 }
 
-// RESET
+// ===== RESET =====
 function resetTable(){
 document.getElementById("search").value="";
 searchGrade();
 }
 
-// CLEAR
+// ===== CLEAR =====
 function clearCustom(){
 if(confirm("Delete ALL data?")){
 localStorage.removeItem("steelData");
