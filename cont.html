@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Admin Panel</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#f5f5f3;--surface:#fff;--surface2:#ebebea;--border:#e5e5e3;--border2:#d0d0cc;--text:#1a1a1a;--text2:#555;--text3:#888;--text4:#bbb;--blue:#185FA5;--blue-bg:#E6F1FB;--blue-light:#B5D4F4;--green:#1D9E75;--green-bg:#E1F5EE;--green-text:#0F6E56;--red:#E24B4A;--red-bg:#FCEBEB;--red-text:#A32D2D;--amber:#EF9F27;--amber-bg:#FAEEDA;--amber-text:#854F0B;--sidebar-w:200px;}
+[data-theme="dark"]{--bg:#111110;--surface:#1c1c1a;--surface2:#252523;--border:#2e2e2c;--border2:#3a3a38;--text:#f0f0ee;--text2:#c0c0bc;--text3:#888;--text4:#555;--blue:#378ADD;--blue-bg:#0C2A45;--blue-light:#185FA5;--green:#1D9E75;--green-bg:#0a2e22;--green-text:#5DCAA5;--red:#E24B4A;--red-bg:#2e0f0f;--red-text:#f09595;--amber:#EF9F27;--amber-bg:#2e1f05;--amber-text:#FAC775;}
+*{box-sizing:border-box;margin:0;padding:0;transition:background-color 0.2s,color 0.15s}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* Auth screen (only shown if not logged in as admin) */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.auth-card{background:var(--surface);border-radius:16px;border:1px solid var(--border);padding:28px;width:100%;max-width:340px}
+.auth-logo{font-size:18px;font-weight:700;color:var(--blue);margin-bottom:4px}
+.auth-sub{font-size:13px;color:var(--text3);margin-bottom:20px}
+.form-row{margin-bottom:10px}
+.form-label{font-size:12px;color:var(--text3);margin-bottom:3px;display:block}
+.form-input{width:100%;height:38px;border:1px solid var(--border2);border-radius:8px;padding:0 11px;font-size:13px;background:var(--surface);color:var(--text);font-family:inherit;outline:none}
+.form-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+.auth-btn{width:100%;height:40px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--blue);color:#fff;margin-top:4px}
+.auth-btn:hover{opacity:0.9}.auth-btn:disabled{opacity:0.5;cursor:not-allowed}
+.auth-msg{font-size:12px;margin-top:10px;padding:8px;border-radius:6px;text-align:center}
+.auth-msg.error{background:var(--red-bg);color:var(--red-text)}.auth-msg.success{background:var(--green-bg);color:var(--green-text)}
+
+/* App layout with sidebar */
+#app{display:none}
+.app-layout{display:flex;min-height:100vh}
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:150;transition:transform 0.25s}
+.sidebar-logo{padding:16px 14px 12px;border-bottom:1px solid var(--border)}
+.sidebar-logo-text{font-size:15px;font-weight:700;color:var(--blue)}
+.sidebar-logo-sub{font-size:10px;color:var(--text4);margin-top:1px}
+.sidebar-nav{flex:1;overflow-y:auto;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;font-size:13px;color:var(--text2);text-decoration:none;cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:inherit}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--blue-bg);color:var(--blue);font-weight:600}
+.nav-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.nav-section{font-size:9px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:0.6px;padding:10px 14px 4px}
+.sidebar-footer{padding:10px 14px;border-top:1px solid var(--border)}
+.user-info{font-size:11px;color:var(--text3);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admin-badge-sb{font-size:10px;font-weight:700;background:var(--amber-bg);color:var(--amber-text);padding:2px 6px;border-radius:20px;display:inline-block;margin-bottom:6px}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:140}
+@media(max-width:768px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.sidebar-overlay.open{display:block}.main-content{margin-left:0!important}}
+.main-content{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 14px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:8px}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.menu-btn{width:32px;height:32px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:16px;display:none;align-items:center;justify-content:center}
+@media(max-width:768px){.menu-btn{display:flex}}
+.page-title{font-size:15px;font-weight:600;color:var(--text)}
+.hbtn{height:30px;padding:0 10px;border:1px solid var(--border2);border-radius:7px;font-size:12px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;white-space:nowrap}
+.hbtn:hover{background:var(--surface2)}.hbtn-blue{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}.hbtn-blue:hover{background:var(--blue);color:#fff}
+main{padding:14px;max-width:1000px;margin:0 auto;width:100%}
+.section{background:var(--surface);border-radius:12px;border:1px solid var(--border);margin-bottom:16px;overflow:hidden}
+.section-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.section-title{font-size:14px;font-weight:600;color:var(--text)}
+.section-sub{font-size:12px;color:var(--text3)}
+.user-table{width:100%;border-collapse:collapse;font-size:13px}
+.user-table th{background:var(--surface2);color:var(--text3);font-weight:600;padding:9px 14px;text-align:left;border-bottom:1px solid var(--border)}
+.user-table td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text2)}
+.user-table tr:last-child td{border-bottom:none}.user-table tr:hover td{background:var(--surface2)}
+.user-email{font-weight:500;color:var(--text)}
+.status-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.status-active{background:var(--green-bg);color:var(--green-text)}
+.status-disabled{background:var(--red-bg);color:var(--red-text)}
+.admin-tag{font-size:10px;font-weight:700;background:var(--amber-bg);color:var(--amber-text);padding:2px 6px;border-radius:20px;margin-left:6px}
+.action-btn{height:26px;padding:0 10px;border:1px solid var(--border);border-radius:6px;font-size:11px;background:transparent;color:var(--text2);cursor:pointer;font-family:inherit;margin-right:4px}
+.action-btn:hover{background:var(--surface2)}.action-btn.danger{border-color:var(--red);color:var(--red-text)}.action-btn.danger:hover{background:var(--red-bg)}.action-btn.promote{border-color:var(--amber);color:var(--amber-text)}.action-btn.promote:hover{background:var(--amber-bg)}
+.invite-form{padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.invite-form .form-row{margin:0;flex:1;min-width:180px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;padding:14px 16px}
+.stat-card{background:var(--surface2);border-radius:8px;padding:10px 14px}
+.stat-label{font-size:10px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px}
+.stat-value{font-size:20px;font-weight:700;color:var(--text)}.stat-sub{font-size:10px;color:var(--text4);margin-top:2px}
+.loading{text-align:center;padding:30px;color:var(--text3)}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-size:13px;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,0.12);display:none}
+.toast.success{border-color:var(--green);color:var(--green-text)}.toast.error{border-color:var(--red);color:var(--red-text)}
+
+/* Lead table */
+.lead-mini-table{width:100%;border-collapse:collapse;font-size:12px}
+.lead-mini-table th{background:var(--surface2);color:var(--text3);font-weight:600;padding:7px 12px;text-align:left;border-bottom:1px solid var(--border)}
+.lead-mini-table td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text2)}
+.lead-mini-table tr:last-child td{border-bottom:none}
+.stage-pill{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600;background:var(--blue-bg);color:var(--blue)}
+.stage-won{background:var(--green-bg);color:var(--green-text)}
+.stage-lost{background:var(--red-bg);color:var(--red-text)}
+</style>
+</head>
+<body>
+
+<!-- AUTH (shown only when not logged in as admin) -->
+<div class="auth-wrap" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">⚙️ Admin Panel</div>
+    <div class="auth-sub">Admin access only</div>
+    <div class="form-row"><label class="form-label">Email</label><input class="form-input" type="email" id="loginEmail" placeholder="admin@company.com" autocomplete="email"></div>
+    <div class="form-row"><label class="form-label">Password</label><input class="form-input" type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="auth-btn" onclick="doLogin()" id="loginBtn">Sign in as Admin</button>
+    <div id="authMsg" style="display:none" class="auth-msg error"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="app-layout">
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-text">Sales Pipeline</div>
+        <div class="sidebar-logo-sub">Steel Trading CRM</div>
+      </div>
+      <div class="sidebar-nav">
+        <div class="nav-section">Pipeline</div>
+        <a href="index.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
+        <a href="offer.html" class="nav-item"><span class="nav-icon">📋</span>Offers</a>
+        <div class="nav-section">Documents</div>
+        <a href="documents.html" class="nav-item"><span class="nav-icon">📄</span>Invoices &amp; Packing</a>
+        <div class="nav-section">Inventory</div>
+        <a href="stock.html" class="nav-item"><span class="nav-icon">📦</span>Stock</a>
+        <div class="nav-section">Tools</div>
+        <a href="tools.html" class="nav-item"><span class="nav-icon">🔧</span>Tools</a>
+        <a href="logistics.html" class="nav-item"><span class="nav-icon">🚢</span>Logistics</a>
+        <a href="news.html" class="nav-item"><span class="nav-icon">📰</span>News</a>
+        <a href="converter.html" class="nav-item"><span class="nav-icon">⚡</span>Grade Converter</a>
+        <a href="cont.html" class="nav-item"><span class="nav-icon">👥</span>Contacts</a>
+        <div class="nav-section">Admin</div>
+        <a href="cont.html" class="nav-item active"><span class="nav-icon">⚙️</span>Admin Panel</a>
+      </div>
+      <div class="sidebar-footer">
+        <div class="admin-badge-sb">Admin</div>
+        <div class="user-info" id="userEmail">—</div>
+        <button class="hbtn" onclick="doLogout()" style="width:100%;margin-bottom:6px">Sign out</button>
+        <button class="hbtn" id="darkBtn" onclick="toggleDark()" style="width:100%">🌙 Dark mode</button>
+      </div>
+    </nav>
+
+    <div class="main-content">
+      <div class="topbar">
+        <div class="topbar-left">
+          <button class="menu-btn" onclick="openSidebar()">☰</button>
+          <span class="page-title">⚙️ Admin Panel</span>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="hbtn hbtn-blue" onclick="loadAll()">↻ Refresh</button>
+        </div>
+      </div>
+
+      <main>
+        <!-- Overview -->
+        <div class="section">
+          <div class="section-header"><span class="section-title">Overview</span></div>
+          <div class="stats-grid" id="overviewStats"><div class="loading">Loading...</div></div>
+        </div>
+
+        <!-- Users -->
+        <div class="section">
+          <div class="section-header">
+            <div><span class="section-title">Users</span><span class="section-sub" style="margin-left:8px">All registered accounts</span></div>
+          </div>
+          <div class="invite-form" style="background:var(--surface2);border-bottom:1px solid var(--border)">
+            <div class="form-row"><label class="form-label">Invite by email</label><input class="form-input" type="email" id="inviteEmail" placeholder="newuser@company.com" style="height:34px;font-size:13px"></div>
+            <div class="form-row" style="min-width:140px"><label class="form-label">Display name</label><input class="form-input" id="inviteName" placeholder="Their name" style="height:34px;font-size:13px"></div>
+            <button class="hbtn hbtn-blue" onclick="copyInviteLink()" style="height:34px;align-self:flex-end">Copy invite link</button>
+          </div>
+          <div id="userTable"><div class="loading">Loading users...</div></div>
+        </div>
+
+        <!-- Profile settings -->
+        <div class="section">
+          <div class="section-header"><span class="section-title">Your profile & contact info</span><span class="section-sub">Shown on exported offers</span></div>
+          <div style="padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="form-row" style="margin:0"><label class="form-label">Display name</label><input class="form-input" id="displayNameInput" placeholder="Your name" style="height:34px;font-size:13px"></div>
+            <div class="form-row" style="margin:0"><label class="form-label">Phone number</label><input class="form-input" id="phoneInput" placeholder="+1 555 000 0000" style="height:34px;font-size:13px"></div>
+            <div class="form-row" style="margin:0;grid-column:1/-1"><label class="form-label">Company / department</label><input class="form-input" id="companyInput" placeholder="e.g. HTT Steel Trading" style="height:34px;font-size:13px"></div>
+          </div>
+          <div style="padding:0 16px 14px"><button class="hbtn hbtn-blue" onclick="saveProfile()">Save profile</button></div>
+        </div>
+
+        <!-- All leads (admin view) -->
+        <div class="section">
+          <div class="section-header">
+            <div><span class="section-title">All leads</span><span class="section-sub" style="margin-left:8px" id="leadsSubtitle">Team pipeline overview</span></div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <input id="leadSearch" class="form-input" placeholder="Search..." style="height:30px;font-size:12px;width:180px" oninput="renderLeadTable()">
+              <select id="leadStageFilter" class="form-input" style="height:30px;font-size:12px;width:160px" onchange="renderLeadTable()">
+                <option value="">All stages</option>
+                <option>Lead / Prospect</option><option>Contacted</option><option>Proposal Sent</option>
+                <option>Negotiation</option><option>Closed Won</option><option>Closed Lost</option>
+              </select>
+              <select id="leadUserFilter" class="form-input" style="height:30px;font-size:12px;width:180px" onchange="renderLeadTable()">
+                <option value="">All users</option>
+              </select>
+            </div>
+          </div>
+          <div style="overflow-x:auto"><div id="allLeadsTable"><div class="loading">Loading leads...</div></div></div>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL='https://fmmfofjkebdsrnkchrfo.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtbWZvZmprZWJkc3Jua2NocmZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDAxNDIsImV4cCI6MjA5MjA3NjE0Mn0.bQQJt06mucLCQCrY1NgN-ed2ngDeRLmITmOfQCAM7ZU';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+let currentUser=null,profiles=[],allLeads=[];
+
+function toggleDark(){const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',t);document.getElementById('darkBtn').textContent=t==='dark'?'☀️ Light mode':'🌙 Dark mode';localStorage.setItem('theme',t);}
+(()=>{const s=localStorage.getItem('theme')||'light';document.documentElement.setAttribute('data-theme',s);if(s==='dark')setTimeout(()=>document.getElementById('darkBtn').textContent='☀️ Light mode',0);})();
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sidebarOverlay').classList.add('open');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('open');}
+function toast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'success');t.style.display='block';setTimeout(()=>t.style.display='none',3000);}
+function showMsg(m,t){const e=document.getElementById('authMsg');e.textContent=m;e.className='auth-msg '+(t||'error');e.style.display='block';}
+
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPassword').value;
+  if(!email||!pass)return showMsg('Please fill in all fields.');
+  const btn=document.getElementById('loginBtn');btn.disabled=true;btn.textContent='Signing in...';
+  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  btn.disabled=false;btn.textContent='Sign in as Admin';
+  if(error)return showMsg(error.message);
+  const {data:profile}=await sb.from('profiles').select('is_admin').eq('id',data.user.id).single();
+  if(!profile?.is_admin){await sb.auth.signOut();return showMsg('Admin access only.');}
+  enterAdmin(data.user);
+}
+async function doLogout(){await sb.auth.signOut();window.location.href='index.html';}
+
+// Auto-login if already authenticated as admin
+sb.auth.getSession().then(async({data:{session}})=>{
+  if(session){
+    const {data:profile}=await sb.from('profiles').select('is_admin').eq('id',session.user.id).single();
+    if(profile?.is_admin) enterAdmin(session.user);
+    // If logged in but not admin, show login form with message
+    else showMsg('You are not an admin.','error');
+  }
+});
+
+function enterAdmin(user){
+  currentUser=user;
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('userEmail').textContent=user.email;
+  loadAll();
+}
+
+async function loadAll(){
+  await Promise.all([loadProfiles(),loadStats(),loadAllLeads()]);
+}
+
+async function loadProfiles(){
+  const {data,error}=await sb.from('profiles').select('*').order('created_at',{ascending:true});
+  if(error){document.getElementById('userTable').innerHTML='<div class="loading">Error: '+error.message+'</div>';return;}
+  profiles=data||[];
+  renderUsers();
+  const me=profiles.find(p=>p.id===currentUser?.id);
+  if(me){
+    document.getElementById('displayNameInput').value=me.display_name||me.full_name||'';
+    document.getElementById('phoneInput').value=me.phone||'';
+    document.getElementById('companyInput').value=me.company||'';
+  }
+}
+
+async function loadStats(){
+  const [{data:l},{data:s,count:sc},{count:u}]=await Promise.all([
+    sb.from('leads').select('stage,value,user_email'),
+    sb.from('stock').select('id',{count:'exact',head:true}),
+    sb.from('profiles').select('id',{count:'exact',head:true}),
+  ]);
+  const ldata=l||[];
+  const won=ldata.filter(x=>x.stage==='Closed Won');
+  const totalRev=won.reduce((s,x)=>s+Number(x.value||0),0);
+  const userCount=profiles.length||u||0;
+  document.getElementById('overviewStats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Users</div><div class="stat-value">${userCount}</div><div class="stat-sub">registered accounts</div></div>
+    <div class="stat-card"><div class="stat-label">Total leads</div><div class="stat-value">${ldata.length}</div><div class="stat-sub">${ldata.filter(x=>x.stage!=='Closed Won'&&x.stage!=='Closed Lost').length} active</div></div>
+    <div class="stat-card"><div class="stat-label">Closed won</div><div class="stat-value">${won.length}</div><div class="stat-sub">$${Number(totalRev).toLocaleString()}</div></div>
+    <div class="stat-card"><div class="stat-label">Stock items</div><div class="stat-value">${sc||0}</div><div class="stat-sub">in database</div></div>
+  `;
+}
+
+async function loadAllLeads(){
+  const {data}=await sb.from('leads').select('*').order('created_at',{ascending:false});
+  allLeads=data||[];
+  // Populate user filter
+  const users=[...new Set(allLeads.map(l=>l.user_email).filter(Boolean))];
+  const sel=document.getElementById('leadUserFilter');
+  sel.innerHTML='<option value="">All users</option>';
+  users.forEach(u=>{const o=document.createElement('option');o.value=u;o.textContent=u;sel.appendChild(o);});
+  document.getElementById('leadsSubtitle').textContent=`${allLeads.length} leads across all users`;
+  renderLeadTable();
+}
+
+function renderLeadTable(){
+  const q=(document.getElementById('leadSearch').value||'').toLowerCase();
+  const stage=document.getElementById('leadStageFilter').value;
+  const user=document.getElementById('leadUserFilter').value;
+  const fl=allLeads.filter(l=>{
+    const mq=!q||l.name.toLowerCase().includes(q)||l.company.toLowerCase().includes(q)||(l.owner||'').toLowerCase().includes(q);
+    return mq&&(!stage||l.stage===stage)&&(!user||l.user_email===user);
+  });
+  if(!fl.length){document.getElementById('allLeadsTable').innerHTML='<div class="loading">No leads match filters</div>';return;}
+  document.getElementById('allLeadsTable').innerHTML=`<table class="lead-mini-table">
+    <thead><tr><th>Contact</th><th>Company</th><th>Owner</th><th>Stage</th><th>Value</th><th>User</th><th>Deadline</th></tr></thead>
+    <tbody>${fl.map(l=>{
+      const stageCls=l.stage==='Closed Won'?'stage-won':l.stage==='Closed Lost'?'stage-lost':'';
+      return`<tr>
+        <td><strong>${l.name}</strong></td>
+        <td>${l.company}</td>
+        <td>${l.owner||'—'}</td>
+        <td><span class="stage-pill ${stageCls}">${l.stage}</span></td>
+        <td>$${Number(l.value||0).toLocaleString()}</td>
+        <td style="font-size:11px;color:var(--text3)">${l.user_email||'—'}</td>
+        <td style="font-size:11px">${l.deadline||'—'}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+function renderUsers(){
+  if(!profiles.length){document.getElementById('userTable').innerHTML='<div class="loading">No users found</div>';return;}
+  document.getElementById('userTable').innerHTML=`<table class="user-table">
+    <thead><tr><th>Email</th><th>Display name</th><th>Status</th><th>Role</th><th>Joined</th><th>Actions</th></tr></thead>
+    <tbody>${profiles.map(p=>`<tr>
+      <td><span class="user-email">${p.email||'—'}</span></td>
+      <td>${p.display_name||p.full_name||'—'}</td>
+      <td><span class="status-badge ${p.disabled?'status-disabled':'status-active'}">${p.disabled?'Disabled':'Active'}</span></td>
+      <td>${p.is_admin?'<span class="admin-tag">Admin</span>':'User'}</td>
+      <td style="font-size:11px;color:var(--text3)">${p.created_at?new Date(p.created_at).toLocaleDateString('en-GB'):'—'}</td>
+      <td>${p.id!==currentUser?.id?`
+        <button class="action-btn ${p.disabled?'':'danger'}" onclick="${p.disabled?`enableUser('${p.id}')`:`disableUser('${p.id}')`}">${p.disabled?'Enable':'Disable'}</button>
+        <button class="action-btn promote" onclick="${p.is_admin?`removeAdmin('${p.id}')`:`makeAdmin('${p.id}')`}">${p.is_admin?'Remove admin':'Make admin'}</button>
+      `:'<span style="font-size:11px;color:var(--text4)">(you)</span>'}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+async function disableUser(id){if(!confirm('Disable this user?'))return;const{error}=await sb.from('profiles').update({disabled:true}).eq('id',id);if(error)toast('Error: '+error.message,'error');else{toast('User disabled');loadProfiles();}}
+async function enableUser(id){const{error}=await sb.from('profiles').update({disabled:false}).eq('id',id);if(error)toast('Error: '+error.message,'error');else{toast('User enabled');loadProfiles();}}
+async function makeAdmin(id){if(!confirm('Grant admin access?'))return;const{error}=await sb.from('profiles').update({is_admin:true}).eq('id',id);if(error)toast('Error: '+error.message,'error');else{toast('Admin access granted');loadProfiles();}}
+async function removeAdmin(id){if(!confirm('Remove admin access?'))return;const{error}=await sb.from('profiles').update({is_admin:false}).eq('id',id);if(error)toast('Error: '+error.message,'error');else{toast('Admin removed');loadProfiles();}}
+
+async function saveProfile(){
+  const name=document.getElementById('displayNameInput').value.trim();
+  const phone=document.getElementById('phoneInput').value.trim();
+  const company=document.getElementById('companyInput').value.trim();
+  const{error}=await sb.from('profiles').update({display_name:name,phone,company}).eq('id',currentUser.id);
+  if(error)toast('Error: '+error.message,'error');else toast('Profile saved');
+}
+
+function copyInviteLink(){
+  const email=document.getElementById('inviteEmail').value.trim();
+  const name=document.getElementById('inviteName').value.trim();
+  const url=window.location.origin+window.location.pathname.replace('admin.html','index.html');
+  const msg=`You've been invited to join our Sales Pipeline.\n\nGo to: ${url}\nClick "Create account"\nUse email: ${email}${name?'\nYour name: '+name:''}`;
+  navigator.clipboard.writeText(msg).then(()=>toast('Invite message copied to clipboard')).catch(()=>{alert(msg);});
+}
+</script>
+
+<!-- Floating Grade Converter -->
+<button class="conv-float-btn" onclick="toggleConverter()" title="Grade Converter" style="position:fixed;right:20px;bottom:20px;z-index:500;width:52px;height:52px;border-radius:50%;border:none;background:var(--blue);color:#fff;font-size:20px;cursor:pointer;box-shadow:0 4px 16px rgba(24,95,165,0.4);display:flex;align-items:center;justify-content:center">⚡</button>
+<div id="convOverlay" onclick="toggleConverter()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:490"></div>
+<div id="convPanel" style="position:fixed;right:0;top:0;bottom:0;z-index:600;width:400px;max-width:100vw;background:var(--surface);border-left:1px solid var(--border);box-shadow:-4px 0 24px rgba(0,0,0,0.12);transform:translateX(100%);transition:transform 0.25s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0">
+    <span style="font-size:14px;font-weight:700;color:var(--blue)">⚡ Grade Converter</span>
+    <button onclick="toggleConverter()" style="width:30px;height:30px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center">×</button>
+  </div>
+  <iframe id="convIframe" src="" style="flex:1;border:none;width:100%;display:block" title="Grade Converter"></iframe>
+</div>
+</body>
+</html>
