@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Steel Platform — Control Panel</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f0f0ee;--surface:#fff;--surface2:#ebebea;--surface3:#f6f6f4;
+  --border:#e0e0de;--border2:#cacac6;
+  --text:#111110;--text2:#4a4a48;--text3:#888884;--text4:#bbbbb6;
+  --blue:#1456a0;--blue-bg:#e8f1fb;--blue-mid:#4a8fd4;
+  --green:#15895f;--green-bg:#e2f4ee;--green-text:#0c5e42;
+  --red:#cc3333;--red-bg:#fdeaea;--red-text:#922020;
+  --amber:#c47d00;--amber-bg:#fdf2de;--amber-text:#764900;
+  --purple:#6055c0;--purple-bg:#eeedfb;--purple-text:#3f36a0;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+  --sidebar-w:210px;
+}
+[data-theme="dark"]{
+  --bg:#0d0d0c;--surface:#181817;--surface2:#202020;--surface3:#1b1b1a;
+  --border:#282826;--border2:#343432;
+  --text:#edecea;--text2:#b4b4b0;--text3:#727270;--text4:#424240;
+  --blue:#4a90d9;--blue-bg:#0a1f3a;--blue-mid:#2468b0;
+  --green:#28b488;--green-bg:#082a1e;--green-text:#50c8a0;
+  --red:#e04848;--red-bg:#280c0c;--red-text:#ee8888;
+  --amber:#f0a820;--amber-bg:#281a00;--amber-text:#f8c860;
+  --purple:#9088e0;--purple-bg:#181538;--purple-text:#b0a8f4;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;font-size:13px}
+#app{display:none}
+
+/* ── AUTH ── */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.auth-card{background:var(--surface);border-radius:18px;border:1px solid var(--border);padding:32px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.1)}
+.auth-logo{font-size:20px;font-weight:700;color:var(--blue);letter-spacing:-.4px}
+.auth-logo-sub{font-size:10px;font-family:var(--mono);color:var(--text4);margin-top:3px;margin-bottom:22px;text-transform:uppercase;letter-spacing:.8px}
+.lbl{font-size:10px;font-weight:700;color:var(--text3);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.inp{width:100%;height:40px;border:1px solid var(--border2);border-radius:8px;padding:0 12px;font-size:13px;background:var(--surface);color:var(--text);font-family:var(--sans);outline:none;transition:border-color .15s,box-shadow .15s}
+.inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+.form-row{margin-bottom:11px}
+.auth-btn{width:100%;height:42px;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--sans);background:var(--blue);color:#fff;margin-top:6px;transition:opacity .15s}
+.auth-btn:hover{opacity:.88}.auth-btn:disabled{opacity:.45;cursor:not-allowed}
+.auth-msg{font-size:12px;margin-top:12px;padding:9px;border-radius:7px;text-align:center;background:var(--red-bg);color:var(--red-text)}
+
+/* ── LAYOUT ── */
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:140}
+.sidebar-overlay.open{display:block}
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:150;transition:transform .25s}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main-wrap{margin-left:0!important}.menu-btn{display:flex!important}}
+.sb-logo{padding:18px 16px 13px;border-bottom:1px solid var(--border)}
+.sb-logo-name{font-size:14px;font-weight:700;color:var(--blue)}
+.sb-logo-sub{font-size:9px;font-family:var(--mono);color:var(--text4);margin-top:2px;text-transform:uppercase;letter-spacing:.8px}
+.sb-nav{flex:1;overflow-y:auto;padding:8px 0}
+.nav-sec{font-size:9px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.8px;padding:12px 16px 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 16px;font-size:13px;color:var(--text2);cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:var(--sans);transition:background .12s,color .12s;text-decoration:none}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--blue-bg);color:var(--blue);font-weight:600}
+.nav-icon{font-size:14px;width:20px;text-align:center;flex-shrink:0}
+.sb-footer{padding:12px 16px;border-top:1px solid var(--border)}
+.sb-user{font-size:11px;color:var(--text3);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.main-wrap{margin-left:var(--sidebar-w);flex:1;min-width:0}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 14px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:8px}
+.h-left{display:flex;align-items:center;gap:10px}
+.h-title{font-size:14px;font-weight:600}
+.h-right{display:flex;align-items:center;gap:6px}
+.menu-btn{width:34px;height:34px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:16px;display:none;align-items:center;justify-content:center;flex-shrink:0}
+.page-main{padding:16px;max-width:1100px;margin:0 auto}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:34px;padding:0 13px;border:1px solid var(--border2);border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--sans);background:var(--surface);color:var(--text);white-space:nowrap;transition:background .12s,color .12s,border-color .12s}
+.btn:hover{background:var(--surface2)}
+.btn-blue{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}.btn-blue:hover{opacity:.88}
+.btn-red{background:var(--red-bg);color:var(--red-text);border-color:var(--red)}.btn-red:hover{background:var(--red);color:#fff}
+.btn-green{background:var(--green);color:#fff;border-color:var(--green);font-weight:600}.btn-green:hover{opacity:.88}
+.btn-ghost{background:transparent;border-color:var(--border);color:var(--text3)}.btn-ghost:hover{background:var(--surface2);color:var(--text)}
+.btn-amber{background:var(--amber-bg);color:var(--amber-text);border-color:var(--amber)}.btn-amber:hover{background:var(--amber);color:#fff}
+.btn-sm{height:28px;padding:0 10px;font-size:11px;border-radius:7px}
+.btn-xs{height:24px;padding:0 8px;font-size:10px;border-radius:6px}
+
+/* ── CARDS & SECTIONS ── */
+.card{background:var(--surface);border-radius:12px;border:1px solid var(--border);margin-bottom:14px;overflow:hidden}
+.card-hd{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.card-hd-title{font-size:13px;font-weight:700;color:var(--text)}
+.card-hd-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.card-body{padding:16px}
+
+/* ── STATS ── */
+.stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 15px}
+.stat-lbl{font-size:9px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.stat-val{font-size:20px;font-weight:700;font-family:var(--mono)}
+.stat-sub{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* ── USERS TABLE ── */
+.tbl-wrap{overflow-x:auto}
+.utbl{width:100%;border-collapse:collapse;font-size:12px;min-width:700px}
+.utbl th{background:var(--surface2);color:var(--text3);font-weight:700;font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;padding:9px 12px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border)}
+.utbl td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle}
+.utbl tr:last-child td{border-bottom:none}
+.utbl tr:hover td{background:var(--surface3)}
+.utbl tr.editing td{background:var(--blue-bg)}
+.ei{height:28px;border:1px solid var(--blue-mid);border-radius:6px;padding:0 7px;font-size:12px;background:var(--surface);color:var(--text);font-family:var(--sans);outline:none;width:100%;min-width:80px}
+.ei:focus{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-bg)}
+.badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.3px}
+.badge-green{background:var(--green-bg);color:var(--green-text)}
+.badge-red{background:var(--red-bg);color:var(--red-text)}
+.badge-amber{background:var(--amber-bg);color:var(--amber-text)}
+.badge-blue{background:var(--blue-bg);color:var(--blue)}
+.you-tag{font-size:10px;color:var(--text4);font-style:italic}
+
+/* ── INVITE PANEL ── */
+.invite-panel{background:var(--surface2);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.invite-panel .form-row{margin:0;flex:1;min-width:160px}
+.invite-msg-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--text2);font-family:var(--mono);line-height:1.6;white-space:pre-wrap;word-break:break-word;margin-top:10px;display:none}
+
+/* ── LEADS TABLE ── */
+.ltbl{width:100%;border-collapse:collapse;font-size:12px;min-width:700px}
+.ltbl th{background:var(--surface2);color:var(--text3);font-weight:700;font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;padding:9px 12px;text-align:left;border-bottom:1px solid var(--border)}
+.ltbl td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text2)}
+.ltbl tr:last-child td{border-bottom:none}
+.ltbl tr:hover td{background:var(--surface3)}
+.stage-pill{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:700;background:var(--blue-bg);color:var(--blue)}
+.stage-won{background:var(--green-bg);color:var(--green-text)}
+.stage-lost{background:var(--red-bg);color:var(--red-text)}
+
+/* ── PROFILE FORM ── */
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px}
+@media(max-width:600px){.profile-grid{grid-template-columns:1fr}}
+.profile-grid .full-width{grid-column:1/-1}
+.field-hint{font-size:10px;color:var(--text4);margin-top:3px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-size:13px;z-index:999;box-shadow:0 4px 20px rgba(0,0,0,.12);display:none;max-width:320px}
+.toast-ok{border-color:var(--green);color:var(--green-text)}
+.toast-err{border-color:var(--red);color:var(--red-text)}
+
+/* ── MODAL ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:16px}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border-radius:14px;border:1px solid var(--border);padding:22px;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(0,0,0,.15)}
+.modal-title{font-size:15px;font-weight:700;margin-bottom:14px}
+.modal-acts{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+
+/* ── MISC ── */
+.empty{text-align:center;padding:40px;color:var(--text4);font-size:13px}
+.loading-msg{text-align:center;padding:30px;color:var(--text3);font-size:13px}
+.flex-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+</style>
+</head>
+<body>
+
+<!-- ══ AUTH ══ -->
+<div class="auth-wrap" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">Steel Platform</div>
+    <div class="auth-logo-sub">Control Panel</div>
+    <div class="form-row"><label class="lbl">Email</label><input class="inp" type="email" id="loginEmail" placeholder="you@company.com" autocomplete="email" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="form-row"><label class="lbl">Password</label><input class="inp" type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="auth-btn" onclick="doLogin()" id="loginBtn">Sign in</button>
+    <div id="authMsg" style="display:none" class="auth-msg"></div>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app">
+  <div style="display:flex;min-height:100vh">
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <nav class="sidebar" id="sidebar">
+      <div class="sb-logo">
+        <div class="sb-logo-name">Steel Platform</div>
+        <div class="sb-logo-sub">Control Panel</div>
+      </div>
+      <div class="sb-nav">
+        <div class="nav-sec">Navigation</div>
+        <a href="stock.html" class="nav-item"><span class="nav-icon">📦</span>Stock & Offers</a>
+        <a href="index.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
+        <div class="nav-sec" id="adminNavSec" style="display:none">Admin</div>
+        <button class="nav-item active" id="navProfile" onclick="showSection('profile')"><span class="nav-icon">👤</span>My Profile</button>
+        <button class="nav-item" id="navUsers" onclick="showSection('users')" style="display:none"><span class="nav-icon">👥</span>Users</button>
+        <button class="nav-item" id="navLeads" onclick="showSection('leads')" style="display:none"><span class="nav-icon">📈</span>All Leads</button>
+      </div>
+      <div class="sb-footer">
+        <div id="adminBadge" style="display:none;margin-bottom:6px"><span class="badge badge-amber">Admin</span></div>
+        <div class="sb-user" id="userEmail">—</div>
+        <button class="btn btn-ghost btn-sm" style="width:100%;margin-bottom:6px" onclick="doLogout()">Sign out</button>
+        <button class="btn btn-ghost btn-sm" style="width:100%" id="darkBtn" onclick="toggleDark()">🌙 Dark mode</button>
+      </div>
+    </nav>
+
+    <div class="main-wrap">
+      <header>
+        <div class="h-left">
+          <button class="menu-btn" onclick="openSidebar()">☰</button>
+          <span class="h-title" id="pageTitle">My Profile</span>
+        </div>
+        <div class="h-right">
+          <button class="btn btn-ghost btn-sm" id="refreshBtn" onclick="loadAll()" style="display:none">↻ Refresh</button>
+        </div>
+      </header>
+
+      <div class="page-main">
+
+        <!-- ── STATS (admin only) ── -->
+        <div id="secStats" style="display:none">
+          <div class="stats-bar" id="statsBar"></div>
+        </div>
+
+        <!-- ── MY PROFILE ── -->
+        <div id="secProfile">
+          <div class="card">
+            <div class="card-hd">
+              <div>
+                <div class="card-hd-title">My Profile</div>
+                <div class="card-hd-sub">This information appears on your exported offers</div>
+              </div>
+            </div>
+            <div class="profile-grid">
+              <div class="form-row" style="margin:0">
+                <label class="lbl">Full name</label>
+                <input class="inp" id="pFullName" placeholder="e.g. Ahmed Benali">
+                <div class="field-hint">Shown in the "Prepared by" field of every offer</div>
+              </div>
+              <div class="form-row" style="margin:0">
+                <label class="lbl">Phone number</label>
+                <input class="inp" id="pPhone" placeholder="+213 555 000 000">
+              </div>
+              <div class="form-row full-width" style="margin:0">
+                <label class="lbl">Company name</label>
+                <input class="inp" id="pCompanyName" placeholder="e.g. HTT Steel Trading">
+                <div class="field-hint">Shown as the main header on offer PDFs</div>
+              </div>
+              <div class="form-row full-width" style="margin:0">
+                <label class="lbl">Company tagline</label>
+                <input class="inp" id="pCompanySub" placeholder="e.g. Steel Trading · International">
+                <div class="field-hint">Shown as the subtitle under the company name on offer PDFs</div>
+              </div>
+            </div>
+            <div style="padding:0 16px 16px">
+              <button class="btn btn-blue" onclick="saveMyProfile()">Save profile</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── USERS (admin only) ── -->
+        <div id="secUsers" style="display:none">
+          <div class="card">
+            <div class="card-hd">
+              <div>
+                <div class="card-hd-title">Users</div>
+                <div class="card-hd-sub" id="userCount">—</div>
+              </div>
+            </div>
+
+            <!-- Invite bar -->
+            <div class="invite-panel">
+              <div class="form-row">
+                <label class="lbl">Email to invite</label>
+                <input class="inp" type="email" id="inviteEmail" placeholder="newuser@company.com" style="height:34px" oninput="updateInvitePreview()">
+              </div>
+              <div class="form-row">
+                <label class="lbl">Their name</label>
+                <input class="inp" id="inviteName" placeholder="Full name" style="height:34px" oninput="updateInvitePreview()">
+              </div>
+              <button class="btn btn-blue btn-sm" style="height:34px;align-self:flex-end" onclick="copyInvite()">📋 Copy invite message</button>
+            </div>
+            <div class="invite-msg-box" id="invitePreview"></div>
+
+            <!-- Users table -->
+            <div class="tbl-wrap">
+              <div id="userTable"><div class="loading-msg">Loading users…</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── ALL LEADS (admin only) ── -->
+        <div id="secLeads" style="display:none">
+          <div class="card">
+            <div class="card-hd">
+              <div>
+                <div class="card-hd-title">All Leads</div>
+                <div class="card-hd-sub" id="leadsSubtitle">—</div>
+              </div>
+              <div class="flex-row">
+                <input id="leadSearch" class="inp" placeholder="Search…" style="height:30px;width:160px;font-size:12px" oninput="renderLeads()">
+                <select id="leadStage" class="inp" style="height:30px;width:150px;font-size:12px" onchange="renderLeads()">
+                  <option value="">All stages</option>
+                  <option>Lead / Prospect</option><option>Contacted</option><option>Proposal Sent</option>
+                  <option>Negotiation</option><option>Closed Won</option><option>Closed Lost</option>
+                </select>
+                <select id="leadUser" class="inp" style="height:30px;width:160px;font-size:12px" onchange="renderLeads()">
+                  <option value="">All users</option>
+                </select>
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);cursor:pointer;white-space:nowrap">
+                  <input type="checkbox" id="showArchived" onchange="renderLeads()" style="accent-color:var(--blue)"> Show archived
+                </label>
+              </div>
+            </div>
+            <div class="tbl-wrap"><div id="leadsTable"><div class="loading-msg">Loading…</div></div></div>
+          </div>
+        </div>
+
+      </div><!-- /page-main -->
+    </div><!-- /main-wrap -->
+  </div>
+</div>
+
+<!-- ── DELETE USER MODAL — Step 1: review leads ── -->
+<div class="modal-bg" id="deleteModal" style="align-items:flex-start;padding:20px;overflow-y:auto">
+  <div class="modal" style="max-width:680px;width:100%;margin:auto">
+    <div class="modal-title" style="color:var(--red-text)">🗑 Delete user permanently?</div>
+    <div id="deleteUserInfo" style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.7"></div>
+
+    <!-- Leads review table (shown only if user has leads) -->
+    <div id="deleteLeadsSection" style="display:none">
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:8px">
+        This user's leads — choose action for each:
+      </div>
+      <div style="overflow-x:auto;border:1px solid var(--border);border-radius:8px;margin-bottom:14px">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:500px" id="deleteLeadsTable">
+        </table>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="setAllLeadsAction('archive')">Archive all</button>
+        <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:200px">
+          <span style="font-size:12px;color:var(--text3);white-space:nowrap">Reassign all to:</span>
+          <select class="inp" id="reassignAllSelect" style="height:30px;font-size:12px;flex:1">
+            <option value="">— pick user —</option>
+          </select>
+          <button class="btn btn-blue btn-sm" onclick="setAllLeadsAction('reassign')">Apply</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:12px;color:var(--text3);padding:9px 12px;background:var(--red-bg);border-radius:7px;line-height:1.6;margin-bottom:4px">
+      Deleting this user removes their profile and all app access permanently. <strong>This cannot be undone.</strong>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost btn-sm" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn btn-red btn-sm" id="deleteConfirmBtn" onclick="confirmDelete()">Delete permanently</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════
+// CONFIG
+// ══════════════════════════════════
+const SUPABASE_URL = 'https://fmmfofjkebdsrnkchrfo.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtbWZvZmprZWJkc3Jua2NocmZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDAxNDIsImV4cCI6MjA5MjA3NjE0Mn0.bQQJt06mucLCQCrY1NgN-ed2ngDeRLmITmOfQCAM7ZU';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ══════════════════════════════════
+// STATE
+// ══════════════════════════════════
+let currentUser = null, isAdmin = false;
+let profiles = [], allLeads = [];
+let pendingDeleteId = null, editingUserId = null;
+
+// ══════════════════════════════════
+// DARK MODE
+// ══════════════════════════════════
+function toggleDark(){
+  const t = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  document.getElementById('darkBtn').textContent = t==='dark'?'☀️ Light mode':'🌙 Dark mode';
+  localStorage.setItem('sp_theme',t);
+}
+(()=>{
+  const t=localStorage.getItem('sp_theme')||'light';
+  document.documentElement.setAttribute('data-theme',t);
+  setTimeout(()=>{ const b=document.getElementById('darkBtn'); if(b&&t==='dark')b.textContent='☀️ Light mode'; },0);
+})();
+
+// ══════════════════════════════════
+// AUTH
+// ══════════════════════════════════
+function showAuthMsg(m){ const e=document.getElementById('authMsg'); e.textContent=m; e.style.display='block'; }
+
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPassword').value;
+  if(!email||!pass)return showAuthMsg('Please fill in all fields.');
+  const btn=document.getElementById('loginBtn');
+  btn.disabled=true; btn.textContent='Signing in…';
+  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  btn.disabled=false; btn.textContent='Sign in';
+  if(error)return showAuthMsg(error.message);
+  onSignedIn(data.user);
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  currentUser=null; isAdmin=false;
+  document.getElementById('app').style.display='none';
+  document.getElementById('authScreen').style.display='flex';
+}
+
+async function onSignedIn(user){
+  currentUser=user;
+  const {data:prof}=await sb.from('profiles')
+    .select('is_admin,full_name,company_name,company_subtitle,phone')
+    .eq('id',user.id).single();
+  isAdmin=!!prof?.is_admin;
+
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('userEmail').textContent=user.email;
+
+  // Fill profile form with current values
+  document.getElementById('pFullName').value=prof?.full_name||'';
+  document.getElementById('pPhone').value=prof?.phone||'';
+  document.getElementById('pCompanyName').value=prof?.company_name||'';
+  document.getElementById('pCompanySub').value=prof?.company_subtitle||'';
+
+  if(isAdmin){
+    document.getElementById('adminBadge').style.display='block';
+    document.getElementById('adminNavSec').style.display='block';
+    document.getElementById('navUsers').style.display='flex';
+    document.getElementById('navLeads').style.display='flex';
+    document.getElementById('refreshBtn').style.display='inline-flex';
+    loadAll();
+  }
+  // Non-admin only sees profile section (already visible by default)
+}
+
+sb.auth.getSession().then(({data:{session}})=>{ if(session)onSignedIn(session.user); });
+
+// ══════════════════════════════════
+// SECTION SWITCHING
+// ══════════════════════════════════
+function showSection(s){
+  ['profile','users','leads'].forEach(id=>{
+    document.getElementById('sec'+cap(id)).style.display=s===id?'block':'none';
+    document.getElementById('sec'+cap(id)+'Stats')?.();
+  });
+  document.getElementById('secStats').style.display=s==='users'?'block':'none';
+  ['navProfile','navUsers','navLeads'].forEach(id=>{
+    document.getElementById(id)?.classList.toggle('active', id==='nav'+cap(s));
+  });
+  const titles={profile:'My Profile',users:'Users',leads:'All Leads'};
+  document.getElementById('pageTitle').textContent=titles[s]||'';
+  closeSidebar();
+}
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
+// ══════════════════════════════════
+// LOAD ALL DATA
+// ══════════════════════════════════
+async function loadAll(){
+  await Promise.all([loadProfiles(), loadStats(), loadLeads()]);
+}
+
+// ══════════════════════════════════
+// STATS
+// ══════════════════════════════════
+async function loadStats(){
+  const [{data:l},{count:sc},{count:u}]=await Promise.all([
+    sb.from('leads').select('stage,value'),
+    sb.from('stock').select('id',{count:'exact',head:true}),
+    sb.from('profiles').select('id',{count:'exact',head:true}),
+  ]);
+  const ld=l||[];
+  const won=ld.filter(x=>x.stage==='Closed Won');
+  const rev=won.reduce((s,x)=>s+Number(x.value||0),0);
+  const active=ld.filter(x=>x.stage!=='Closed Won'&&x.stage!=='Closed Lost').length;
+  document.getElementById('statsBar').innerHTML=`
+    <div class="stat"><div class="stat-lbl">Users</div><div class="stat-val">${u||0}</div><div class="stat-sub">registered</div></div>
+    <div class="stat"><div class="stat-lbl">Active leads</div><div class="stat-val">${active}</div><div class="stat-sub">${ld.length} total</div></div>
+    <div class="stat"><div class="stat-lbl">Closed won</div><div class="stat-val">${won.length}</div><div class="stat-sub">$${rev.toLocaleString()}</div></div>
+    <div class="stat"><div class="stat-lbl">Stock items</div><div class="stat-val">${sc||0}</div><div class="stat-sub">in database</div></div>
+  `;
+}
+
+// ══════════════════════════════════
+// PROFILES / USERS
+// ══════════════════════════════════
+async function loadProfiles(){
+  const {data,error}=await sb.from('profiles').select('*').order('created_at',{ascending:true});
+  if(error){ toast('Error loading users: '+error.message,'err'); return; }
+  profiles=data||[];
+  document.getElementById('userCount').textContent=`${profiles.length} registered account${profiles.length!==1?'s':''}`;
+  renderUsers();
+}
+
+function renderUsers(){
+  if(!profiles.length){
+    document.getElementById('userTable').innerHTML='<div class="empty">No users found</div>';
+    return;
+  }
+  document.getElementById('userTable').innerHTML=`
+    <table class="utbl">
+      <thead><tr>
+        <th>Email</th>
+        <th>Full name</th>
+        <th>Company</th>
+        <th>Phone</th>
+        <th>Role</th>
+        <th>Status</th>
+        <th>Joined</th>
+        <th style="min-width:180px">Actions</th>
+      </tr></thead>
+      <tbody id="userTbody">${profiles.map(p=>renderUserRow(p)).join('')}</tbody>
+    </table>`;
+}
+
+function renderUserRow(p, editing=false){
+  const isMe = p.id===currentUser?.id;
+  const joined = p.created_at ? new Date(p.created_at).toLocaleDateString('en-GB') : '—';
+
+  if(editing){
+    return `<tr class="editing" id="row_${p.id}">
+      <td style="font-size:11px;color:var(--text3)">${esc(p.email||'—')}</td>
+      <td><input class="ei" id="ei_fn_${p.id}" value="${esc(p.full_name||'')}" placeholder="Full name"></td>
+      <td><input class="ei" id="ei_co_${p.id}" value="${esc(p.company_name||'')}" placeholder="Company"></td>
+      <td><input class="ei" id="ei_ph_${p.id}" value="${esc(p.phone||'')}" placeholder="Phone"></td>
+      <td>
+        <select class="ei" id="ei_role_${p.id}" style="min-width:70px">
+          <option value="0" ${!p.is_admin?'selected':''}>User</option>
+          <option value="1" ${p.is_admin?'selected':''}>Admin</option>
+        </select>
+      </td>
+      <td>
+        <select class="ei" id="ei_status_${p.id}" style="min-width:80px">
+          <option value="0" ${!p.disabled?'selected':''}>Active</option>
+          <option value="1" ${p.disabled?'selected':''}>Disabled</option>
+        </select>
+      </td>
+      <td style="font-size:11px;color:var(--text3)">${joined}</td>
+      <td>
+        <button class="btn btn-green btn-xs" onclick="saveUserEdit('${p.id}')">✓ Save</button>
+        <button class="btn btn-ghost btn-xs" onclick="cancelEdit('${p.id}')">Cancel</button>
+      </td>
+    </tr>`;
+  }
+
+  return `<tr id="row_${p.id}">
+    <td style="font-weight:500;color:var(--text)">${esc(p.email||'—')}${isMe?` <span class="you-tag">(you)</span>`:''}</td>
+    <td>${esc(p.full_name||'—')}</td>
+    <td style="font-size:11px;color:var(--text3)">${esc(p.company_name||'—')}</td>
+    <td style="font-size:11px;color:var(--text3)">${esc(p.phone||'—')}</td>
+    <td>${p.is_admin?`<span class="badge badge-amber">Admin</span>`:`<span style="font-size:11px;color:var(--text3)">User</span>`}</td>
+    <td><span class="badge ${p.disabled?'badge-red':'badge-green'}">${p.disabled?'Disabled':'Active'}</span></td>
+    <td style="font-size:11px;color:var(--text3)">${joined}</td>
+    <td>
+      ${!isMe?`
+        <button class="btn btn-ghost btn-xs" onclick="startEdit('${p.id}')">✏ Edit</button>
+        <button class="btn btn-red btn-xs" onclick="openDeleteModal('${p.id}')">🗑</button>
+      `:`<span class="you-tag">your account</span>`}
+    </td>
+  </tr>`;
+}
+
+function startEdit(id){
+  if(editingUserId && editingUserId!==id) cancelEdit(editingUserId);
+  editingUserId=id;
+  const p=profiles.find(x=>x.id===id); if(!p)return;
+  const row=document.getElementById('row_'+id); if(!row)return;
+  row.outerHTML=renderUserRow(p,true);
+}
+
+function cancelEdit(id){
+  editingUserId=null;
+  const p=profiles.find(x=>x.id===id); if(!p)return;
+  const row=document.getElementById('row_'+id); if(!row)return;
+  row.outerHTML=renderUserRow(p,false);
+}
+
+async function saveUserEdit(id){
+  const full_name=document.getElementById('ei_fn_'+id)?.value.trim()||'';
+  const company_name=document.getElementById('ei_co_'+id)?.value.trim()||'';
+  const phone=document.getElementById('ei_ph_'+id)?.value.trim()||'';
+  const is_admin=document.getElementById('ei_role_'+id)?.value==='1';
+  const disabled=document.getElementById('ei_status_'+id)?.value==='1';
+  const {error}=await sb.from('profiles').update({full_name,company_name,phone,is_admin,disabled}).eq('id',id);
+  if(error){ toast('Save failed: '+error.message,'err'); return; }
+  const idx=profiles.findIndex(x=>x.id===id);
+  if(idx>-1) profiles[idx]={...profiles[idx],full_name,company_name,phone,is_admin,disabled};
+  editingUserId=null;
+  const row=document.getElementById('row_'+id);
+  if(row) row.outerHTML=renderUserRow(profiles[idx],false);
+  toast('User saved');
+}
+
+// ══════════════════════════════════
+// DELETE USER — with leads review
+// ══════════════════════════════════
+let pendingDeleteLeads = []; // [{id, name, company, action:'archive'|'reassign', reassignTo:''}]
+
+async function openDeleteModal(id){
+  const p=profiles.find(x=>x.id===id); if(!p)return;
+  pendingDeleteId=id;
+
+  // Show user info
+  document.getElementById('deleteUserInfo').innerHTML=
+    `You are about to permanently delete:<br><strong style="color:var(--red-text);font-size:14px">${esc(p.email||p.full_name||'this user')}</strong>`;
+
+  // Fetch this user's leads
+  const {data:leads}=await sb.from('leads').select('id,name,company,stage,value').eq('user_id',id).eq('archived',false);
+  pendingDeleteLeads=(leads||[]).map(l=>({...l,action:'archive',reassignTo:''}));
+
+  const leadsSection=document.getElementById('deleteLeadsSection');
+  if(pendingDeleteLeads.length){
+    leadsSection.style.display='block';
+    // Populate reassign dropdowns with other users
+    const others=profiles.filter(x=>x.id!==id&&!x.disabled);
+    const opts='<option value="">— pick user —</option>'+others.map(u=>`<option value="${esc(u.id)}">${esc(u.full_name||u.email||u.id)}</option>`).join('');
+    document.getElementById('reassignAllSelect').innerHTML=opts;
+    renderDeleteLeadsTable(others,opts);
+  } else {
+    leadsSection.style.display='none';
+  }
+
+  document.getElementById('deleteModal').classList.add('open');
+}
+
+function renderDeleteLeadsTable(others, opts){
+  if(!opts){
+    const o=profiles.filter(x=>x.id!==pendingDeleteId&&!x.disabled);
+    opts='<option value="">— pick user —</option>'+o.map(u=>`<option value="${esc(u.id)}">${esc(u.full_name||u.email||u.id)}</option>`).join('');
+  }
+  document.getElementById('deleteLeadsTable').innerHTML=`
+    <thead><tr style="background:var(--surface2)">
+      <th style="padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);border-bottom:1px solid var(--border)">Lead</th>
+      <th style="padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);border-bottom:1px solid var(--border)">Stage</th>
+      <th style="padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);border-bottom:1px solid var(--border)">Action</th>
+      <th style="padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);border-bottom:1px solid var(--border)">Reassign to</th>
+    </tr></thead>
+    <tbody>${pendingDeleteLeads.map((l,i)=>`
+      <tr style="${i%2===0?'':'background:var(--surface3)'}">
+        <td style="padding:8px 10px;border-bottom:1px solid var(--border)">
+          <strong style="font-size:12px">${esc(l.name||'—')}</strong>
+          <div style="font-size:10px;color:var(--text3)">${esc(l.company||'')} · $${Number(l.value||0).toLocaleString()}</div>
+        </td>
+        <td style="padding:8px 10px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text3)">${esc(l.stage||'—')}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid var(--border)">
+          <div style="display:flex;border:1px solid var(--border2);border-radius:6px;overflow:hidden;width:fit-content">
+            <button onclick="setLeadAction(${i},'archive')" id="lact_arc_${i}"
+              style="padding:4px 10px;border:none;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans);background:${l.action==='archive'?'var(--amber)':'var(--surface)'};color:${l.action==='archive'?'#fff':'var(--text3)'}">
+              Archive
+            </button>
+            <button onclick="setLeadAction(${i},'reassign')" id="lact_res_${i}"
+              style="padding:4px 10px;border:none;border-left:1px solid var(--border2);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans);background:${l.action==='reassign'?'var(--blue)':'var(--surface)'};color:${l.action==='reassign'?'#fff':'var(--text3)'}">
+              Reassign
+            </button>
+          </div>
+        </td>
+        <td style="padding:8px 10px;border-bottom:1px solid var(--border)">
+          <select class="inp" style="height:28px;font-size:11px;${l.action!=='reassign'?'opacity:.35;pointer-events:none':''}" id="lrto_${i}" onchange="setLeadReassignTo(${i},this.value)">
+            ${opts.replace(`value="${esc(l.reassignTo)}"`,`value="${esc(l.reassignTo)}" selected`)}
+          </select>
+        </td>
+      </tr>`).join('')}
+    </tbody>`;
+}
+
+function setLeadAction(i, action){
+  pendingDeleteLeads[i].action=action;
+  renderDeleteLeadsTable();
+}
+function setLeadReassignTo(i, val){
+  pendingDeleteLeads[i].reassignTo=val;
+}
+function setAllLeadsAction(action){
+  const reassignTo=action==='reassign'?document.getElementById('reassignAllSelect').value:'';
+  if(action==='reassign'&&!reassignTo){ toast('Pick a user to reassign to first','err'); return; }
+  pendingDeleteLeads.forEach(l=>{ l.action=action; if(action==='reassign')l.reassignTo=reassignTo; });
+  renderDeleteLeadsTable();
+}
+
+function closeDeleteModal(){
+  document.getElementById('deleteModal').classList.remove('open');
+  pendingDeleteId=null; pendingDeleteLeads=[];
+}
+
+async function confirmDelete(){
+  if(!pendingDeleteId)return;
+
+  // Validate: reassign actions must have a target user
+  const incomplete=pendingDeleteLeads.filter(l=>l.action==='reassign'&&!l.reassignTo);
+  if(incomplete.length){ toast(`${incomplete.length} lead(s) marked Reassign but no user selected`,'err'); return; }
+
+  const btn=document.getElementById('deleteConfirmBtn');
+  btn.disabled=true; btn.textContent='Processing…';
+
+  // Process each lead
+  for(const l of pendingDeleteLeads){
+    if(l.action==='archive'){
+      await sb.from('leads').update({archived:true,archived_at:new Date().toISOString(),user_id:null}).eq('id',l.id);
+    } else if(l.action==='reassign'){
+      const target=profiles.find(x=>x.id===l.reassignTo);
+      await sb.from('leads').update({user_id:l.reassignTo,user_email:target?.email||null}).eq('id',l.id);
+    }
+  }
+
+  // Delete profile
+  const {error}=await sb.from('profiles').delete().eq('id',pendingDeleteId);
+  if(error){ toast('Delete failed: '+error.message,'err'); btn.disabled=false; btn.textContent='Delete permanently'; return; }
+
+  profiles=profiles.filter(x=>x.id!==pendingDeleteId);
+  btn.disabled=false; btn.textContent='Delete permanently';
+  closeDeleteModal();
+  renderUsers();
+  await loadLeads();
+  toast('User deleted and leads processed ✓');
+}
+
+// ══════════════════════════════════
+// INVITE
+// ══════════════════════════════════
+function updateInvitePreview(){
+  const email=document.getElementById('inviteEmail').value.trim();
+  const name=document.getElementById('inviteName').value.trim();
+  const box=document.getElementById('invitePreview');
+  if(!email){ box.style.display='none'; return; }
+  const appUrl=window.location.origin+window.location.pathname.replace('cont.html','stock.html');
+  const msg=`You have been invited to join the Steel Platform.\n\nTo get started:\n1. Go to: ${appUrl}\n2. Click "Create account" and sign up\n3. Use this email: ${email}${name?'\n4. Your name: '+name:''}\n\nOnce registered, fill in your profile in the Control Panel.`;
+  box.style.display='block';
+  box.textContent=msg;
+}
+
+function copyInvite(){
+  const email=document.getElementById('inviteEmail').value.trim();
+  if(!email){ toast('Enter an email address first','err'); return; }
+  const name=document.getElementById('inviteName').value.trim();
+  const appUrl=window.location.origin+window.location.pathname.replace('cont.html','stock.html');
+  const msg=`You have been invited to join the Steel Platform.\n\nTo get started:\n1. Go to: ${appUrl}\n2. Click "Create account" and sign up\n3. Use this email: ${email}${name?'\n4. Your name: '+name:''}\n\nOnce registered, fill in your profile in the Control Panel.`;
+  navigator.clipboard.writeText(msg)
+    .then(()=>toast('Invite message copied to clipboard ✓'))
+    .catch(()=>{ alert(msg); });
+}
+
+// ══════════════════════════════════
+// MY PROFILE
+// ══════════════════════════════════
+async function saveMyProfile(){
+  const full_name=document.getElementById('pFullName').value.trim();
+  const phone=document.getElementById('pPhone').value.trim();
+  const company_name=document.getElementById('pCompanyName').value.trim();
+  const company_subtitle=document.getElementById('pCompanySub').value.trim();
+  const {error}=await sb.from('profiles').update({full_name,phone,company_name,company_subtitle}).eq('id',currentUser.id);
+  if(error){ toast('Save failed: '+error.message,'err'); return; }
+  toast('Profile saved ✓');
+}
+
+// ══════════════════════════════════
+// LEADS
+// ══════════════════════════════════
+async function loadLeads(){
+  const {data}=await sb.from('leads').select('*').order('created_at',{ascending:false});
+  allLeads=data||[];
+  const active=allLeads.filter(l=>!l.archived);
+  document.getElementById('leadsSubtitle').textContent=`${active.length} active · ${allLeads.filter(l=>l.archived).length} archived`;
+  const users=[...new Set(allLeads.map(l=>l.user_email).filter(Boolean))];
+  const sel=document.getElementById('leadUser');
+  sel.innerHTML='<option value="">All users</option>'+users.map(u=>`<option value="${esc(u)}">${esc(u)}</option>`).join('');
+  renderLeads();
+}
+
+function renderLeads(){
+  const q=(document.getElementById('leadSearch').value||'').toLowerCase();
+  const stage=document.getElementById('leadStage').value;
+  const user=document.getElementById('leadUser').value;
+  const showArchived=document.getElementById('showArchived')?.checked;
+  const fl=allLeads.filter(l=>{
+    if(!showArchived && l.archived) return false;
+    if(showArchived && !l.archived) return false;
+    const mq=!q||(l.name||'').toLowerCase().includes(q)||(l.company||'').toLowerCase().includes(q)||(l.owner||'').toLowerCase().includes(q);
+    return mq&&(!stage||l.stage===stage)&&(!user||l.user_email===user);
+  });
+  if(!fl.length){ document.getElementById('leadsTable').innerHTML=`<div class="empty">${showArchived?'No archived leads':'No active leads match filters'}</div>`; return; }
+  document.getElementById('leadsTable').innerHTML=`
+    <table class="ltbl">
+      <thead><tr>
+        <th>Contact</th><th>Company</th><th>Owner</th><th>Stage</th><th>Value</th>
+        <th>${showArchived?'Original user':'User'}</th><th>Deadline</th>
+        ${showArchived?'<th>Archived</th>':''}
+      </tr></thead>
+      <tbody>${fl.map(l=>{
+        const sc=l.stage==='Closed Won'?'stage-won':l.stage==='Closed Lost'?'stage-lost':'';
+        const userDisplay=l.user_email||(l.original_user_email?`${esc(l.original_user_email)} <span style="font-size:9px;color:var(--text4)">(deleted)</span>`:'—');
+        return`<tr>
+          <td><strong>${esc(l.name||'—')}</strong></td>
+          <td>${esc(l.company||'—')}</td>
+          <td>${esc(l.owner||'—')}</td>
+          <td><span class="stage-pill ${sc}">${esc(l.stage||'—')}</span></td>
+          <td>$${Number(l.value||0).toLocaleString()}</td>
+          <td style="font-size:11px;color:var(--text3)">${userDisplay}</td>
+          <td style="font-size:11px">${l.deadline||'—'}</td>
+          ${showArchived?`<td style="font-size:10px;color:var(--text4)">${l.archived_at?new Date(l.archived_at).toLocaleDateString('en-GB'):'—'}</td>`:''}
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+}
+
+// ══════════════════════════════════
+// SIDEBAR
+// ══════════════════════════════════
+function openSidebar(){ document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('open'); }
+function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('open'); }
+
+// ══════════════════════════════════
+// UTILS
+// ══════════════════════════════════
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function toast(msg, type='ok'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='toast '+(type==='err'?'toast-err':'toast-ok');
+  t.style.display='block';
+  clearTimeout(t._t);
+  t._t=setTimeout(()=>t.style.display='none',3000);
+}
+</script>
+
+<!-- Floating Grade Converter -->
+<button onclick="toggleConverter()" title="Grade Converter" style="position:fixed;right:20px;bottom:20px;z-index:500;width:52px;height:52px;border-radius:50%;border:none;background:var(--blue);color:#fff;font-size:20px;cursor:pointer;box-shadow:0 4px 16px rgba(20,86,160,.4);display:flex;align-items:center;justify-content:center">⚡</button>
+<div id="convOverlay" onclick="toggleConverter()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.2);z-index:490"></div>
+<div id="convPanel" style="position:fixed;right:0;top:0;bottom:0;z-index:600;width:400px;max-width:100vw;background:var(--surface);border-left:1px solid var(--border);box-shadow:-4px 0 24px rgba(0,0,0,.12);transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0">
+    <span style="font-size:14px;font-weight:700;color:var(--blue)">⚡ Grade Converter</span>
+    <button onclick="toggleConverter()" style="width:30px;height:30px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center">×</button>
+  </div>
+  <iframe id="convIframe" src="" style="flex:1;border:none;width:100%;display:block" title="Grade Converter"></iframe>
+</div>
+<script>
+function toggleConverter(){
+  const p=document.getElementById('convPanel'),o=document.getElementById('convOverlay'),f=document.getElementById('convIframe');
+  const open=p.style.transform==='translateX(0%)';
+  p.style.transform=open?'translateX(100%)':'translateX(0%)';
+  o.style.display=open?'none':'block';
+  if(!open&&!f.src) f.src='converter.html';
+}
+</script>
+</body>
+</html>
