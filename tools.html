@@ -108,7 +108,18 @@ select.form-input{cursor:pointer}
 .thickness-check-row{display:flex;gap:8px;margin-bottom:14px;align-items:flex-end}
 .thickness-check-row .form-input{max-width:160px;flex-shrink:0}
 
-/* ── Floating Converter ── */
+/* ── Cutting Visual ── */
+.cut-bar-wrap{margin-bottom:10px}
+.cut-bar-label{font-size:11px;color:var(--text3);margin-bottom:3px;font-weight:600}
+.cut-bar-track{height:28px;border-radius:6px;overflow:hidden;display:flex;background:var(--surface2);border:1px solid var(--border)}
+.cut-seg{height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;overflow:hidden;white-space:nowrap;transition:opacity 0.15s}
+.cut-seg:hover{opacity:0.82;cursor:default}
+.cut-seg-waste{background:var(--border2);color:var(--text3)}
+.cut-seg-offcut{background:var(--amber);color:#fff}
+.cut-legend{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
+.cut-legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.cut-legend-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+
 .conv-float-btn{
   position:fixed;right:20px;bottom:20px;z-index:500;
   width:52px;height:52px;border-radius:50%;border:none;
@@ -195,6 +206,7 @@ select.form-input{cursor:pointer}
       <button class="tool-tab" onclick="showTool('price',this)">💰 Price Calculator</button>
       <button class="tool-tab" onclick="showTool('container',this)">🚢 Container Load</button>
       <button class="tool-tab" onclick="showTool('tolerance',this)">📐 Tolerance</button>
+      <button class="tool-tab" onclick="showTool('cutting',this)">✂️ Cutting Optimization</button>
     </div>
 
     <!-- ── Weight Calculator ── -->
@@ -510,6 +522,49 @@ select.form-input{cursor:pointer}
         <p class="tol-note" id="tol-note"></p>
       </div>
     </div>
+    <!-- ── Cutting Optimization ── -->
+    <div class="tool-section" id="tool-cutting">
+      <div class="card">
+        <div class="card-title"><span>✂️</span> Cutting Optimization (1D Bar / Sheet)</div>
+        <div class="grid2">
+          <div>
+            <div class="form-row">
+              <label class="form-label">Stock Length (mm)</label>
+              <input class="form-input" type="number" id="cut-stock" placeholder="e.g. 6000" value="6000" min="1" oninput="cutRender()">
+            </div>
+            <div class="form-row">
+              <label class="form-label">Kerf / Saw Cut Width (mm)</label>
+              <input class="form-input" type="number" id="cut-kerf" placeholder="e.g. 3" value="3" min="0" step="0.5" oninput="cutRender()">
+            </div>
+            <div class="form-row">
+              <label class="form-label">Min Offcut to keep (mm) <span style="font-weight:400;color:var(--text4)">(0 = discard all)</span></label>
+              <input class="form-input" type="number" id="cut-min-offcut" placeholder="e.g. 200" value="200" min="0" oninput="cutRender()">
+            </div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:10px">Cut List — one piece per line: <span style="font-weight:400;color:var(--text2)">length qty (e.g. <code>1500 4</code>)</span></div>
+            <textarea id="cut-list" class="form-input" rows="8" placeholder="1500 4&#10;900 6&#10;2200 2&#10;750 10" style="height:auto;padding:10px;resize:vertical;font-family:monospace;font-size:12px" oninput="cutRender()"></textarea>
+          </div>
+        </div>
+        <button class="calc-btn" onclick="cutOptimize()">✂️ Optimize Cuts</button>
+      </div>
+
+      <!-- Summary result -->
+      <div class="result-panel" id="cut-result">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px">
+          <div class="result-item"><div class="result-label">Bars Needed</div><div class="result-value" id="cut-out-bars" style="font-size:22px">—</div></div>
+          <div class="result-item"><div class="result-label">Material Used</div><div class="result-value" id="cut-out-used" style="font-size:22px">—</div><div class="result-unit">%</div></div>
+          <div class="result-item"><div class="result-label">Total Waste</div><div class="result-value" id="cut-out-waste" style="font-size:22px">—</div><div class="result-unit">mm</div></div>
+          <div class="result-item"><div class="result-label">Usable Offcuts</div><div class="result-value" id="cut-out-offcuts" style="font-size:22px">—</div></div>
+        </div>
+
+        <!-- Visual bar chart -->
+        <div id="cut-visual" style="margin-top:4px"></div>
+
+        <div class="result-formula" id="cut-formula">—</div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -874,7 +929,127 @@ function calcContainer(){
   document.getElementById('cl-result').classList.add('show');
 }
 
-// Init
+
+// ── Cutting Optimization ──
+// Piece colors palette
+const CUT_COLORS = [
+  '#185FA5','#1D9E75','#7F77DD','#E24B4A','#EF9F27',
+  '#0891b2','#7c3aed','#be185d','#15803d','#b45309'
+];
+
+function cutParsePieces(){
+  const lines = (document.getElementById('cut-list').value||'').trim().split('\n');
+  const pieces = [];
+  for(const line of lines){
+    const parts = line.trim().split(/[\s,;x×]+/);
+    if(!parts[0]) continue;
+    const len = parseFloat(parts[0]);
+    const qty = parseInt(parts[1]||'1');
+    if(isNaN(len)||len<=0) continue;
+    for(let i=0;i<(isNaN(qty)||qty<1?1:qty);i++) pieces.push(len);
+  }
+  return pieces;
+}
+
+function cutRender(){ /* live rerender on input change — lightweight */ }
+
+function cutOptimize(){
+  const stock = parseFloat(document.getElementById('cut-stock').value)||0;
+  const kerf  = parseFloat(document.getElementById('cut-kerf').value)||0;
+  const minOffcut = parseFloat(document.getElementById('cut-min-offcut').value)||0;
+  const pieces = cutParsePieces();
+
+  if(!stock || pieces.length===0){
+    document.getElementById('cut-result').classList.remove('show');
+    return;
+  }
+
+  // Validate
+  const tooBig = pieces.filter(p=>p>stock);
+  if(tooBig.length){
+    alert(`Error: ${tooBig.length} piece(s) exceed the stock length (${stock} mm). Largest: ${Math.max(...tooBig)} mm.`);
+    return;
+  }
+
+  // First Fit Decreasing
+  const sorted = [...pieces].sort((a,b)=>b-a);
+  const bars = []; // each bar: { remaining, cuts:[{len,colorIdx}] }
+
+  // Build a unique color map per unique length
+  const uniqueLens = [...new Set(sorted)];
+  const colorMap = {};
+  uniqueLens.forEach((l,i)=>colorMap[l]=CUT_COLORS[i%CUT_COLORS.length]);
+
+  for(const piece of sorted){
+    let placed = false;
+    for(const bar of bars){
+      const need = (bar.cuts.length>0 ? kerf : 0) + piece;
+      if(bar.remaining >= need){
+        bar.remaining -= need;
+        bar.cuts.push({len:piece, color:colorMap[piece]});
+        placed = true;
+        break;
+      }
+    }
+    if(!placed){
+      bars.push({remaining: stock - piece, cuts:[{len:piece, color:colorMap[piece]}]});
+    }
+  }
+
+  // Summarise
+  let totalWaste=0, offcuts=0;
+  for(const bar of bars){
+    if(bar.remaining >= minOffcut && bar.remaining > 0) offcuts++;
+    else totalWaste += bar.remaining;
+  }
+  const totalStock = bars.length * stock;
+  const totalUsed = pieces.reduce((s,p)=>s+p,0) + (pieces.length * kerf);
+  const pctUsed = totalStock>0 ? (totalUsed/totalStock*100) : 0;
+
+  document.getElementById('cut-out-bars').textContent = bars.length;
+  document.getElementById('cut-out-used').textContent = pctUsed.toFixed(1);
+  document.getElementById('cut-out-waste').textContent = totalWaste.toLocaleString();
+  document.getElementById('cut-out-offcuts').textContent = offcuts;
+  document.getElementById('cut-formula').textContent =
+    `${pieces.length} pieces across ${bars.length} bars × ${stock} mm stock · Kerf ${kerf} mm · Efficiency ${pctUsed.toFixed(1)}%`;
+
+  // Visual
+  const vis = document.getElementById('cut-visual');
+  let html = '';
+  bars.forEach((bar,bi)=>{
+    html += `<div class="cut-bar-wrap">`;
+    html += `<div class="cut-bar-label">Bar ${bi+1} — ${bar.cuts.length} cuts, ${bar.remaining} mm remaining</div>`;
+    html += `<div class="cut-bar-track">`;
+    bar.cuts.forEach((seg,si)=>{
+      const pct = (seg.len / stock * 100).toFixed(2);
+      const kerfPct = (kerf / stock * 100).toFixed(2);
+      if(si>0 && kerf>0){
+        html+=`<div class="cut-seg" style="width:${kerfPct}%;background:var(--border2);min-width:2px" title="Kerf ${kerf}mm"></div>`;
+      }
+      html+=`<div class="cut-seg" style="width:${pct}%;background:${seg.color}" title="${seg.len} mm">${seg.len>=200?seg.len+'':''}</div>`;
+    });
+    // offcut or waste
+    if(bar.remaining>0){
+      const remPct = (bar.remaining / stock * 100).toFixed(2);
+      const isOffcut = bar.remaining >= minOffcut;
+      html+=`<div class="cut-seg ${isOffcut?'cut-seg-offcut':'cut-seg-waste'}" style="width:${remPct}%" title="${isOffcut?'Offcut':'Waste'}: ${bar.remaining}mm">${bar.remaining>=150?bar.remaining+'':''}</div>`;
+    }
+    html += `</div></div>`;
+  });
+  // legend
+  html += `<div class="cut-legend">`;
+  uniqueLens.forEach(l=>{
+    const cnt = pieces.filter(p=>p===l).length;
+    html+=`<div class="cut-legend-item"><div class="cut-legend-dot" style="background:${colorMap[l]}"></div>${l} mm × ${cnt}</div>`;
+  });
+  html+=`<div class="cut-legend-item"><div class="cut-legend-dot" style="background:var(--amber)"></div>Offcut (≥${minOffcut} mm)</div>`;
+  html+=`<div class="cut-legend-item"><div class="cut-legend-dot" style="background:var(--border2)"></div>Waste</div>`;
+  html += `</div>`;
+  vis.innerHTML = html;
+
+  document.getElementById('cut-result').classList.add('show');
+}
+
 onTypeChange();
 document.documentElement.setAttribute('data-theme', localStorage.getItem('theme')||'light');
 </script>
