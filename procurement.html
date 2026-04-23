@@ -492,18 +492,24 @@ function openEditPO(id){
 function closePOModal(){document.getElementById('poModal').classList.remove('open');}
 function addPOLine(p={}){
   const id=++poLineId;
-  const tr=document.createElement('tr');tr.id='pol-'+id;
+  const tr=document.createElement('tr');
+  tr.id='pol-'+id;
   tr.innerHTML=
     '<td><input class="li" id="plg-'+id+'" value="'+esc(p.grade||'')+'" placeholder="S235JR" style="min-width:80px"></td>'+
     '<td><input class="li" id="plt-'+id+'" value="'+esc(p.product_type||'')+'" placeholder="Plate" style="width:65px"></td>'+
     '<td><input class="li" id="plthk-'+id+'" type="number" value="'+(p.thickness||'')+'" placeholder="mm" style="width:55px"></td>'+
     '<td><input class="li" id="plw-'+id+'" type="number" value="'+(p.width||'')+'" placeholder="mm" style="width:60px"></td>'+
-    '<td><input class="li" id="plq-'+id+'" type="number" value="'+(p.qty||'')+'" placeholder="0" oninput="recalcPO()" style="width:55px"></td>'+
+    '<td><input class="li" id="plq-'+id+'" type="number" value="'+(p.qty||'')+'" placeholder="0" style="width:55px"></td>'+
     '<td><select class="li" id="plu-'+id+'" style="width:55px"><option '+((!p.unit||p.unit==='ton')?'selected':'')+'>ton</option><option '+(p.unit==='kg'?'selected':'')+'>kg</option><option '+(p.unit==='pcs'?'selected':'')+'>pcs</option></select></td>'+
-    '<td><input class="li" id="plp-'+id+'" type="number" value="'+(p.agreed_price||'')+'" placeholder="0.00" oninput="recalcPO()" style="width:70px"></td>'+
+    '<td><input class="li" id="plp-'+id+'" type="number" value="'+(p.agreed_price||'')+'" placeholder="0.00" style="width:70px"></td>'+
     '<td style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--green-text);white-space:nowrap;padding:4px 6px" id="plt-tot-'+id+'">—</td>'+
-    '<td><button class="del-row-btn" onclick="document.getElementById('pol-'+id+'').remove();recalcPO()">×</button></td>';
+    '<td><button class="del-row-btn">×</button></td>';
+  // Attach events via JS — no inline onclick quoting issues
+  tr.querySelector('.del-row-btn').addEventListener('click',function(){tr.remove();recalcPO();});
+  tr.querySelector('#plq-'+id).addEventListener('input',recalcPO);
+  tr.querySelector('#plp-'+id).addEventListener('input',recalcPO);
   document.getElementById('poLines').appendChild(tr);
+  recalcPO();
 }
 function recalcPO(){
   let total=0;
