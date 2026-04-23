@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Dashboard — Steel Platform</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f0f0ee;--surface:#fff;--surface2:#ebebea;--surface3:#f6f6f4;
+  --border:#e0e0de;--border2:#cacac6;
+  --text:#111110;--text2:#4a4a48;--text3:#888884;--text4:#bbbbb6;
+  --blue:#1456a0;--blue-bg:#e8f1fb;--blue-mid:#4a8fd4;
+  --green:#15895f;--green-bg:#e2f4ee;--green-text:#0c5e42;
+  --red:#cc3333;--red-bg:#fdeaea;--red-text:#922020;
+  --amber:#c47d00;--amber-bg:#fdf2de;--amber-text:#764900;
+  --purple:#6055c0;--purple-bg:#eeedfb;--purple-text:#3f36a0;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+  --sidebar-w:210px;
+}
+[data-theme="dark"]{
+  --bg:#0d0d0c;--surface:#181817;--surface2:#202020;--surface3:#1b1b1a;
+  --border:#282826;--border2:#343432;
+  --text:#edecea;--text2:#b4b4b0;--text3:#727270;--text4:#424240;
+  --blue:#4a90d9;--blue-bg:#0a1f3a;--blue-mid:#2468b0;
+  --green:#28b488;--green-bg:#082a1e;--green-text:#50c8a0;
+  --red:#e04848;--red-bg:#280c0c;--red-text:#ee8888;
+  --amber:#f0a820;--amber-bg:#281a00;--amber-text:#f8c860;
+  --purple:#9088e0;--purple-bg:#181538;--purple-text:#b0a8f4;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;font-size:13px}
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.auth-card{background:var(--surface);border-radius:18px;border:1px solid var(--border);padding:32px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.08)}
+.auth-logo{font-size:20px;font-weight:700;color:var(--blue)}.auth-logo-sub{font-size:10px;font-family:var(--mono);color:var(--text4);margin-top:3px;margin-bottom:22px;text-transform:uppercase;letter-spacing:.8px}
+.lbl{font-size:10px;font-weight:700;color:var(--text3);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.inp{width:100%;height:40px;border:1px solid var(--border2);border-radius:8px;padding:0 12px;font-size:13px;background:var(--surface);color:var(--text);font-family:var(--sans);outline:none;transition:border-color .15s,box-shadow .15s}
+.inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+.form-row{margin-bottom:11px}
+.auth-btn{width:100%;height:42px;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--sans);background:var(--blue);color:#fff;margin-top:6px;transition:opacity .15s}
+.auth-btn:hover{opacity:.88}.auth-btn:disabled{opacity:.45;cursor:not-allowed}
+.auth-msg{font-size:12px;margin-top:12px;padding:9px;border-radius:7px;text-align:center;background:var(--red-bg);color:var(--red-text)}
+#app{display:none}
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:140}.sb-overlay.open{display:block}
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:150;transition:transform .25s}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main-wrap{margin-left:0!important}.menu-btn{display:flex!important}}
+.sb-logo{padding:18px 16px 13px;border-bottom:1px solid var(--border)}
+.sb-logo-name{font-size:14px;font-weight:700;color:var(--blue)}.sb-logo-sub{font-size:9px;font-family:var(--mono);color:var(--text4);margin-top:2px;text-transform:uppercase;letter-spacing:.8px}
+.sb-nav{flex:1;overflow-y:auto;padding:8px 0}
+.nav-sec{font-size:9px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.8px;padding:12px 16px 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 16px;font-size:13px;color:var(--text2);cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:var(--sans);transition:background .12s,color .12s;text-decoration:none}
+.nav-item:hover{background:var(--surface2);color:var(--text)}.nav-item.active{background:var(--blue-bg);color:var(--blue);font-weight:600}
+.nav-icon{font-size:14px;width:20px;text-align:center;flex-shrink:0}
+.sb-footer{padding:12px 16px;border-top:1px solid var(--border)}
+.sb-user{font-size:11px;color:var(--text3);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admin-badge{font-size:9px;font-weight:700;background:var(--amber-bg);color:var(--amber-text);padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px;border:1px solid var(--amber)}
+.main-wrap{margin-left:var(--sidebar-w);flex:1;min-width:0}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 14px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:8px}
+.h-left{display:flex;align-items:center;gap:10px}.h-title{font-size:14px;font-weight:600;color:var(--text)}
+.h-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.menu-btn{width:34px;height:34px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:16px;display:none;align-items:center;justify-content:center;flex-shrink:0}
+.page-body{padding:16px;max-width:1400px;margin:0 auto}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:34px;padding:0 13px;border:1px solid var(--border2);border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--sans);background:var(--surface);color:var(--text);white-space:nowrap;transition:background .12s,color .12s,border-color .12s;text-decoration:none}
+.btn:hover{background:var(--surface2)}.btn-blue{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}.btn-blue:hover{opacity:.88}
+.btn-green{background:var(--green);color:#fff;border-color:var(--green);font-weight:600}.btn-green:hover{opacity:.88}
+.btn-ghost{background:transparent;border-color:var(--border);color:var(--text3)}.btn-ghost:hover{background:var(--surface2);color:var(--text)}
+.btn-sm{height:28px;padding:0 10px;font-size:11px;border-radius:7px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:14px 16px;transition:border-color .15s}
+.kpi:hover{border-color:var(--blue-mid)}
+.kpi-icon{font-size:20px;margin-bottom:8px}
+.kpi-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text4);margin-bottom:5px}
+.kpi-val{font-size:26px;font-weight:700;font-family:var(--mono);line-height:1;color:var(--text)}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:4px}
+/* Quick actions */
+.qa-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+/* Main grid */
+.dash-grid{display:grid;grid-template-columns:1fr 320px;gap:14px}
+@media(max-width:1000px){.dash-grid{grid-template-columns:1fr}}
+/* Charts */
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
+.chart-ttl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+@media(max-width:700px){.charts-row{grid-template-columns:1fr}}
+/* Alerts */
+.alerts-col{display:flex;flex-direction:column;gap:10px}
+.alert-group{background:var(--surface);border:1px solid var(--border);border-radius:11px;overflow:hidden}
+.alert-group-hd{padding:10px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.alert-item{padding:9px 14px;display:flex;align-items:flex-start;gap:10px;border-bottom:1px solid var(--border);cursor:pointer;text-decoration:none;transition:background .12s}
+.alert-item:last-child{border-bottom:none}
+.alert-item:hover{background:var(--surface2)}
+.alert-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.alert-text{font-size:12px;font-weight:600;color:var(--text);line-height:1.3}
+.alert-sub{font-size:10px;color:var(--text3);margin-top:2px}
+.alert-empty{padding:14px;text-align:center;font-size:11px;color:var(--text4)}
+.alert-count{background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:20px}
+.alert-count-amber{background:var(--amber);color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:20px}
+/* Activity feed */
+.feed-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
+.feed-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.feed-item:last-child{border-bottom:none}
+.feed-icon{font-size:14px;flex-shrink:0;width:24px;text-align:center}
+.feed-body{flex:1;min-width:0}
+.feed-text{font-size:12px;color:var(--text);line-height:1.4}
+.feed-ts{font-size:10px;color:var(--text4);margin-top:2px}
+.feed-user{font-size:10px;color:var(--text3)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--surface);padding:9px 18px;border-radius:8px;font-size:12px;font-weight:600;z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+.refresh-ts{font-size:10px;color:var(--text4);margin-left:6px}
+</style>
+</head>
+<body>
+<div class="auth-wrap" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">⚙️ Steel Platform</div>
+    <div class="auth-logo-sub">Dashboard · Sign in</div>
+    <div class="form-row"><label class="lbl">Email</label><input class="inp" type="email" id="loginEmail" placeholder="you@company.com"></div>
+    <div class="form-row"><label class="lbl">Password</label><input class="inp" type="password" id="loginPassword" placeholder="••••••••"></div>
+    <button class="auth-btn" id="loginBtn">Sign in</button>
+    <div id="authMsg" style="display:none" class="auth-msg"></div>
+  </div>
+</div>
+<div id="app">
+  <div class="sb-overlay" id="sbOverlay"></div>
+  <nav class="sidebar" id="sidebar">
+    <div class="sb-logo"><div class="sb-logo-name">⚙️ Steel Platform</div><div class="sb-logo-sub">Export Management Suite</div></div>
+    <div class="sb-nav">
+      <div class="nav-sec">Pipeline</div>
+      <a href="dashboard.html" class="nav-item active"><span class="nav-icon">📊</span>Dashboard</a>
+      <a href="index.html" class="nav-item"><span class="nav-icon">📋</span>CRM / Leads</a>
+      <div class="nav-sec">Inventory</div>
+      <a href="stock.html" class="nav-item"><span class="nav-icon">📦</span>Stock</a>
+      <a href="procurement.html" class="nav-item"><span class="nav-icon">🛒</span>Procurement</a>
+      <div class="nav-sec">Operations</div>
+      <a href="logistics.html" class="nav-item"><span class="nav-icon">🚢</span>Logistics</a>
+      <a href="documents.html" class="nav-item"><span class="nav-icon">📄</span>Documents</a>
+      <div class="nav-sec">Finance</div>
+      <a href="bookkeeping.html" class="nav-item"><span class="nav-icon">💰</span>Bookkeeping</a>
+      <div class="nav-sec">Tools</div>
+      <a href="converter.html" class="nav-item"><span class="nav-icon">⚡</span>Grade Converter</a>
+      <a href="tools.html" class="nav-item"><span class="nav-icon">🔧</span>Tools</a>
+      <a href="news.html" class="nav-item"><span class="nav-icon">📰</span>News</a>
+      <div class="nav-sec">Team</div>
+      <a href="cont.html" class="nav-item"><span class="nav-icon">👥</span>Contacts</a>
+      <a href="team.html" class="nav-item"><span class="nav-icon">🧑‍💼</span>Team</a>
+    </div>
+    <div class="sb-footer">
+      <div class="sb-user" id="userEmail">—</div>
+      <div id="adminBadgeWrap" style="display:none;margin-bottom:8px"><span class="admin-badge">⚙ Admin</span></div>
+      <button class="btn btn-ghost" style="width:100%;margin-bottom:6px" id="logoutBtn">Sign out</button>
+      <button class="btn btn-ghost" id="darkBtn" style="width:100%">🌙 Dark mode</button>
+    </div>
+  </nav>
+  <div class="main-wrap">
+    <header>
+      <div class="h-left">
+        <button class="menu-btn" id="menuBtn">☰</button>
+        <span class="h-title">📊 Dashboard</span>
+        <span class="refresh-ts" id="refreshTs"></span>
+      </div>
+      <div class="h-right">
+        <button class="btn btn-ghost btn-sm" id="refreshBtn">↻ Refresh</button>
+      </div>
+    </header>
+    <div class="page-body">
+
+      <!-- Quick Actions -->
+      <div class="qa-row">
+        <a href="index.html" class="btn btn-blue">+ New Lead</a>
+        <a href="procurement.html" class="btn btn-ghost">+ New PO</a>
+        <a href="logistics.html" class="btn btn-ghost">+ New Shipment</a>
+        <a href="bookkeeping.html" class="btn btn-ghost">+ New Invoice</a>
+        <a href="converter.html" class="btn btn-ghost">⚡ Grade Converter</a>
+        <a href="news.html" class="btn btn-ghost">📰 Market News</a>
+      </div>
+
+      <!-- KPI Row -->
+      <div class="kpi-row">
+        <div class="kpi"><div class="kpi-icon">🎯</div><div class="kpi-lbl">Pipeline Value</div><div class="kpi-val" id="kpi-pipeline">—</div><div class="kpi-sub" id="kpi-pipeline-sub">open deals</div></div>
+        <div class="kpi" style="border-color:var(--green)"><div class="kpi-icon">🏆</div><div class="kpi-lbl">Won This Month</div><div class="kpi-val" id="kpi-won" style="color:var(--green-text)">—</div><div class="kpi-sub" id="kpi-won-sub">deals closed</div></div>
+        <div class="kpi"><div class="kpi-icon">📦</div><div class="kpi-lbl">Stock Value</div><div class="kpi-val" id="kpi-stock">—</div><div class="kpi-sub" id="kpi-stock-sub">items</div></div>
+        <div class="kpi" style="border-color:var(--amber)"><div class="kpi-icon">🧾</div><div class="kpi-lbl">Open Invoices</div><div class="kpi-val" id="kpi-ar" style="color:var(--amber-text)">—</div><div class="kpi-sub" id="kpi-ar-sub">unpaid AR</div></div>
+        <div class="kpi"><div class="kpi-icon">🚢</div><div class="kpi-lbl">Active Shipments</div><div class="kpi-val" id="kpi-ships">—</div><div class="kpi-sub" id="kpi-ships-sub">in progress</div></div>
+        <div class="kpi"><div class="kpi-icon">🛒</div><div class="kpi-lbl">Open POs</div><div class="kpi-val" id="kpi-pos">—</div><div class="kpi-sub" id="kpi-pos-sub">committed spend</div></div>
+      </div>
+
+      <div class="dash-grid">
+        <!-- Left: charts + feed -->
+        <div>
+          <!-- Charts row -->
+          <div class="charts-row">
+            <div class="chart-card">
+              <div class="chart-ttl">Won Revenue — Last 6 Months</div>
+              <div style="position:relative;height:200px"><canvas id="wonChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-ttl">Pipeline by Stage</div>
+              <div style="position:relative;height:200px"><canvas id="stageChart"></canvas></div>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-ttl">Revenue vs COGS — Last 6 Months</div>
+            <div style="position:relative;height:200px"><canvas id="plChart"></canvas></div>
+          </div>
+
+          <!-- Activity feed -->
+          <div class="feed-card">
+            <div class="chart-ttl" style="margin-bottom:8px">⚡ Recent Activity <span style="font-size:10px;font-weight:400;color:var(--text4)">across all modules</span></div>
+            <div id="feedList"><div style="text-align:center;padding:20px;color:var(--text4)"><span class="spinner"></span> Loading…</div></div>
+          </div>
+        </div>
+
+        <!-- Right: alerts -->
+        <div class="alerts-col">
+          <div class="alert-group">
+            <div class="alert-group-hd" style="color:var(--red-text)">
+              🚨 Overdue Invoices
+              <span class="alert-count" id="cnt-inv">0</span>
+            </div>
+            <div id="alerts-inv"><div class="alert-empty">No overdue invoices ✓</div></div>
+          </div>
+          <div class="alert-group">
+            <div class="alert-group-hd" style="color:var(--amber-text)">
+              📦 POs Due This Week
+              <span class="alert-count-amber" id="cnt-po">0</span>
+            </div>
+            <div id="alerts-po"><div class="alert-empty">No POs due this week ✓</div></div>
+          </div>
+          <div class="alert-group">
+            <div class="alert-group-hd" style="color:var(--red-text)">
+              ⏰ Overdue Leads
+              <span class="alert-count" id="cnt-leads">0</span>
+            </div>
+            <div id="alerts-leads"><div class="alert-empty">No overdue leads ✓</div></div>
+          </div>
+          <div class="alert-group">
+            <div class="alert-group-hd" style="color:var(--amber-text)">
+              📉 Low Stock
+              <span class="alert-count-amber" id="cnt-stock">0</span>
+            </div>
+            <div id="alerts-stock"><div class="alert-empty">No low stock alerts ✓</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL='https://fmmfofjkebdsrnkchrfo.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtbWZvZmprZWJkc3Jua2NocmZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDAxNDIsImV4cCI6MjA5MjA3NjE0Mn0.bQQJt06mucLCQCrY1NgN-ed2ngDeRLmITmOfQCAM7ZU';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+
+let wonChartInst=null,stageChartInst=null,plChartInst=null;
+
+// dark mode
+function toggleDark(){const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',t);document.getElementById('darkBtn').textContent=t==='dark'?'☀️ Light':'🌙 Dark mode';localStorage.setItem('sp_theme',t);}
+(()=>{const t=localStorage.getItem('sp_theme')||'light';document.documentElement.setAttribute('data-theme',t);setTimeout(()=>{const b=document.getElementById('darkBtn');if(b&&t==='dark')b.textContent='☀️ Light';},50);})();
+
+// sidebar
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sbOverlay').classList.add('open');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbOverlay').classList.remove('open');}
+
+// toast
+let _tt=null;
+function toast(msg,type='ok'){const el=document.getElementById('toast');el.textContent=msg;el.style.background=type==='err'?'var(--red-text)':type==='warn'?'var(--amber-text)':'var(--text)';el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2500);}
+
+function fmtUSD(n){return'$'+Number(n||0).toLocaleString('en-US',{maximumFractionDigits:0});}
+function fmtNum(n){return Number(n||0).toLocaleString('en-US',{maximumFractionDigits:0});}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function timeAgo(ts){if(!ts)return'';const s=Math.floor((Date.now()-new Date(ts))/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
+
+// auth
+document.getElementById('loginBtn').addEventListener('click',doLogin);
+document.getElementById('loginEmail').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+function showAuthMsg(m){const e=document.getElementById('authMsg');e.textContent=m;e.style.display='block';}
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPassword').value;
+  if(!email||!pass)return showAuthMsg('Please fill in all fields.');
+  const btn=document.getElementById('loginBtn');btn.disabled=true;btn.textContent='Signing in…';
+  const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  btn.disabled=false;btn.textContent='Sign in';
+  if(error)return showAuthMsg(error.message);
+  onSignedIn(data.user);
+}
+document.getElementById('logoutBtn').addEventListener('click',async()=>{await sb.auth.signOut();location.reload();});
+async function onSignedIn(user){
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('userEmail').textContent=user.email;
+  const{data:prof}=await sb.from('profiles').select('is_admin').eq('id',user.id).single();
+  if(prof?.is_admin)document.getElementById('adminBadgeWrap').style.display='block';
+  await loadDashboard();
+}
+sb.auth.getSession().then(({data:{session}})=>{if(session)onSignedIn(session.user);});
+document.getElementById('refreshBtn').addEventListener('click',loadDashboard);
+document.getElementById('menuBtn').addEventListener('click',openSidebar);
+document.getElementById('sbOverlay').addEventListener('click',closeSidebar);
+document.getElementById('darkBtn').addEventListener('click',toggleDark);
+
+// ── MAIN LOAD ──
+async function loadDashboard(){
+  document.getElementById('refreshBtn').disabled=true;
+  document.getElementById('refreshBtn').textContent='↻ Loading…';
+
+  const today=new Date().toISOString().slice(0,10);
+  const monthStart=today.slice(0,7)+'-01';
+  const weekEnd=new Date(Date.now()+7*864e5).toISOString().slice(0,10);
+
+  // Fetch everything in parallel
+  const [
+    leadsRes, stockRes, shipmentsRes,
+    invoicesRes, posRes, profilesRes
+  ] = await Promise.all([
+    sb.from('leads').select('id,name,company,stage,value,owner,deadline,created_at,updated_at'),
+    sb.from('stock').select('id,grade,product_type,quantity,buy_price,created_at'),
+    sb.from('shipments').select('id,shipment_ref,customer,status,eta,weight_tons,created_at,updated_at'),
+    sb.from('invoices').select('id,invoice_no,customer,total_usd,paid_amount,due_date,status,created_at,updated_at'),
+    sb.from('purchase_orders').select('id,po_number,supplier_id,total_value,delivery_date,status,created_at'),
+    sb.from('profiles').select('id,email,full_name'),
+  ]);
+
+  const leads=leadsRes.data||[];
+  const stock=stockRes.data||[];
+  const shipments=shipmentsRes.data||[];
+  const invoices=invoicesRes.data||[];
+  const pos=posRes.data||[];
+  const profiles=profilesRes.data||[];
+
+  // Low stock thresholds from localStorage
+  let thresholds={};
+  try{thresholds=JSON.parse(localStorage.getItem('sp_thresholds')||'{}');}catch(e){}
+
+  // ── KPIs ──
+  const openLeads=leads.filter(l=>l.stage!=='Closed Won'&&l.stage!=='Closed Lost');
+  const pipeline=openLeads.reduce((s,l)=>s+(Number(l.value)||0),0);
+
+  const wonMonth=leads.filter(l=>l.stage==='Closed Won'&&(l.updated_at||'').slice(0,7)===today.slice(0,7));
+  const wonVal=wonMonth.reduce((s,l)=>s+(Number(l.value)||0),0);
+
+  const stockVal=stock.reduce((s,i)=>s+(Number(i.quantity)||0)*(Number(i.buy_price)||0),0);
+
+  const openInvoices=invoices.filter(i=>i.status!=='Paid');
+  const arTotal=openInvoices.reduce((s,i)=>s+(Number(i.total_usd)||0)-(Number(i.paid_amount)||0),0);
+
+  const activeShips=shipments.filter(s=>s.status!=='Delivered').length;
+  const openPOs=pos.filter(p=>!['Received','Cancelled'].includes(p.status));
+  const poSpend=openPOs.reduce((s,p)=>s+(Number(p.total_value)||0),0);
+
+  document.getElementById('kpi-pipeline').textContent=fmtUSD(pipeline);
+  document.getElementById('kpi-pipeline-sub').textContent=openLeads.length+' open deals';
+  document.getElementById('kpi-won').textContent=fmtUSD(wonVal);
+  document.getElementById('kpi-won-sub').textContent=wonMonth.length+' deals this month';
+  document.getElementById('kpi-stock').textContent=fmtUSD(stockVal);
+  document.getElementById('kpi-stock-sub').textContent=stock.length+' items';
+  document.getElementById('kpi-ar').textContent=fmtUSD(arTotal);
+  document.getElementById('kpi-ar-sub').textContent=openInvoices.length+' unpaid invoices';
+  document.getElementById('kpi-ships').textContent=activeShips;
+  document.getElementById('kpi-ships-sub').textContent=shipments.length+' total';
+  document.getElementById('kpi-pos').textContent=openPOs.length;
+  document.getElementById('kpi-pos-sub').textContent=fmtUSD(poSpend)+' committed';
+
+  // ── Charts ──
+  renderWonChart(leads,today);
+  renderStageChart(openLeads);
+  renderPLChart(invoices);
+
+  // ── Alerts ──
+  // Overdue invoices
+  const overdueInv=invoices.filter(i=>i.status!=='Paid'&&i.due_date&&i.due_date<today);
+  document.getElementById('cnt-inv').textContent=overdueInv.length;
+  renderAlerts('alerts-inv',overdueInv.slice(0,5).map(i=>({
+    icon:'🧾',text:esc(i.invoice_no||'Invoice')+' — '+esc(i.customer||'—'),
+    sub:'Due '+i.due_date+' · '+fmtUSD((Number(i.total_usd)||0)-(Number(i.paid_amount)||0))+' outstanding',
+    href:'bookkeeping.html'
+  })),'No overdue invoices ✓');
+
+  // POs due this week
+  const duePOs=openPOs.filter(p=>p.delivery_date&&p.delivery_date>=today&&p.delivery_date<=weekEnd);
+  document.getElementById('cnt-po').textContent=duePOs.length;
+  renderAlerts('alerts-po',duePOs.slice(0,5).map(p=>({
+    icon:'🛒',text:esc(p.po_number||'PO'),
+    sub:'Delivery: '+p.delivery_date+' · '+fmtUSD(p.total_value),
+    href:'procurement.html'
+  })),'No POs due this week ✓');
+
+  // Overdue leads
+  const overdueLeads=openLeads.filter(l=>l.deadline&&l.deadline<today);
+  document.getElementById('cnt-leads').textContent=overdueLeads.length;
+  renderAlerts('alerts-leads',overdueLeads.slice(0,5).map(l=>({
+    icon:'📋',text:esc(l.company||l.name||'Lead'),
+    sub:'Deadline: '+l.deadline+' · '+esc(l.stage||''),
+    href:'index.html'
+  })),'No overdue leads ✓');
+
+  // Low stock
+  const lowStock=stock.filter(s=>{
+    const t=thresholds[(s.product_type||'').trim()];
+    return t&&(Number(s.quantity)||0)<t;
+  });
+  document.getElementById('cnt-stock').textContent=lowStock.length;
+  renderAlerts('alerts-stock',lowStock.slice(0,5).map(s=>({
+    icon:'📦',text:esc(s.grade||s.product_type||'Item'),
+    sub:'Qty: '+s.quantity+' (threshold: '+thresholds[(s.product_type||'').trim()]+')',
+    href:'stock.html'
+  })),'No low stock alerts ✓');
+
+  // ── Activity feed ──
+  renderFeed(leads,shipments,invoices,pos,profiles,today);
+
+  // Timestamp
+  document.getElementById('refreshTs').textContent='Updated '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('refreshBtn').disabled=false;
+  document.getElementById('refreshBtn').textContent='↻ Refresh';
+}
+
+function renderAlerts(containerId,items,emptyMsg){
+  const el=document.getElementById(containerId);
+  if(!items.length){el.innerHTML='<div class="alert-empty">'+emptyMsg+'</div>';return;}
+  el.innerHTML='';
+  items.forEach(item=>{
+    const a=document.createElement('a');
+    a.className='alert-item';a.href=item.href;
+    a.innerHTML='<div class="alert-icon">'+item.icon+'</div>'+
+      '<div><div class="alert-text">'+item.text+'</div><div class="alert-sub">'+item.sub+'</div></div>';
+    el.appendChild(a);
+  });
+}
+
+// ── Won Revenue chart ──
+function renderWonChart(leads,today){
+  const months=[];for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months.push(d.toISOString().slice(0,7));}
+  const labels=months.map(m=>{const[y,mo]=m.split('-');return new Date(y,mo-1).toLocaleString('en-US',{month:'short'});});
+  const data=months.map(m=>leads.filter(l=>l.stage==='Closed Won'&&(l.updated_at||'').slice(0,7)===m).reduce((s,l)=>s+(Number(l.value)||0),0));
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const gc=isDark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.05)';
+  const tc=isDark?'#b4b4b0':'#888884';
+  const ctx=document.getElementById('wonChart').getContext('2d');
+  if(wonChartInst)wonChartInst.destroy();
+  wonChartInst=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Won Revenue',data,backgroundColor:data.map(v=>v>0?'rgba(21,137,95,0.75)':'rgba(20,86,160,0.3)'),borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:tc,font:{size:10}},grid:{display:false}},y:{ticks:{color:tc,callback:v=>'$'+v.toLocaleString()},grid:{color:gc}}}}});
+}
+
+// ── Pipeline by Stage donut ──
+function renderStageChart(openLeads){
+  const STAGES=['Lead/Prospect','Qualified','Offer Sent','Negotiation'];
+  const vals=STAGES.map(s=>openLeads.filter(l=>l.stage===s).reduce((sum,l)=>sum+(Number(l.value)||0),0));
+  const COLORS=['#4a8fd4','#c47d00','#6055c0','#1456a0'];
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const tc=isDark?'#b4b4b0':'#888884';
+  const ctx=document.getElementById('stageChart').getContext('2d');
+  if(stageChartInst)stageChartInst.destroy();
+  stageChartInst=new Chart(ctx,{type:'doughnut',data:{labels:STAGES,datasets:[{data:vals,backgroundColor:COLORS,borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:tc,font:{family:'IBM Plex Sans',size:10},padding:8,boxWidth:10}}}}});
+}
+
+// ── P&L line chart ──
+function renderPLChart(invoices){
+  const months=[];for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months.push(d.toISOString().slice(0,7));}
+  const labels=months.map(m=>{const[y,mo]=m.split('-');return new Date(y,mo-1).toLocaleString('en-US',{month:'short'});});
+  const rev=months.map(m=>invoices.filter(i=>i.created_at?.slice(0,7)===m).reduce((s,i)=>s+(Number(i.total_usd)||0),0));
+  const paid=months.map(m=>invoices.filter(i=>i.updated_at?.slice(0,7)===m&&i.status==='Paid').reduce((s,i)=>s+(Number(i.paid_amount)||Number(i.total_usd)||0),0));
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const gc=isDark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.05)';
+  const tc=isDark?'#b4b4b0':'#888884';
+  const ctx=document.getElementById('plChart').getContext('2d');
+  if(plChartInst)plChartInst.destroy();
+  plChartInst=new Chart(ctx,{data:{labels,datasets:[
+    {type:'bar',label:'Invoiced',data:rev,backgroundColor:'rgba(20,86,160,0.6)',borderRadius:4},
+    {type:'line',label:'Collected',data:paid,borderColor:'#15895f',backgroundColor:'rgba(21,137,95,0.1)',borderWidth:2,pointRadius:4,tension:0.3,fill:true},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tc,font:{family:'IBM Plex Sans',size:11}}}},scales:{x:{ticks:{color:tc,font:{size:10}},grid:{display:false}},y:{ticks:{color:tc,callback:v=>'$'+v.toLocaleString()},grid:{color:gc}}}}});
+}
+
+// ── Activity feed ──
+function renderFeed(leads,shipments,invoices,pos,profiles,today){
+  // Build unified activity list
+  const events=[];
+  const userName=uid=>{const p=profiles.find(x=>x.id===uid);return p?.full_name||p?.email||'Team';};
+
+  leads.filter(l=>l.stage==='Closed Won').slice(0,5).forEach(l=>events.push({ts:l.updated_at||l.created_at,icon:'🏆',text:'Deal won: '+esc(l.company||l.name||'Lead'),sub:fmtUSD(l.value)+' · '+esc(l.owner||'—')}));
+  leads.filter(l=>l.stage!=='Closed Won'&&l.stage!=='Closed Lost').slice(0,5).forEach(l=>events.push({ts:l.created_at,icon:'📋',text:'New lead: '+esc(l.company||l.name||'—'),sub:esc(l.stage||'')+ ' · '+esc(l.owner||'—')}));
+  shipments.slice(0,5).forEach(s=>events.push({ts:s.updated_at||s.created_at,icon:'🚢',text:'Shipment '+esc(s.shipment_ref||'—')+': '+esc(s.status||'—'),sub:esc(s.customer||'—')}));
+  invoices.filter(i=>i.status==='Paid').slice(0,5).forEach(i=>events.push({ts:i.updated_at||i.created_at,icon:'💰',text:'Invoice paid: '+esc(i.invoice_no||'—'),sub:fmtUSD(i.total_usd)+' · '+esc(i.customer||'—')}));
+  pos.slice(0,5).forEach(p=>events.push({ts:p.created_at,icon:'🛒',text:'PO created: '+esc(p.po_number||'—'),sub:fmtUSD(p.total_value)+' · '+esc(p.status||'')}));
+
+  events.sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  const top=events.slice(0,15);
+
+  const feed=document.getElementById('feedList');
+  if(!top.length){feed.innerHTML='<div style="text-align:center;padding:20px;color:var(--text4);font-size:13px">No activity yet.</div>';return;}
+  feed.innerHTML='';
+  top.forEach(ev=>{
+    const div=document.createElement('div');
+    div.className='feed-item';
+    div.innerHTML='<div class="feed-icon">'+ev.icon+'</div>'+
+      '<div class="feed-body">'+
+        '<div class="feed-text">'+ev.text+'</div>'+
+        '<div style="display:flex;gap:10px;margin-top:2px"><span class="feed-user">'+ev.sub+'</span><span class="feed-ts">'+timeAgo(ev.ts)+'</span></div>'+
+      '</div>';
+    feed.appendChild(div);
+  });
+}
+</script>
+</body>
+</html>

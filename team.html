@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Team — Steel Platform</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f0f0ee;--surface:#fff;--surface2:#ebebea;--surface3:#f6f6f4;
+  --border:#e0e0de;--border2:#cacac6;
+  --text:#111110;--text2:#4a4a48;--text3:#888884;--text4:#bbbbb6;
+  --blue:#1456a0;--blue-bg:#e8f1fb;--blue-mid:#4a8fd4;
+  --green:#15895f;--green-bg:#e2f4ee;--green-text:#0c5e42;
+  --red:#cc3333;--red-bg:#fdeaea;--red-text:#922020;
+  --amber:#c47d00;--amber-bg:#fdf2de;--amber-text:#764900;
+  --purple:#6055c0;--purple-bg:#eeedfb;--purple-text:#3f36a0;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+  --sidebar-w:210px;
+}
+[data-theme="dark"]{
+  --bg:#0d0d0c;--surface:#181817;--surface2:#202020;--surface3:#1b1b1a;
+  --border:#282826;--border2:#343432;
+  --text:#edecea;--text2:#b4b4b0;--text3:#727270;--text4:#424240;
+  --blue:#4a90d9;--blue-bg:#0a1f3a;--blue-mid:#2468b0;
+  --green:#28b488;--green-bg:#082a1e;--green-text:#50c8a0;
+  --red:#e04848;--red-bg:#280c0c;--red-text:#ee8888;
+  --amber:#f0a820;--amber-bg:#281a00;--amber-text:#f8c860;
+  --purple:#9088e0;--purple-bg:#181538;--purple-text:#b0a8f4;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;font-size:13px}
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.auth-card{background:var(--surface);border-radius:18px;border:1px solid var(--border);padding:32px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.08)}
+.auth-logo{font-size:20px;font-weight:700;color:var(--blue)}.auth-logo-sub{font-size:10px;font-family:var(--mono);color:var(--text4);margin-top:3px;margin-bottom:22px;text-transform:uppercase;letter-spacing:.8px}
+.lbl{font-size:10px;font-weight:700;color:var(--text3);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.inp{width:100%;height:40px;border:1px solid var(--border2);border-radius:8px;padding:0 12px;font-size:13px;background:var(--surface);color:var(--text);font-family:var(--sans);outline:none;transition:border-color .15s,box-shadow .15s}
+.inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+.form-row{margin-bottom:11px}
+.auth-btn{width:100%;height:42px;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--sans);background:var(--blue);color:#fff;margin-top:6px;transition:opacity .15s}
+.auth-btn:hover{opacity:.88}.auth-btn:disabled{opacity:.45;cursor:not-allowed}
+.auth-msg{font-size:12px;margin-top:12px;padding:9px;border-radius:7px;text-align:center;background:var(--red-bg);color:var(--red-text)}
+#app{display:none}
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:140}.sb-overlay.open{display:block}
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:150;transition:transform .25s}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main-wrap{margin-left:0!important}.menu-btn{display:flex!important}}
+.sb-logo{padding:18px 16px 13px;border-bottom:1px solid var(--border)}
+.sb-logo-name{font-size:14px;font-weight:700;color:var(--blue)}.sb-logo-sub{font-size:9px;font-family:var(--mono);color:var(--text4);margin-top:2px;text-transform:uppercase;letter-spacing:.8px}
+.sb-nav{flex:1;overflow-y:auto;padding:8px 0}
+.nav-sec{font-size:9px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.8px;padding:12px 16px 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 16px;font-size:13px;color:var(--text2);cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:var(--sans);transition:background .12s,color .12s;text-decoration:none}
+.nav-item:hover{background:var(--surface2);color:var(--text)}.nav-item.active{background:var(--blue-bg);color:var(--blue);font-weight:600}
+.nav-icon{font-size:14px;width:20px;text-align:center;flex-shrink:0}
+.sb-footer{padding:12px 16px;border-top:1px solid var(--border)}
+.sb-user{font-size:11px;color:var(--text3);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admin-badge{font-size:9px;font-weight:700;background:var(--amber-bg);color:var(--amber-text);padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px;border:1px solid var(--amber)}
+.main-wrap{margin-left:var(--sidebar-w);flex:1;min-width:0}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 14px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:8px}
+.h-left{display:flex;align-items:center;gap:10px}.h-title{font-size:14px;font-weight:600;color:var(--text)}
+.h-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.menu-btn{width:34px;height:34px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:16px;display:none;align-items:center;justify-content:center;flex-shrink:0}
+.page-body{padding:16px;max-width:1300px;margin:0 auto}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:34px;padding:0 13px;border:1px solid var(--border2);border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--sans);background:var(--surface);color:var(--text);white-space:nowrap;transition:background .12s,color .12s,border-color .12s}
+.btn:hover{background:var(--surface2)}.btn-blue{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}.btn-blue:hover{opacity:.88}
+.btn-green{background:var(--green);color:#fff;border-color:var(--green);font-weight:600}.btn-green:hover{opacity:.88}
+.btn-ghost{background:transparent;border-color:var(--border);color:var(--text3)}.btn-ghost:hover{background:var(--surface2);color:var(--text)}
+.btn-danger{background:var(--red-bg);color:var(--red-text);border-color:var(--red)}.btn-danger:hover{background:var(--red);color:#fff}
+.btn-amber{background:var(--amber-bg);color:var(--amber-text);border-color:var(--amber)}.btn-amber:hover{background:var(--amber);color:#fff}
+.btn-sm{height:28px;padding:0 10px;font-size:11px;border-radius:7px}.btn-xs{height:24px;padding:0 8px;font-size:10px;border-radius:6px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.tab-bar{display:flex;gap:0;border:1px solid var(--border2);border-radius:9px;overflow:hidden;width:fit-content;margin-bottom:14px}
+.tab-btn{padding:8px 18px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:var(--surface2);color:var(--text3);font-family:var(--sans);transition:background .12s,color .12s}
+.tab-btn.active{background:var(--blue);color:#fff}.tab-btn:not(:last-child){border-right:1px solid var(--border2)}
+.tab-pane{display:none}.tab-pane.active{display:block}
+.tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);margin-bottom:12px}
+.tm-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tm-tbl th{background:var(--surface2);color:var(--text3);font-weight:700;font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;padding:9px 12px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border)}
+.tm-tbl td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tm-tbl tr:last-child td{border-bottom:none}
+.empty-row{text-align:center;padding:40px;color:var(--text4);font-style:italic}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.role-badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.role-admin{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber)}
+.role-sales{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-mid)}
+.role-logistics{background:var(--purple-bg);color:var(--purple-text);border:1px solid var(--purple)}
+.role-viewer{background:var(--surface2);color:var(--text3);border:1px solid var(--border2)}
+.leaderboard{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.lb-row{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;transition:border-color .15s}
+.lb-row:hover{border-color:var(--blue-mid)}
+.lb-rank{font-size:18px;font-weight:800;font-family:var(--mono);color:var(--text4);width:28px;flex-shrink:0;text-align:center}
+.lb-rank.gold{color:#d4a800}.lb-rank.silver{color:#909090}.lb-rank.bronze{color:#a0602a}
+.lb-name{font-size:13px;font-weight:600;color:var(--text);flex:1}
+.lb-email{font-size:10px;color:var(--text4)}
+.lb-stats{display:flex;gap:16px;flex-shrink:0}
+.lb-stat{text-align:right}
+.lb-stat-val{font-size:16px;font-weight:700;font-family:var(--mono);color:var(--text)}
+.lb-stat-lbl{font-size:9px;color:var(--text4);text-transform:uppercase;letter-spacing:.4px}
+.lb-bar{height:4px;background:var(--surface2);border-radius:4px;margin-top:6px;overflow:hidden;flex:1}
+.lb-bar-fill{height:100%;background:var(--blue);border-radius:4px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+.chart-ttl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:12px}
+.profile-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:14px;max-width:480px}
+.profile-avatar{width:52px;height:52px;border-radius:50%;background:var(--blue-bg);border:2px solid var(--blue-mid);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:var(--blue);margin-bottom:14px}
+.comm-status-paid{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green)}
+.comm-status-pending{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber)}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center;z-index:300;padding:0}
+@media(min-width:600px){.modal-bg{align-items:center;padding:16px}}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border-radius:16px 16px 0 0;border:1px solid var(--border);padding:22px;width:100%;max-width:460px;max-height:93vh;overflow-y:auto}
+@media(min-width:600px){.modal{border-radius:14px}}
+.modal-drag{width:40px;height:4px;background:var(--border2);border-radius:4px;margin:0 auto 16px}
+@media(min-width:600px){.modal-drag{display:none}}
+.modal-ttl{font-size:15px;font-weight:700;margin-bottom:16px;color:var(--text)}
+.modal-acts{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.msec{font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px;padding-top:12px;border-top:1px solid var(--border)}
+.msec:first-of-type{border-top:none;padding-top:0;margin-top:0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.g2{grid-template-columns:1fr}}
+select.inp{cursor:pointer}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--surface);padding:9px 18px;border-radius:8px;font-size:12px;font-weight:600;z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+.admin-only{display:none}
+</style>
+</head>
+<body>
+<div class="auth-wrap" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">⚙️ Steel Platform</div>
+    <div class="auth-logo-sub">Team · Sign in</div>
+    <div class="form-row"><label class="lbl">Email</label><input class="inp" type="email" id="loginEmail" placeholder="you@company.com"></div>
+    <div class="form-row"><label class="lbl">Password</label><input class="inp" type="password" id="loginPassword" placeholder="••••••••"></div>
+    <button class="auth-btn" id="loginBtn">Sign in</button>
+    <div id="authMsg" style="display:none" class="auth-msg"></div>
+  </div>
+</div>
+<div id="app">
+  <div class="sb-overlay" id="sbOverlay"></div>
+  <nav class="sidebar" id="sidebar">
+    <div class="sb-logo"><div class="sb-logo-name">⚙️ Steel Platform</div><div class="sb-logo-sub">Export Management Suite</div></div>
+    <div class="sb-nav">
+      <div class="nav-sec">Pipeline</div>
+      <a href="index.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
+      <a href="index.html" class="nav-item"><span class="nav-icon">📋</span>CRM / Leads</a>
+      <div class="nav-sec">Inventory</div>
+      <a href="stock.html" class="nav-item"><span class="nav-icon">📦</span>Stock</a>
+      <a href="procurement.html" class="nav-item"><span class="nav-icon">🛒</span>Procurement</a>
+      <div class="nav-sec">Operations</div>
+      <a href="logistics.html" class="nav-item"><span class="nav-icon">🚢</span>Logistics</a>
+      <a href="documents.html" class="nav-item"><span class="nav-icon">📄</span>Documents</a>
+      <div class="nav-sec">Finance</div>
+      <a href="bookkeeping.html" class="nav-item"><span class="nav-icon">💰</span>Bookkeeping</a>
+      <div class="nav-sec">Tools</div>
+      <a href="converter.html" class="nav-item"><span class="nav-icon">⚡</span>Grade Converter</a>
+      <a href="tools.html" class="nav-item"><span class="nav-icon">🔧</span>Tools</a>
+      <a href="news.html" class="nav-item"><span class="nav-icon">📰</span>News</a>
+      <div class="nav-sec">Team</div>
+      <a href="cont.html" class="nav-item"><span class="nav-icon">👥</span>Contacts</a>
+      <a href="team.html" class="nav-item active"><span class="nav-icon">🧑‍💼</span>Team</a>
+    </div>
+    <div class="sb-footer">
+      <div class="sb-user" id="userEmail">—</div>
+      <div id="adminBadgeWrap" style="display:none;margin-bottom:8px"><span class="admin-badge">⚙ Admin</span></div>
+      <button class="btn btn-ghost" style="width:100%;margin-bottom:6px" id="logoutBtn">Sign out</button>
+      <button class="btn btn-ghost" id="darkBtn" style="width:100%">🌙 Dark mode</button>
+    </div>
+  </nav>
+  <div class="main-wrap">
+    <header>
+      <div class="h-left"><button class="menu-btn" id="menuBtn">☰</button><span class="h-title">🧑‍💼 Team</span></div>
+      <div class="h-right">
+        <button class="btn btn-blue admin-only" id="inviteBtn">+ Invite User</button>
+      </div>
+    </header>
+    <div class="page-body">
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tabPerf">🏆 Performance</button>
+        <button class="tab-btn" id="tabComm">💸 Commissions</button>
+        <button class="tab-btn" id="tabUsers">👤 My Profile</button>
+        <button class="tab-btn admin-only" id="tabAdmin">🛡 Users (Admin)</button>
+      </div>
+
+      <!-- Performance -->
+      <div class="tab-pane active" id="panePerf">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Leaderboard — Won Value This Month</div>
+          <select class="filter-inp" id="perfPeriod" style="height:28px;font-size:11px;border:1px solid var(--border2);border-radius:7px;padding:0 10px;background:var(--surface);color:var(--text);font-family:var(--sans);outline:none;cursor:pointer">
+            <option value="month">This month</option>
+            <option value="ytd">Year to date</option>
+            <option value="all">All time</option>
+          </select>
+        </div>
+        <div class="leaderboard" id="leaderboard"></div>
+        <div class="chart-card">
+          <div class="chart-ttl">Won Deal Value per Rep — Last 6 Months</div>
+          <div style="position:relative;height:280px"><canvas id="perfChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Commissions -->
+      <div class="tab-pane" id="paneComm">
+        <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div style="font-size:12px;color:var(--text3)">Commission rates are set per user by admins. Commissions are auto-calculated when a deal is marked Won.</div>
+          <div style="display:flex;gap:6px">
+            <select class="filter-inp" id="commUserFilter" style="height:28px;font-size:11px;border:1px solid var(--border2);border-radius:7px;padding:0 10px;background:var(--surface);color:var(--text);font-family:var(--sans);outline:none;cursor:pointer">
+              <option value="">All reps</option>
+            </select>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tm-tbl">
+            <thead><tr>
+              <th>Sales Rep</th><th>Deal</th><th>Deal Value</th><th>Rate</th><th>Commission</th><th>Earned</th><th>Status</th><th style="width:100px"></th>
+            </tr></thead>
+            <tbody id="commBody"><tr><td colspan="8" class="empty-row"><span class="spinner"></span>Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- My Profile -->
+      <div class="tab-pane" id="paneUsers">
+        <div class="profile-card">
+          <div class="profile-avatar" id="profileAvatar">?</div>
+          <div style="font-size:16px;font-weight:700;margin-bottom:4px" id="profileName">—</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:14px" id="profileEmail">—</div>
+          <div class="msec" style="margin-top:0">Edit Your Profile</div>
+          <div class="form-row"><label class="lbl">Full Name</label><input class="inp" id="pFullName" placeholder="Your full name"></div>
+          <div class="form-row"><label class="lbl">Display Name</label><input class="inp" id="pDisplayName" placeholder="How you appear in the app"></div>
+          <div class="form-row"><label class="lbl">Phone</label><input class="inp" id="pPhone" placeholder="+213 555 000 000"></div>
+          <button class="btn btn-blue btn-sm" id="saveProfileBtn">Save Profile</button>
+        </div>
+      </div>
+
+      <!-- Admin: Users -->
+      <div class="tab-pane admin-only" id="paneAdmin">
+        <div class="tbl-wrap">
+          <table class="tm-tbl">
+            <thead><tr>
+              <th>Name / Email</th><th>Role</th><th>Commission Rate</th><th>Joined</th><th style="width:120px">Actions</th>
+            </tr></thead>
+            <tbody id="adminUsersBody"><tr><td colspan="5" class="empty-row"><span class="spinner"></span>Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit User Modal (admin) -->
+<div class="modal-bg" id="editUserModal">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <p class="modal-ttl">Edit User</p>
+    <div class="form-row"><label class="lbl">Email</label><input class="inp" id="euEmail" disabled style="opacity:.6"></div>
+    <div class="form-row"><label class="lbl">Full Name</label><input class="inp" id="euName" placeholder="Full name"></div>
+    <div class="form-row"><label class="lbl">Role</label>
+      <select class="inp" id="euRole">
+        <option value="sales">Sales</option>
+        <option value="logistics">Logistics</option>
+        <option value="viewer">Viewer</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="lbl">Commission Rate (%)</label>
+      <input class="inp" type="number" id="euCommRate" placeholder="e.g. 2.5" min="0" max="100" step="0.1">
+    </div>
+    <div class="form-row"><label class="lbl">Is Admin</label>
+      <select class="inp" id="euIsAdmin"><option value="false">No</option><option value="true">Yes</option></select>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost btn-sm" id="euCancelBtn">Cancel</button>
+      <button class="btn btn-blue btn-sm" id="euSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Invite Modal -->
+<div class="modal-bg" id="inviteModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-drag"></div>
+    <p class="modal-ttl">Invite New User</p>
+    <div class="form-row"><label class="lbl">Email Address</label><input class="inp" type="email" id="invEmail" placeholder="colleague@company.com"></div>
+    <div class="form-row"><label class="lbl">Role</label>
+      <select class="inp" id="invRole"><option value="sales">Sales</option><option value="logistics">Logistics</option><option value="viewer">Viewer</option><option value="admin">Admin</option></select>
+    </div>
+    <div style="font-size:11px;color:var(--text3);background:var(--surface2);border-radius:7px;padding:9px;margin-top:4px">The user will receive an email to set their password. Make sure your Supabase project has email auth enabled.</div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost btn-sm" id="invCancelBtn">Cancel</button>
+      <button class="btn btn-blue btn-sm" id="invSendBtn">Send Invite</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL='https://fmmfofjkebdsrnkchrfo.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtbWZvZmprZWJkc3Jua2NocmZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDAxNDIsImV4cCI6MjA5MjA3NjE0Mn0.bQQJt06mucLCQCrY1NgN-ed2ngDeRLmITmOfQCAM7ZU';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+
+let currentUser=null,isAdmin=false;
+let allProfiles=[],allLeads=[],allCommissions=[];
+let editingUserId=null,perfChartInst=null;
+
+// dark mode
+function toggleDark(){const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',t);document.getElementById('darkBtn').textContent=t==='dark'?'☀️ Light':'🌙 Dark mode';localStorage.setItem('sp_theme',t);}
+(()=>{const t=localStorage.getItem('sp_theme')||'light';document.documentElement.setAttribute('data-theme',t);setTimeout(()=>{const b=document.getElementById('darkBtn');if(b&&t==='dark')b.textContent='☀️ Light';},50);})();
+
+// sidebar
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sbOverlay').classList.add('open');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbOverlay').classList.remove('open');}
+
+// toast
+let _tt=null;
+function toast(msg,type='ok'){const el=document.getElementById('toast');el.textContent=msg;el.style.background=type==='err'?'var(--red-text)':type==='warn'?'var(--amber-text)':'var(--text)';el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2800);}
+
+function fmtUSD(n){return'$'+Number(n||0).toLocaleString('en-US',{maximumFractionDigits:0});}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// auth
+document.getElementById('loginBtn').addEventListener('click',doLogin);
+document.getElementById('loginEmail').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+function showAuthMsg(m){const e=document.getElementById('authMsg');e.textContent=m;e.style.display='block';}
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPassword').value;
+  if(!email||!pass)return showAuthMsg('Please fill in all fields.');
+  const btn=document.getElementById('loginBtn');btn.disabled=true;btn.textContent='Signing in…';
+  const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  btn.disabled=false;btn.textContent='Sign in';
+  if(error)return showAuthMsg(error.message);
+  onSignedIn(data.user);
+}
+document.getElementById('logoutBtn').addEventListener('click',async()=>{await sb.auth.signOut();location.reload();});
+async function onSignedIn(user){
+  currentUser=user;
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('userEmail').textContent=user.email;
+  const{data:prof}=await sb.from('profiles').select('*').eq('id',user.id).single();
+  isAdmin=!!prof?.is_admin;
+  if(isAdmin){
+    document.getElementById('adminBadgeWrap').style.display='block';
+    document.querySelectorAll('.admin-only').forEach(el=>el.style.display='');
+  }
+  loadMyProfile(prof);
+  await loadAll();
+}
+sb.auth.getSession().then(({data:{session}})=>{if(session)onSignedIn(session.user);});
+
+async function loadAll(){
+  const[profs,leads,comms]=await Promise.all([
+    sb.from('profiles').select('*'),
+    sb.from('leads').select('id,name,company,stage,value,owner,created_at,updated_at'),
+    sb.from('commissions').select('*').order('created_at',{ascending:false}),
+  ]);
+  allProfiles=profs.data||[];
+  allLeads=leads.data||[];
+  allCommissions=comms.data||[];
+  renderAll();
+}
+
+function renderAll(){
+  renderLeaderboard();
+  renderCommissions();
+  renderAdminUsers();
+  populateCommUserFilter();
+}
+
+// tabs
+const TABS=[
+  {btn:'tabPerf',pane:'panePerf',fn:()=>{renderLeaderboard();renderPerfChart();}},
+  {btn:'tabComm',pane:'paneComm',fn:()=>renderCommissions()},
+  {btn:'tabUsers',pane:'paneUsers',fn:()=>{}},
+  {btn:'tabAdmin',pane:'paneAdmin',fn:()=>renderAdminUsers()},
+];
+TABS.forEach(({btn,pane,fn})=>{
+  const el=document.getElementById(btn);
+  if(el)el.addEventListener('click',()=>{
+    TABS.forEach(t=>{
+      document.getElementById(t.btn)?.classList.remove('active');
+      document.getElementById(t.pane)?.classList.remove('active');
+    });
+    el.classList.add('active');
+    document.getElementById(pane).classList.add('active');
+    fn();
+  });
+});
+document.getElementById('perfPeriod').addEventListener('change',renderLeaderboard);
+document.getElementById('commUserFilter').addEventListener('change',renderCommissions);
+
+// ── Leaderboard ──
+function getPeriodStart(){
+  const period=document.getElementById('perfPeriod').value;
+  const now=new Date();
+  if(period==='month')return new Date(now.getFullYear(),now.getMonth(),1).toISOString();
+  if(period==='ytd')return new Date(now.getFullYear(),0,1).toISOString();
+  return '2000-01-01T00:00:00Z';
+}
+
+function renderLeaderboard(){
+  const since=getPeriodStart();
+  const wonLeads=allLeads.filter(l=>l.stage==='Closed Won'&&(l.updated_at||l.created_at)>=since);
+
+  // Group by owner email
+  const byRep={};
+  wonLeads.forEach(l=>{
+    const o=l.owner||'Unassigned';
+    if(!byRep[o])byRep[o]={owner:o,count:0,value:0,allLeads:0};
+    byRep[o].count++;
+    byRep[o].value+=Number(l.value)||0;
+  });
+  // Add total leads created for win rate
+  allLeads.filter(l=>(l.updated_at||l.created_at)>=since).forEach(l=>{
+    const o=l.owner||'Unassigned';
+    if(!byRep[o])byRep[o]={owner:o,count:0,value:0,allLeads:0};
+    byRep[o].allLeads++;
+  });
+
+  const reps=Object.values(byRep).sort((a,b)=>b.value-a.value);
+  const maxVal=reps[0]?.value||1;
+  const container=document.getElementById('leaderboard');
+
+  if(!reps.length){container.innerHTML='<div style="color:var(--text4);text-align:center;padding:32px;font-size:13px">No won deals in this period.</div>';return;}
+
+  container.innerHTML='';
+  const rankClass=['gold','silver','bronze'];
+  reps.forEach((rep,i)=>{
+    const winRate=rep.allLeads?((rep.count/rep.allLeads)*100).toFixed(0):0;
+    const avgDeal=rep.count?rep.value/rep.count:0;
+    const profile=allProfiles.find(p=>p.email===rep.owner||p.full_name===rep.owner);
+    const displayName=profile?.full_name||profile?.display_name||rep.owner;
+
+    const row=document.createElement('div');
+    row.className='lb-row';
+    row.innerHTML=
+      '<div class="lb-rank '+(rankClass[i]||'')+'">'+( i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1))+'</div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div class="lb-name">'+esc(displayName)+'</div>'+
+        '<div class="lb-email">'+esc(rep.owner)+'</div>'+
+        '<div class="lb-bar" style="margin-top:6px"><div class="lb-bar-fill" style="width:'+Math.round(rep.value/maxVal*100)+'%"></div></div>'+
+      '</div>'+
+      '<div class="lb-stats">'+
+        '<div class="lb-stat"><div class="lb-stat-val">'+fmtUSD(rep.value)+'</div><div class="lb-stat-lbl">Won value</div></div>'+
+        '<div class="lb-stat"><div class="lb-stat-val">'+rep.count+'</div><div class="lb-stat-lbl">Deals</div></div>'+
+        '<div class="lb-stat"><div class="lb-stat-val">'+winRate+'%</div><div class="lb-stat-lbl">Win rate</div></div>'+
+        '<div class="lb-stat"><div class="lb-stat-val">'+fmtUSD(avgDeal)+'</div><div class="lb-stat-lbl">Avg deal</div></div>'+
+      '</div>';
+    container.appendChild(row);
+  });
+  renderPerfChart(reps);
+}
+
+// ── Perf Chart ──
+function renderPerfChart(reps){
+  const months=[];for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months.push(d.toISOString().slice(0,7));}
+  const labels=months.map(m=>{const[y,mo]=m.split('-');return new Date(y,mo-1).toLocaleString('en-US',{month:'short'});});
+
+  // Get unique owners from won deals
+  const owners=[...new Set(allLeads.filter(l=>l.stage==='Closed Won'&&l.owner).map(l=>l.owner))].slice(0,6);
+  const COLORS=['#1456a0','#15895f','#c47d00','#6055c0','#cc3333','#4a8fd4'];
+
+  const datasets=owners.map((owner,idx)=>({
+    label:allProfiles.find(p=>p.email===owner)?.full_name||owner,
+    data:months.map(m=>allLeads.filter(l=>l.stage==='Closed Won'&&l.owner===owner&&(l.updated_at||'').slice(0,7)===m).reduce((s,l)=>s+(Number(l.value)||0),0)),
+    backgroundColor:COLORS[idx%COLORS.length]+'bb',
+    borderColor:COLORS[idx%COLORS.length],
+    borderWidth:1,
+    borderRadius:3,
+  }));
+
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const gc=isDark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.05)';
+  const tc=isDark?'#b4b4b0':'#888884';
+
+  const ctx=document.getElementById('perfChart').getContext('2d');
+  if(perfChartInst)perfChartInst.destroy();
+  perfChartInst=new Chart(ctx,{type:'bar',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tc,font:{family:'IBM Plex Sans',size:11}}}},scales:{x:{stacked:true,ticks:{color:tc,font:{size:11}},grid:{display:false}},y:{stacked:true,ticks:{color:tc,callback:v=>'$'+v.toLocaleString()},grid:{color:gc}}}}});
+}
+
+// ── Commissions ──
+function populateCommUserFilter(){
+  const sel=document.getElementById('commUserFilter');
+  const users=[...new Set(allCommissions.map(c=>c.user_id))];
+  const opts=users.map(uid=>{
+    const p=allProfiles.find(x=>x.id===uid);
+    return '<option value="'+uid+'">'+(p?.full_name||p?.email||uid)+'</option>';
+  });
+  sel.innerHTML='<option value="">All reps</option>'+opts.join('');
+}
+
+function renderCommissions(){
+  const uf=document.getElementById('commUserFilter').value;
+  let rows=allCommissions;
+  if(uf)rows=rows.filter(c=>c.user_id===uf);
+
+  const tbody=document.getElementById('commBody');
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="8" class="empty-row">No commissions recorded yet.</td></tr>';return;}
+
+  tbody.innerHTML='';
+  rows.forEach(c=>{
+    const profile=allProfiles.find(p=>p.id===c.user_id);
+    const lead=allLeads.find(l=>l.id===c.lead_id);
+    const tr=document.createElement('tr');
+    tr.innerHTML=
+      '<td><span style="font-weight:600">'+esc(profile?.full_name||profile?.email||'—')+'</span></td>'+
+      '<td>'+esc(lead?lead.company||lead.name:'—')+'</td>'+
+      '<td style="font-family:var(--mono)">'+fmtUSD(c.deal_value)+'</td>'+
+      '<td style="font-family:var(--mono)">'+esc(c.rate_pct||'—')+'%</td>'+
+      '<td style="font-family:var(--mono);font-weight:700;color:var(--green-text)">'+fmtUSD(c.amount_usd)+'</td>'+
+      '<td style="color:var(--text3);font-size:11px">'+(c.created_at?.slice(0,10)||'—')+'</td>'+
+      '<td><span class="role-badge '+(c.status==='Paid'?'comm-status-paid':'comm-status-pending')+'">'+esc(c.status||'Pending')+'</span></td>'+
+      '<td></td>';
+    const actsTd=tr.querySelector('td:last-child');
+    if(isAdmin&&c.status!=='Paid'){
+      const markBtn=document.createElement('button');
+      markBtn.className='btn btn-xs btn-green';markBtn.textContent='Mark Paid';
+      markBtn.addEventListener('click',()=>markCommPaid(c.id));
+      actsTd.appendChild(markBtn);
+    }
+    tbody.appendChild(tr);
+  });
+}
+
+async function markCommPaid(id){
+  const today=new Date().toISOString().slice(0,10);
+  const{error}=await sb.from('commissions').update({status:'Paid',paid_date:today}).eq('id',id);
+  if(error){toast('Error: '+error.message,'err');return;}
+  await loadAll();toast('Commission marked as Paid ✓');
+}
+
+// ── My Profile ──
+function loadMyProfile(prof){
+  const initials=(prof?.full_name||currentUser?.email||'?').charAt(0).toUpperCase();
+  document.getElementById('profileAvatar').textContent=initials;
+  document.getElementById('profileName').textContent=prof?.full_name||prof?.display_name||'—';
+  document.getElementById('profileEmail').textContent=currentUser?.email||'—';
+  document.getElementById('pFullName').value=prof?.full_name||'';
+  document.getElementById('pDisplayName').value=prof?.display_name||'';
+  document.getElementById('pPhone').value=prof?.phone||'';
+}
+document.getElementById('saveProfileBtn').addEventListener('click',async()=>{
+  const obj={full_name:document.getElementById('pFullName').value.trim(),display_name:document.getElementById('pDisplayName').value.trim(),phone:document.getElementById('pPhone').value.trim()};
+  const{error}=await sb.from('profiles').update(obj).eq('id',currentUser.id);
+  if(error){toast('Save failed: '+error.message,'err');return;}
+  toast('Profile saved ✓');
+  document.getElementById('profileName').textContent=obj.full_name||obj.display_name||'—';
+  document.getElementById('profileAvatar').textContent=(obj.full_name||'?').charAt(0).toUpperCase();
+});
+
+// ── Admin: Users ──
+function renderAdminUsers(){
+  if(!isAdmin)return;
+  const tbody=document.getElementById('adminUsersBody');
+  if(!allProfiles.length){tbody.innerHTML='<tr><td colspan="5" class="empty-row">No users found</td></tr>';return;}
+  tbody.innerHTML='';
+  allProfiles.forEach(prof=>{
+    const roleCls={admin:'role-admin',sales:'role-sales',logistics:'role-logistics',viewer:'role-viewer'};
+    const tr=document.createElement('tr');
+    tr.innerHTML=
+      '<td><div style="font-weight:600">'+esc(prof.full_name||prof.display_name||'—')+'</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono)">'+esc(prof.email||'—')+'</div></td>'+
+      '<td><span class="role-badge '+(roleCls[prof.role]||'role-viewer')+'">'+esc(prof.role||'viewer')+'</span>'+(prof.is_admin?' <span class="admin-badge" style="font-size:8px">Admin</span>':'')+'</td>'+
+      '<td style="font-family:var(--mono)">'+(prof.commission_rate!=null?prof.commission_rate+'%':'—')+'</td>'+
+      '<td style="color:var(--text3);font-size:11px">'+(prof.created_at?.slice(0,10)||'—')+'</td>'+
+      '<td></td>';
+    const actsTd=tr.querySelector('td:last-child');
+    const editBtn=document.createElement('button');
+    editBtn.className='btn btn-xs btn-ghost';editBtn.textContent='Edit';
+    editBtn.addEventListener('click',()=>openEditUser(prof.id));
+    actsTd.appendChild(editBtn);
+    tbody.appendChild(tr);
+  });
+}
+
+// ── Edit User Modal ──
+function openEditUser(uid){
+  const prof=allProfiles.find(p=>p.id===uid);if(!prof)return;
+  editingUserId=uid;
+  document.getElementById('euEmail').value=prof.email||'';
+  document.getElementById('euName').value=prof.full_name||'';
+  document.getElementById('euRole').value=prof.role||'sales';
+  document.getElementById('euCommRate').value=prof.commission_rate||'';
+  document.getElementById('euIsAdmin').value=prof.is_admin?'true':'false';
+  document.getElementById('editUserModal').classList.add('open');
+}
+document.getElementById('euCancelBtn').addEventListener('click',()=>document.getElementById('editUserModal').classList.remove('open'));
+document.getElementById('euSaveBtn').addEventListener('click',async()=>{
+  const obj={full_name:document.getElementById('euName').value.trim(),role:document.getElementById('euRole').value,commission_rate:Number(document.getElementById('euCommRate').value)||null,is_admin:document.getElementById('euIsAdmin').value==='true'};
+  const{error}=await sb.from('profiles').update(obj).eq('id',editingUserId);
+  if(error){toast('Save failed: '+error.message,'err');return;}
+  document.getElementById('editUserModal').classList.remove('open');
+  await loadAll();toast('User updated ✓');
+});
+
+// ── Invite Modal ──
+document.getElementById('inviteBtn')?.addEventListener('click',()=>document.getElementById('inviteModal').classList.add('open'));
+document.getElementById('invCancelBtn').addEventListener('click',()=>document.getElementById('inviteModal').classList.remove('open'));
+document.getElementById('invSendBtn').addEventListener('click',async()=>{
+  const email=document.getElementById('invEmail').value.trim();
+  const role=document.getElementById('invRole').value;
+  if(!email){toast('Enter an email address','warn');return;}
+  const btn=document.getElementById('invSendBtn');btn.disabled=true;btn.textContent='Sending…';
+  const{error}=await sb.auth.admin.inviteUserByEmail(email,{data:{role}}).catch(()=>({error:{message:'Admin API requires service role key. Use Supabase dashboard to invite users.'}}));
+  btn.disabled=false;btn.textContent='Send Invite';
+  if(error){toast(error.message,'warn');return;}
+  document.getElementById('inviteModal').classList.remove('open');
+  toast('Invite sent to '+email+' ✓');
+});
+
+// wire buttons
+document.getElementById('menuBtn').addEventListener('click',openSidebar);
+document.getElementById('sbOverlay').addEventListener('click',closeSidebar);
+document.getElementById('darkBtn').addEventListener('click',toggleDark);
+</script>
+</body>
+</html>
