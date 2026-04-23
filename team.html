@@ -239,7 +239,7 @@ select.inp{cursor:pointer}
         <div class="tbl-wrap">
           <table class="tm-tbl">
             <thead><tr>
-              <th>Name / Email</th><th>Role</th><th>Commission Rate</th><th>Joined</th><th style="width:120px">Actions</th>
+              <th>Name / Email</th><th>Role</th><th>Commission Rate</th><th>Status</th><th>Joined</th><th style="width:160px">Actions</th>
             </tr></thead>
             <tbody id="adminUsersBody"><tr><td colspan="5" class="empty-row"><span class="spinner"></span>Loading…</td></tr></tbody>
           </table>
@@ -302,9 +302,46 @@ const SB_URL='https://fmmfofjkebdsrnkchrfo.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtbWZvZmprZWJkc3Jua2NocmZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDAxNDIsImV4cCI6MjA5MjA3NjE0Mn0.bQQJt06mucLCQCrY1NgN-ed2ngDeRLmITmOfQCAM7ZU';
 const sb=supabase.createClient(SB_URL,SB_KEY);
 
-let currentUser=null,isAdmin=false;
+let currentUser=null,isAdmin=false,currentUserId=null;
 let allProfiles=[],allLeads=[],allCommissions=[];
 let editingUserId=null,perfChartInst=null;
+
+// ── Edge Function URL ──
+// After deploying the admin-actions Edge Function in Supabase, paste its URL here:
+const EDGE_FN_URL='https://fmmfofjkebdsrnkchrfo.supabase.co/functions/v1/admin-actions';
+
+async function callAdminAction(payload){
+  const{data:{session}}=await sb.auth.getSession();
+  if(!session)return{error:'Not signed in'};
+  const res=await fetch(EDGE_FN_URL,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+    body:JSON.stringify(payload),
+  });
+  return res.json();
+}
+
+// ── Pause / Unpause ──
+async function togglePauseUser(uid,makePaused){
+  const label=makePaused?'pause':'unpause';
+  if(!confirm((makePaused?'Pause':'Unpause')+' this user? They '+(makePaused?'will not be able to access':'will regain access to')+' the platform.'))return;
+  const{error}=await sb.from('profiles').update({is_active:!makePaused}).eq('id',uid);
+  if(error){toast('Error: '+error.message,'err');return;}
+  await loadAll();
+  toast('User '+(makePaused?'paused':'unpaused')+' ✓');
+}
+
+// ── Delete User (via Edge Function) ──
+async function deleteUser(uid,name){
+  if(!confirm('Permanently delete '+name+'?\n\nThis removes their account and all login access. This CANNOT be undone.'))return;
+  const btn=event.target;btn.disabled=true;btn.textContent='Deleting…';
+  const result=await callAdminAction({action:'delete',userId:uid});
+  if(result.error){
+    btn.disabled=false;btn.textContent='🗑';
+    toast('Delete failed: '+result.error,'err');return;
+  }
+  await loadAll();toast('User deleted permanently');
+}
 
 // dark mode
 function toggleDark(){const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',t);document.getElementById('darkBtn').textContent=t==='dark'?'☀️ Light':'🌙 Dark mode';localStorage.setItem('sp_theme',t);}
@@ -339,11 +376,20 @@ async function doLogin(){
 document.getElementById('logoutBtn').addEventListener('click',async()=>{await sb.auth.signOut();location.reload();});
 async function onSignedIn(user){
   currentUser=user;
+  currentUserId=user.id;
   document.getElementById('authScreen').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('userEmail').textContent=user.email;
   const{data:prof}=await sb.from('profiles').select('*').eq('id',user.id).single();
   isAdmin=!!prof?.is_admin;
+  // Block paused users immediately
+  if(prof?.is_active===false){
+    await sb.auth.signOut();
+    document.getElementById('authScreen').style.display='flex';
+    document.getElementById('app').style.display='none';
+    showAuthMsg('Your account has been paused. Contact your administrator.');
+    return;
+  }
   if(isAdmin){
     document.getElementById('adminBadgeWrap').style.display='block';
     document.querySelectorAll('.admin-only').forEach(el=>el.style.display='');
@@ -557,22 +603,44 @@ document.getElementById('saveProfileBtn').addEventListener('click',async()=>{
 function renderAdminUsers(){
   if(!isAdmin)return;
   const tbody=document.getElementById('adminUsersBody');
-  if(!allProfiles.length){tbody.innerHTML='<tr><td colspan="5" class="empty-row">No users found</td></tr>';return;}
+  if(!allProfiles.length){tbody.innerHTML='<tr><td colspan="6" class="empty-row">No users found</td></tr>';return;}
   tbody.innerHTML='';
   allProfiles.forEach(prof=>{
     const roleCls={admin:'role-admin',sales:'role-sales',logistics:'role-logistics',viewer:'role-viewer'};
+    const isActive=prof.is_active!==false;
     const tr=document.createElement('tr');
+    tr.style.opacity=isActive?'1':'0.55';
     tr.innerHTML=
       '<td><div style="font-weight:600">'+esc(prof.full_name||prof.display_name||'—')+'</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono)">'+esc(prof.email||'—')+'</div></td>'+
       '<td><span class="role-badge '+(roleCls[prof.role]||'role-viewer')+'">'+esc(prof.role||'viewer')+'</span>'+(prof.is_admin?' <span class="admin-badge" style="font-size:8px">Admin</span>':'')+'</td>'+
       '<td style="font-family:var(--mono)">'+(prof.commission_rate!=null?prof.commission_rate+'%':'—')+'</td>'+
+      '<td><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid;'+(isActive?'background:var(--green-bg);color:var(--green-text);border-color:var(--green)':'background:var(--amber-bg);color:var(--amber-text);border-color:var(--amber)')+'">'+( isActive?'Active':'Paused')+'</span></td>'+
       '<td style="color:var(--text3);font-size:11px">'+(prof.created_at?.slice(0,10)||'—')+'</td>'+
-      '<td></td>';
+      '<td style="display:flex;gap:4px;flex-wrap:wrap"></td>';
     const actsTd=tr.querySelector('td:last-child');
+
+    // Edit button
     const editBtn=document.createElement('button');
     editBtn.className='btn btn-xs btn-ghost';editBtn.textContent='Edit';
     editBtn.addEventListener('click',()=>openEditUser(prof.id));
     actsTd.appendChild(editBtn);
+
+    // Pause / Unpause button
+    const pauseBtn=document.createElement('button');
+    pauseBtn.className='btn btn-xs btn-amber';
+    pauseBtn.textContent=isActive?'⏸ Pause':'▶ Unpause';
+    pauseBtn.addEventListener('click',()=>togglePauseUser(prof.id,!isActive));
+    actsTd.appendChild(pauseBtn);
+
+    // Delete button (not for self)
+    if(prof.id!==currentUserId){
+      const delBtn=document.createElement('button');
+      delBtn.className='btn btn-xs btn-danger';delBtn.textContent='🗑';
+      delBtn.title='Delete user permanently';
+      delBtn.addEventListener('click',()=>deleteUser(prof.id,prof.full_name||prof.email));
+      actsTd.appendChild(delBtn);
+    }
+
     tbody.appendChild(tr);
   });
 }
@@ -605,10 +673,11 @@ document.getElementById('invSendBtn').addEventListener('click',async()=>{
   const role=document.getElementById('invRole').value;
   if(!email){toast('Enter an email address','warn');return;}
   const btn=document.getElementById('invSendBtn');btn.disabled=true;btn.textContent='Sending…';
-  const{error}=await sb.auth.admin.inviteUserByEmail(email,{data:{role}}).catch(()=>({error:{message:'Admin API requires service role key. Use Supabase dashboard to invite users.'}}));
+  const result=await callAdminAction({action:'invite',email,role});
   btn.disabled=false;btn.textContent='Send Invite';
-  if(error){toast(error.message,'warn');return;}
+  if(result.error){toast('Invite failed: '+result.error,'err');return;}
   document.getElementById('inviteModal').classList.remove('open');
+  document.getElementById('invEmail').value='';
   toast('Invite sent to '+email+' ✓');
 });
 
