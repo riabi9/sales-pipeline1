@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Logistics — Steel Platform</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f0f0ee;--surface:#fff;--surface2:#ebebea;--surface3:#f6f6f4;
+  --border:#e0e0de;--border2:#cacac6;
+  --text:#111110;--text2:#4a4a48;--text3:#888884;--text4:#bbbbb6;
+  --blue:#1456a0;--blue-bg:#e8f1fb;--blue-mid:#4a8fd4;
+  --green:#15895f;--green-bg:#e2f4ee;--green-text:#0c5e42;
+  --red:#cc3333;--red-bg:#fdeaea;--red-text:#922020;
+  --amber:#c47d00;--amber-bg:#fdf2de;--amber-text:#764900;
+  --purple:#6055c0;--purple-bg:#eeedfb;--purple-text:#3f36a0;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+  --sidebar-w:210px;
+}
+[data-theme="dark"]{
+  --bg:#0d0d0c;--surface:#181817;--surface2:#202020;--surface3:#1b1b1a;
+  --border:#282826;--border2:#343432;
+  --text:#edecea;--text2:#b4b4b0;--text3:#727270;--text4:#424240;
+  --blue:#4a90d9;--blue-bg:#0a1f3a;--blue-mid:#2468b0;
+  --green:#28b488;--green-bg:#082a1e;--green-text:#50c8a0;
+  --red:#e04848;--red-bg:#280c0c;--red-text:#ee8888;
+  --amber:#f0a820;--amber-bg:#281a00;--amber-text:#f8c860;
+  --purple:#9088e0;--purple-bg:#181538;--purple-text:#b0a8f4;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;font-size:13px}
+
+/* ── Auth ── */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.auth-card{background:var(--surface);border-radius:18px;border:1px solid var(--border);padding:32px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.08)}
+.auth-logo{font-size:20px;font-weight:700;color:var(--blue);letter-spacing:-.4px}
+.auth-logo-sub{font-size:10px;font-family:var(--mono);color:var(--text4);margin-top:3px;margin-bottom:22px;text-transform:uppercase;letter-spacing:.8px}
+.lbl{font-size:10px;font-weight:700;color:var(--text3);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.inp{width:100%;height:40px;border:1px solid var(--border2);border-radius:8px;padding:0 12px;font-size:13px;background:var(--surface);color:var(--text);font-family:var(--sans);outline:none;transition:border-color .15s,box-shadow .15s}
+.inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+.form-row{margin-bottom:11px}
+.auth-btn{width:100%;height:42px;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--sans);background:var(--blue);color:#fff;margin-top:6px;transition:opacity .15s}
+.auth-btn:hover{opacity:.88}
+.auth-btn:disabled{opacity:.45;cursor:not-allowed}
+.auth-msg{font-size:12px;margin-top:12px;padding:9px;border-radius:7px;text-align:center;background:var(--red-bg);color:var(--red-text)}
+
+/* ── Layout ── */
+#app{display:none}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:140}
+.sidebar-overlay.open{display:block}
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:150;transition:transform .25s}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main-wrap{margin-left:0!important}.menu-btn{display:flex!important}}
+.sb-logo{padding:18px 16px 13px;border-bottom:1px solid var(--border)}
+.sb-logo-name{font-size:14px;font-weight:700;color:var(--blue)}
+.sb-logo-sub{font-size:9px;font-family:var(--mono);color:var(--text4);margin-top:2px;text-transform:uppercase;letter-spacing:.8px}
+.sb-nav{flex:1;overflow-y:auto;padding:8px 0}
+.nav-sec{font-size:9px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.8px;padding:12px 16px 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 16px;font-size:13px;color:var(--text2);cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:var(--sans);transition:background .12s,color .12s;text-decoration:none}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--blue-bg);color:var(--blue);font-weight:600}
+.nav-icon{font-size:14px;width:20px;text-align:center;flex-shrink:0}
+.sb-footer{padding:12px 16px;border-top:1px solid var(--border)}
+.sb-user{font-size:11px;color:var(--text3);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admin-badge{font-size:9px;font-weight:700;background:var(--amber-bg);color:var(--amber-text);padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px;border:1px solid var(--amber)}
+.main-wrap{margin-left:var(--sidebar-w);flex:1;min-width:0}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 14px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:8px}
+.h-left{display:flex;align-items:center;gap:10px}
+.h-title{font-size:14px;font-weight:600;color:var(--text)}
+.h-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.menu-btn{width:34px;height:34px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:16px;display:none;align-items:center;justify-content:center;flex-shrink:0}
+.page-body{padding:16px;max-width:1300px;margin:0 auto}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:34px;padding:0 13px;border:1px solid var(--border2);border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--sans);background:var(--surface);color:var(--text);white-space:nowrap;transition:background .12s,color .12s,border-color .12s}
+.btn:hover{background:var(--surface2)}
+.btn-blue{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}
+.btn-blue:hover{opacity:.88}
+.btn-green{background:var(--green);color:#fff;border-color:var(--green);font-weight:600}
+.btn-green:hover{opacity:.88}
+.btn-ghost{background:transparent;border-color:var(--border);color:var(--text3)}
+.btn-ghost:hover{background:var(--surface2);color:var(--text)}
+.btn-danger{background:var(--red-bg);color:var(--red-text);border-color:var(--red)}
+.btn-danger:hover{background:var(--red);color:#fff}
+.btn-amber{background:var(--amber-bg);color:var(--amber-text);border-color:var(--amber)}
+.btn-sm{height:28px;padding:0 10px;font-size:11px}
+.btn-xs{height:24px;padding:0 8px;font-size:10px;border-radius:6px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* ── Stats bar ── */
+.stats-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.stat-pill{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;color:var(--text2)}
+.stat-pill strong{font-weight:700;color:var(--text);font-family:var(--mono);margin-right:4px}
+
+/* ── Filter bar ── */
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.filter-inp{height:34px;border:1px solid var(--border2);border-radius:8px;padding:0 10px;font-size:12px;background:var(--surface);color:var(--text);font-family:var(--sans);outline:none}
+.filter-inp:focus{border-color:var(--blue)}
+select.filter-inp{cursor:pointer}
+
+/* ── Shipment cards ── */
+.ships-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;margin-bottom:20px}
+.ship-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;transition:border-color .15s}
+.ship-card:hover{border-color:var(--blue-mid)}
+.ship-card.overdue{border-left:3px solid var(--red)}
+.ship-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:8px}
+.ship-ref{font-size:13px;font-weight:700;color:var(--text);font-family:var(--mono)}
+.ship-customer{font-size:11px;color:var(--text3);margin-top:2px}
+.ship-actions{display:flex;gap:4px;flex-shrink:0}
+.route-row{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);margin-bottom:8px;flex-wrap:wrap}
+.port-tag{font-weight:600;color:var(--text)}
+.route-arrow{color:var(--text4);flex-shrink:0}
+.ship-meta{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.meta-item{font-size:11px;color:var(--text3)}
+.meta-item strong{color:var(--text2)}
+
+/* ── Status pipeline ── */
+.status-pipeline{display:flex;align-items:center;gap:0;margin-bottom:10px;overflow-x:auto}
+.sp-step{display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;position:relative}
+.sp-step:not(:last-child)::after{content:'';position:absolute;top:10px;right:-50%;width:100%;height:2px;background:var(--border2);z-index:0}
+.sp-step.done::after{background:var(--green)}
+.sp-step.active::after{background:var(--blue)}
+.sp-dot{width:20px;height:20px;border-radius:50%;border:2px solid var(--border2);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:9px;position:relative;z-index:1;flex-shrink:0;transition:all .2s}
+.sp-step.done .sp-dot{background:var(--green);border-color:var(--green);color:#fff}
+.sp-step.active .sp-dot{background:var(--blue);border-color:var(--blue);color:#fff}
+.sp-label{font-size:9px;color:var(--text4);margin-top:3px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60px}
+.sp-step.done .sp-label{color:var(--green-text)}
+.sp-step.active .sp-label{color:var(--blue);font-weight:700}
+
+/* ── Doc checklist ── */
+.doc-checklist{background:var(--surface2);border-radius:8px;padding:8px 10px;margin-bottom:8px}
+.doc-check-title{font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.doc-checks{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.doc-check-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);cursor:pointer}
+.doc-check-item input[type=checkbox]{accent-color:var(--green);width:13px;height:13px;cursor:pointer}
+.doc-check-item.done{color:var(--green-text)}
+
+/* ── Lead link chip ── */
+.lead-chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;background:var(--blue-bg);color:var(--blue);padding:2px 8px;border-radius:20px;border:1px solid var(--blue-mid);margin-bottom:8px}
+
+/* ── Delivered prompt banner ── */
+.delivered-prompt{position:fixed;top:62px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--green);border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 24px rgba(0,0,0,.12);z-index:500;max-width:440px;width:calc(100% - 32px)}
+.dp-text{font-size:13px;font-weight:600;color:var(--green-text)}
+.dp-sub{font-size:11px;color:var(--text3)}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--surface);padding:9px 18px;border-radius:8px;font-size:12px;font-weight:600;z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+
+/* ── Modal ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center;z-index:300;padding:0}
+@media(min-width:600px){.modal-bg{align-items:center;padding:16px}}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border-radius:16px 16px 0 0;border:1px solid var(--border);padding:22px;width:100%;max-width:560px;max-height:93vh;overflow-y:auto}
+@media(min-width:600px){.modal{border-radius:14px}}
+.modal-drag{width:40px;height:4px;background:var(--border2);border-radius:4px;margin:0 auto 16px}
+@media(min-width:600px){.modal-drag{display:none}}
+.modal-ttl{font-size:15px;font-weight:700;margin-bottom:16px;color:var(--text)}
+.modal-acts{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.msec{font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px;padding-top:12px;border-top:1px solid var(--border)}
+.msec:first-of-type{border-top:none;padding-top:0;margin-top:0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:420px){.g2,.g3{grid-template-columns:1fr}}
+select.inp{cursor:pointer}
+textarea.inp{height:auto;padding:8px 12px;resize:vertical;line-height:1.5}
+
+/* ── Tools section ── */
+.tools-section{margin-top:8px}
+.tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+@media(max-width:800px){.tools-grid{grid-template-columns:1fr}}
+.card{background:var(--surface);border-radius:12px;border:1px solid var(--border);padding:16px;margin-bottom:14px}
+.card-hd{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text);margin-bottom:13px;display:flex;align-items:center;justify-content:space-between}
+.track-input-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.track-inp{flex:1;min-width:140px;height:36px;border:1px solid var(--border2);border-radius:8px;padding:0 11px;font-size:13px;background:var(--surface);color:var(--text);font-family:var(--sans);outline:none}
+.track-inp:focus{border-color:var(--blue)}
+.carrier-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.carrier-btn{height:38px;border:1.5px solid var(--border2);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans);background:var(--surface2);color:var(--text2);transition:all .12s}
+.carrier-btn:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.1)}
+.carrier-btn.msc{border-color:#e63939;background:#fef7f7;color:#c0392b}
+.carrier-btn.maersk{border-color:#1d4b8f;background:#eef2fb;color:#1d4b8f}
+.carrier-btn.cma{border-color:#e06020;background:#fdf3ec;color:#c04a10}
+.carrier-btn.hapag{border-color:#f5a623;background:#fffaec;color:#c47d00}
+.carrier-btn.mt{border-color:#2d8f4e;background:#edf7f1;color:#1b6132}
+.carrier-btn.cosco{border-color:#c41010;background:#fef0f0;color:#a00c0c}
+.track-hint{font-size:11px;color:var(--text4);margin-top:8px;text-align:center}
+/* currency */
+.cur-base-row{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.cur-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.cur-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center}
+.cur-flag{font-size:20px;margin-bottom:3px}
+.cur-pair{font-size:10px;color:var(--text3);font-weight:700}
+.cur-rate{font-size:18px;font-weight:800;color:var(--text);margin:3px 0}
+.cur-loading{font-size:12px;color:var(--text4);text-align:center;padding:16px}
+.cur-error{font-size:11px;color:var(--red-text);background:var(--red-bg);border-radius:7px;padding:8px;text-align:center;margin-top:8px}
+.conv-row{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:11px;margin-top:10px}
+.conv-inputs{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.conv-amount{height:32px;width:90px;border:1px solid var(--border2);border-radius:7px;padding:0 8px;font-size:14px;font-weight:600;background:var(--surface);color:var(--text);font-family:var(--sans);outline:none}
+.conv-sel{height:32px;border:1px solid var(--border2);border-radius:7px;padding:0 8px;font-size:12px;background:var(--surface);color:var(--text);font-family:var(--sans);outline:none;cursor:pointer}
+.conv-result{font-size:15px;font-weight:700;color:var(--blue)}
+/* incoterms */
+.inco-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:7px}
+.inco-chip{position:relative;background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;padding:9px 7px;text-align:center;cursor:pointer;transition:all .12s}
+.inco-chip:hover{border-color:var(--blue);background:var(--blue-bg);transform:translateY(-2px)}
+.inco-code{font-size:13px;font-weight:800;color:var(--text)}
+.inco-name{font-size:9px;color:var(--text3);margin-top:2px}
+.inco-group{font-size:9px;font-weight:700;margin-top:3px;padding:1px 5px;border-radius:8px;display:inline-block}
+.inco-chip[data-group="E"] .inco-group{background:#e8f5e9;color:#2e7d32}
+.inco-chip[data-group="F"] .inco-group{background:#e3f2fd;color:#1565c0}
+.inco-chip[data-group="C"] .inco-group{background:#fff3e0;color:#e65100}
+.inco-chip[data-group="D"] .inco-group{background:#f3e5f5;color:#6a1b9a}
+.inco-tooltip{position:fixed;z-index:1000;max-width:300px;background:#1a1a1a;color:#fff;border-radius:10px;padding:13px;pointer-events:none;opacity:0;transition:opacity .15s;font-size:12px;box-shadow:0 8px 30px rgba(0,0,0,.25);line-height:1.5}
+.inco-tooltip.show{opacity:1}
+.inco-tt-code{font-size:15px;font-weight:800;margin-bottom:3px;color:#7dd3fc}
+.inco-tt-full{font-size:11px;color:#94a3b8;margin-bottom:7px}
+.inco-tt-label{font-size:10px;font-weight:700;text-transform:uppercase;color:#94a3b8;margin-bottom:2px}
+.inco-tt-seller{color:#86efac}
+.inco-tt-buyer{color:#fda4af}
+.inco-legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.inco-leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3)}
+.inco-leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:48px;color:var(--text4);font-size:13px}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div class="auth-wrap" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">⚙️ Steel Platform</div>
+    <div class="auth-logo-sub">Logistics · Sign in</div>
+    <div class="form-row"><label class="lbl">Email</label><input class="inp" type="email" id="loginEmail" placeholder="you@company.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="form-row"><label class="lbl">Password</label><input class="inp" type="password" id="loginPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="auth-btn" onclick="doLogin()" id="loginBtn">Sign in</button>
+    <div id="authMsg" style="display:none" class="auth-msg"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+  <nav class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-name">⚙️ Steel Platform</div>
+      <div class="sb-logo-sub">Export Management Suite</div>
+    </div>
+    <div class="sb-nav">
+      <div class="nav-sec">Pipeline</div>
+      <a href="index.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
+      <a href="index.html" class="nav-item"><span class="nav-icon">📋</span>CRM / Leads</a>
+      <div class="nav-sec">Inventory</div>
+      <a href="stock.html" class="nav-item"><span class="nav-icon">📦</span>Stock</a>
+      <a href="procurement.html" class="nav-item"><span class="nav-icon">🛒</span>Procurement</a>
+      <div class="nav-sec">Operations</div>
+      <a href="logistics.html" class="nav-item active"><span class="nav-icon">🚢</span>Logistics</a>
+      <a href="documents.html" class="nav-item"><span class="nav-icon">📄</span>Documents</a>
+      <div class="nav-sec">Finance</div>
+      <a href="bookkeeping.html" class="nav-item"><span class="nav-icon">💰</span>Bookkeeping</a>
+      <div class="nav-sec">Tools</div>
+      <a href="converter.html" class="nav-item"><span class="nav-icon">⚡</span>Grade Converter</a>
+      <a href="tools.html" class="nav-item"><span class="nav-icon">🔧</span>Tools</a>
+      <a href="news.html" class="nav-item"><span class="nav-icon">📰</span>News</a>
+      <div class="nav-sec">Team</div>
+      <a href="cont.html" class="nav-item"><span class="nav-icon">👥</span>Contacts</a>
+      <a href="team.html" class="nav-item"><span class="nav-icon">🧑‍💼</span>Team</a>
+    </div>
+    <div class="sb-footer">
+      <div class="sb-user" id="userEmail">—</div>
+      <div id="adminBadgeWrap" style="display:none;margin-bottom:8px"><span class="admin-badge">⚙ Admin</span></div>
+      <button class="btn btn-ghost" style="width:100%;margin-bottom:6px" onclick="doLogout()">Sign out</button>
+      <button class="btn btn-ghost" id="darkBtn" onclick="toggleDark()" style="width:100%">🌙 Dark mode</button>
+    </div>
+  </nav>
+
+  <div class="main-wrap" id="mainWrap">
+    <header>
+      <div class="h-left">
+        <button class="menu-btn" onclick="openSidebar()">☰</button>
+        <span class="h-title">🚢 Logistics</span>
+      </div>
+      <div class="h-right">
+        <button class="btn btn-blue" onclick="openAddShipment()">+ New Shipment</button>
+      </div>
+    </header>
+
+    <div class="page-body">
+
+      <!-- Stats -->
+      <div class="stats-row" id="statsRow">
+        <div class="stat-pill"><span class="spinner"></span>Loading…</div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-bar">
+        <select class="filter-inp" id="fStatus" onchange="renderShipments()">
+          <option value="">All statuses</option>
+          <option value="Booking">Booking</option>
+          <option value="Loading">Loading</option>
+          <option value="On Water">On Water</option>
+          <option value="At Destination">At Destination</option>
+          <option value="Delivered">Delivered</option>
+        </select>
+        <input class="filter-inp" type="date" id="fEtaFrom" onchange="renderShipments()" title="ETA from" style="width:130px">
+        <input class="filter-inp" type="date" id="fEtaTo" onchange="renderShipments()" title="ETA to" style="width:130px">
+        <input class="filter-inp" type="text" id="fSearch" placeholder="Search ref, customer, port…" oninput="renderShipments()" style="flex:1;min-width:140px">
+        <button class="btn btn-ghost btn-sm" onclick="clearFilters()">Clear</button>
+      </div>
+
+      <!-- Shipments grid -->
+      <div id="shipmentsGrid"></div>
+
+      <!-- Tools section -->
+      <div class="tools-section">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:12px;padding-top:8px;border-top:1px solid var(--border)">Market Intelligence & Tools</div>
+        <div class="tools-grid">
+          <!-- Carrier Tracker -->
+          <div class="card">
+            <div class="card-hd">🚢 Vessel & Truck Tracker</div>
+            <div class="track-input-row">
+              <input class="track-inp" id="trackInput" placeholder="Container no., vessel name, waybill…" onkeydown="if(event.key==='Enter')trackWith('https://www.marinetraffic.com/en/ais/details/vessels/vessel_name:')">
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:10px">
+              <button class="btn btn-sm" id="modeSeaBtn" onclick="setTrackerMode('sea')" style="flex:1;background:var(--blue);color:#fff;border-color:var(--blue)">🚢 Sea</button>
+              <button class="btn btn-sm" id="modeTruckBtn" onclick="setTrackerMode('truck')" style="flex:1">🚛 Truck</button>
+            </div>
+            <div id="seaCarriers" class="carrier-grid">
+              <button class="carrier-btn msc" onclick="trackWith('https://www.msc.com/track-a-shipment?agencyPath=&trackingNumber=')">🔵 MSC</button>
+              <button class="carrier-btn maersk" onclick="trackWith('https://www.maersk.com/tracking/')">🔷 Maersk</button>
+              <button class="carrier-btn cma" onclick="trackWith('https://www.cma-cgm.com/ebusiness/tracking/search?Reference=')">🟠 CMA CGM</button>
+              <button class="carrier-btn hapag" onclick="trackWith('https://www.hapag-lloyd.com/en/online-business/track/track-by-booking-solution.html?bookingNumber=')">🟡 Hapag</button>
+              <button class="carrier-btn mt" onclick="trackWith('https://www.marinetraffic.com/en/ais/details/vessels/vessel_name:')">🟢 MarineTraffic</button>
+              <button class="carrier-btn cosco" onclick="trackWith('https://elines.coscoshipping.com/ebusiness/cargoTracking?trackingType=BOOKING&number=')">🔴 COSCO</button>
+            </div>
+            <div id="truckCarriers" class="carrier-grid" style="display:none">
+              <button class="carrier-btn" style="border-color:#e10000;background:#fff5f5;color:#c00" onclick="trackWith('https://www.dhl.com/global-en/home/tracking.html?tracking-id=')">🔴 DHL Freight</button>
+              <button class="carrier-btn" style="border-color:#c00a0a;background:#fff5f5;color:#8b0000" onclick="trackWith('https://www.dbschenker.com/global/meta/tracking.html?trackid=')">🟥 DB Schenker</button>
+              <button class="carrier-btn" style="border-color:#0066cc;background:#f0f6ff;color:#0044aa" onclick="trackWith('https://www.kn-portal.com/tracking/?trackid=')">🔷 K+N</button>
+              <button class="carrier-btn" style="border-color:#338a3e;background:#f0fff3;color:#1a5c24" onclick="trackWith('https://www.dsv.com/en/get-a-quote-and-book/tracking?searchterm=')">🟩 DSV</button>
+              <button class="carrier-btn" style="border-color:#e85d00;background:#fff8f0;color:#b84000" onclick="trackWith('https://www.ekol.com/en/ekol-tracking/?waybill=')">🟧 Ekol</button>
+              <button class="carrier-btn" style="border-color:#555;background:#f8f8f8;color:#333" onclick="trackWith('https://www.geodis.com/global-en/track-trace?reference=')">⬛ Geodis</button>
+            </div>
+            <div class="track-hint">Enter tracking number then click carrier to open their portal</div>
+          </div>
+
+          <!-- Currency -->
+          <div class="card">
+            <div class="card-hd">💱 Live Currency Rates
+              <button class="btn btn-ghost btn-xs" onclick="loadRates()">↻ Refresh</button>
+            </div>
+            <div class="cur-base-row">
+              <span style="font-size:11px;color:var(--text3);font-weight:600">Base:</span>
+              <select class="filter-inp" id="curBase" onchange="loadRates()" style="width:90px">
+                <option value="USD">🇺🇸 USD</option>
+                <option value="EUR">🇪🇺 EUR</option>
+                <option value="TRY">🇹🇷 TRY</option>
+                <option value="GBP">🇬🇧 GBP</option>
+              </select>
+              <span style="font-size:10px;color:var(--text4)" id="curTs"></span>
+            </div>
+            <div class="cur-grid" id="curGrid"><div class="cur-loading"><span class="spinner"></span>Loading…</div></div>
+            <div class="conv-row">
+              <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:7px">Quick Convert</div>
+              <div class="conv-inputs">
+                <input class="conv-amount" type="number" id="convAmount" value="1000" oninput="doConvert()">
+                <select class="conv-sel" id="convFrom" onchange="doConvert()"><option>USD</option><option>EUR</option><option>TRY</option><option>GBP</option><option>DZD</option></select>
+                <span style="color:var(--text3)">→</span>
+                <select class="conv-sel" id="convTo" onchange="doConvert()"><option>EUR</option><option>USD</option><option>TRY</option><option>GBP</option><option>DZD</option></select>
+                <span class="conv-result" id="convResult">—</span>
+              </div>
+            </div>
+            <div id="curError" class="cur-error" style="display:none"></div>
+          </div>
+        </div>
+
+        <!-- Incoterms -->
+        <div class="card">
+          <div class="card-hd">📋 Incoterms 2020 — Interactive Guide <span style="font-size:10px;font-weight:400;color:var(--text4)">(hover for details)</span></div>
+          <div class="inco-legend">
+            <div class="inco-leg-item"><div class="inco-leg-dot" style="background:#2e7d32"></div>Group E — Departure</div>
+            <div class="inco-leg-item"><div class="inco-leg-dot" style="background:#1565c0"></div>Group F — Main carriage unpaid</div>
+            <div class="inco-leg-item"><div class="inco-leg-dot" style="background:#e65100"></div>Group C — Main carriage paid</div>
+            <div class="inco-leg-item"><div class="inco-leg-dot" style="background:#6a1b9a"></div>Group D — Arrival</div>
+          </div>
+          <div class="inco-grid" id="incoGrid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Incoterms tooltip -->
+<div class="inco-tooltip" id="incoTooltip"></div>
+
+<!-- Add/Edit shipment modal -->
+<div class="modal-bg" id="shipModal">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <p class="modal-ttl" id="shipModalTitle">New Shipment</p>
+
+    <div class="msec">Identification</div>
+    <div class="g3">
+      <div class="form-row"><label class="lbl">Shipment Ref</label><input class="inp" id="mRef" placeholder="SHP-2025-001" style="font-family:var(--mono)"></div>
+      <div class="form-row"><label class="lbl">Transport Mode</label>
+        <select class="inp" id="mMode" onchange="updateModalForMode()">
+          <option value="Sea">🚢 Sea</option>
+          <option value="Truck">🚛 Truck</option>
+          <option value="Multimodal">🔀 Multimodal</option>
+        </select>
+      </div>
+      <div class="form-row"><label class="lbl">Status</label>
+        <select class="inp" id="mStatus">
+          <option>Booking</option><option>Loading</option><option>On Water</option><option>At Destination</option><option>Delivered</option>
+        </select>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="form-row"><label class="lbl">Customer</label><input class="inp" id="mCustomer" placeholder="Company name"></div>
+      <div class="form-row"><label class="lbl">Linked Deal (Lead ID)</label><input class="inp" id="mLeadId" placeholder="Lead ID from CRM" style="font-family:var(--mono)"></div>
+    </div>
+
+    <div class="msec">Route</div>
+    <div class="g2">
+      <div class="form-row"><label class="lbl" id="lOrigin">Origin Port / Location</label><input class="inp" id="mOriginPort" placeholder="e.g. Mersin, TR"></div>
+      <div class="form-row"><label class="lbl" id="lDest">Destination Port / Location</label><input class="inp" id="mDestPort" placeholder="e.g. Algiers, DZ"></div>
+    </div>
+    <div class="g2" id="vesselRow">
+      <div class="form-row"><label class="lbl" id="lVessel">Vessel / Truck / Driver</label><input class="inp" id="mVessel" placeholder="e.g. MSC Stella"></div>
+      <div class="form-row"><label class="lbl" id="lContainer">Container No. / Waybill / Plate</label><input class="inp" id="mContainer" style="font-family:var(--mono)" placeholder="TCKU3456789"></div>
+    </div>
+
+    <div class="msec">Schedule</div>
+    <div class="g2">
+      <div class="form-row"><label class="lbl" id="lEtd">ETD / Dispatch Date</label><input class="inp" type="date" id="mEtd"></div>
+      <div class="form-row"><label class="lbl" id="lEta">ETA / Delivery Date</label><input class="inp" type="date" id="mEta"></div>
+    </div>
+
+    <div class="msec">Cargo</div>
+    <div class="g3">
+      <div class="form-row"><label class="lbl">Weight (tons)</label><input class="inp" type="number" id="mWeight" placeholder="0.00" style="font-family:var(--mono)"></div>
+      <div class="form-row"><label class="lbl">Freight Cost ($)</label><input class="inp" type="number" id="mFreight" placeholder="0.00" style="font-family:var(--mono)"></div>
+      <div class="form-row"><label class="lbl">Incoterms</label><input class="inp" id="mIncoterms" placeholder="CIF, FOB…"></div>
+    </div>
+    <div class="form-row"><label class="lbl">Products (brief description)</label><textarea class="inp" id="mProducts" style="height:52px" placeholder="e.g. S235JR Plate 10mm × 1500 × 6000, 50T"></textarea></div>
+
+    <div class="msec">Notes</div>
+    <div class="form-row"><textarea class="inp" id="mNotes" style="height:60px" placeholder="Additional notes…"></textarea></div>
+
+    <div class="modal-acts">
+      <button class="btn btn-danger btn-sm" id="mDeleteBtn" style="display:none;margin-right:auto" onclick="deleteShipment()">Delete</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeShipModal()">Cancel</button>
+      <button class="btn btn-blue btn-sm" onclick="saveShipment()" id="mSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ CONFIG ══
+const SUPABASE_URL='https://fmmfofjkebdsrnkchrfo.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtbWZvZmprZWJkc3Jua2NocmZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDAxNDIsImV4cCI6MjA5MjA3NjE0Mn0.bQQJt06mucLCQCrY1NgN-ed2ngDeRLmITmOfQCAM7ZU';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+const STATUSES=['Booking','Loading','On Water','At Destination','Delivered'];
+const STATUS_ICONS=['📋','📦','🌊','⚓','✅'];
+
+let currentUser=null, isAdmin=false;
+let shipments=[];
+let editingId=null;
+
+// ── Dark mode ──
+function toggleDark(){
+  const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  document.getElementById('darkBtn').textContent=t==='dark'?'☀️ Light mode':'🌙 Dark mode';
+  localStorage.setItem('sp_theme',t);
+}
+(()=>{
+  const t=localStorage.getItem('sp_theme')||'light';
+  document.documentElement.setAttribute('data-theme',t);
+  setTimeout(()=>{const b=document.getElementById('darkBtn');if(b&&t==='dark')b.textContent='☀️ Light mode';},50);
+})();
+
+// ── Sidebar ──
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sidebarOverlay').classList.add('open');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('open');}
+
+// ── Toast ──
+let _tt=null;
+function toast(msg,type='ok'){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.style.background=type==='err'?'var(--red-text)':type==='warn'?'var(--amber-text)':'var(--text)';
+  el.classList.add('show');
+  clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2800);
+}
+
+// ── Auth ──
+function showAuthMsg(m){const e=document.getElementById('authMsg');e.textContent=m;e.style.display='block';}
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPassword').value;
+  if(!email||!pass)return showAuthMsg('Please fill in all fields.');
+  const btn=document.getElementById('loginBtn');btn.disabled=true;btn.textContent='Signing in…';
+  const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  btn.disabled=false;btn.textContent='Sign in';
+  if(error)return showAuthMsg(error.message);
+  onSignedIn(data.user);
+}
+async function doLogout(){
+  await sb.auth.signOut();currentUser=null;
+  document.getElementById('app').style.display='none';
+  document.getElementById('authScreen').style.display='flex';
+}
+async function onSignedIn(user){
+  currentUser=user;
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('userEmail').textContent=user.email;
+  const{data:prof}=await sb.from('profiles').select('is_admin').eq('id',user.id).single();
+  isAdmin=!!prof?.is_admin;
+  if(isAdmin)document.getElementById('adminBadgeWrap').style.display='block';
+  await loadShipments();
+  checkUrlParams();
+  buildIncoGrid();
+  loadRates();
+}
+sb.auth.getSession().then(({data:{session}})=>{if(session)onSignedIn(session.user);});
+
+// ── URL params (from CRM won deal) ──
+function checkUrlParams(){
+  const p=new URLSearchParams(window.location.search);
+  if(p.get('lead_id')||p.get('customer')){
+    openAddShipment({
+      lead_id:p.get('lead_id')||'',
+      customer:p.get('customer')||'',
+      contact:p.get('contact')||'',
+    });
+    window.history.replaceState({},'',window.location.pathname);
+  }
+}
+
+// ── Load shipments ──
+async function loadShipments(){
+  document.getElementById('shipmentsGrid').innerHTML='<div class="empty-state"><span class="spinner"></span>Loading shipments…</div>';
+  const{data,error}=await sb.from('shipments').select('*').order('created_at',{ascending:false});
+  if(error){
+    document.getElementById('shipmentsGrid').innerHTML='<div class="empty-state">Could not load shipments.<br><small>Make sure the shipments table exists in Supabase.</small></div>';
+    renderStats([]);return;
+  }
+  shipments=data||[];
+  renderStats(shipments);
+  renderShipments();
+}
+
+// ── Stats ──
+function renderStats(data){
+  const active=data.filter(s=>s.status!=='Delivered');
+  const atSea=data.filter(s=>s.status==='On Water'&&(s.transport_mode||'Sea')!=='Truck');
+  const inTransit=data.filter(s=>s.status==='On Water'&&s.transport_mode==='Truck');
+  const tonWater=atSea.reduce((sum,s)=>sum+(Number(s.weight_tons)||0),0);
+  const today=new Date().toISOString().slice(0,10);
+  const overdue=active.filter(s=>s.eta&&s.eta<today).length;
+  document.getElementById('statsRow').innerHTML=
+    '<div class="stat-pill"><strong>'+active.length+'</strong>active</div>'+
+    '<div class="stat-pill"><strong>'+atSea.length+'</strong>🚢 at sea</div>'+
+    (inTransit.length?'<div class="stat-pill"><strong>'+inTransit.length+'</strong>🚛 in transit</div>':'')+
+    '<div class="stat-pill"><strong>'+tonWater.toFixed(0)+'t</strong>on-water tonnage</div>'+
+    '<div class="stat-pill" style="'+(overdue?'border-color:var(--red)':'')+'">' +
+    '<strong style="'+(overdue?'color:var(--red-text)':'')+'">'+overdue+'</strong>overdue</div>';
+}
+
+// ── Filter ──
+function clearFilters(){
+  ['fStatus','fSearch'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fEtaFrom').value='';
+  document.getElementById('fEtaTo').value='';
+  renderShipments();
+}
+function filteredShipments(){
+  const st=document.getElementById('fStatus').value;
+  const q=(document.getElementById('fSearch').value||'').toLowerCase();
+  const from=document.getElementById('fEtaFrom').value;
+  const to=document.getElementById('fEtaTo').value;
+  return shipments.filter(s=>{
+    if(st&&s.status!==st)return false;
+    if(q&&![s.shipment_ref,s.customer,s.origin_port,s.destination_port,s.vessel,s.container_no].some(v=>(v||'').toLowerCase().includes(q)))return false;
+    if(from&&s.eta&&s.eta<from)return false;
+    if(to&&s.eta&&s.eta>to)return false;
+    return true;
+  });
+}
+
+// ── Render shipments ──
+function renderShipments(){
+  const data=filteredShipments();
+  const grid=document.getElementById('shipmentsGrid');
+  if(!data.length){
+    grid.innerHTML='<div class="empty-state">No shipments found.<br><small>Click "+ New Shipment" to add one.</small></div>';
+    return;
+  }
+  const today=new Date().toISOString().slice(0,10);
+  grid.innerHTML='<div class="ships-grid">'+data.map(s=>shipCard(s,today)).join('')+'</div>';
+}
+
+function shipCard(s,today){
+  const stageIdx=STATUSES.indexOf(s.status);
+  const isTruck=(s.transport_mode||'Sea')==='Truck';
+  const modeIcon=s.transport_mode==='Truck'?'🚛':s.transport_mode==='Multimodal'?'🔀':'🚢';
+  const isOverdue=s.eta&&s.eta<today&&s.status!=='Delivered';
+  const doc=s.doc_checklist||{};
+  const docs=[
+    {key:'bl',label:isTruck?'CMR / Waybill':'BL Received'},
+    {key:'ci',label:'CI Sent'},
+    {key:'pl',label:'PL Sent'},
+    {key:'co',label:'Cert. of Origin'},
+  ];
+  const docsChecked=docs.filter(d=>doc[d.key]).length;
+
+  // Status pipeline — relabel "On Water" as "In Transit" for trucks
+  const pipeline=STATUSES.map((st,i)=>{
+    const isDone=i<stageIdx;
+    const isActive=i===stageIdx;
+    const label=(isTruck&&st==='On Water')?'In Transit':st;
+    return '<div class="sp-step'+(isDone?' done':isActive?' active':'')+'">'+
+      '<div class="sp-dot">'+(isDone?'✓':STATUS_ICONS[i])+'</div>'+
+      '<div class="sp-label">'+label.replace(' ','<br>')+'</div>'+
+      '</div>';
+  }).join('');
+
+  // Doc checklist
+  const docHTML=docs.map(d=>
+    '<label class="doc-check-item'+(doc[d.key]?' done':'')+'">'+
+    '<input type="checkbox"'+(doc[d.key]?' checked':'')+' onchange="toggleDoc(\''+s.id+'\',\''+d.key+'\',this.checked)" onclick="event.stopPropagation()">'+
+    d.label+'</label>'
+  ).join('');
+
+  return '<div class="ship-card'+(isOverdue?' overdue':'')+'">'+
+    '<div class="ship-hd">'+
+      '<div>'+
+        '<div class="ship-ref">'+modeIcon+' '+esc(s.shipment_ref||'—')+'</div>'+
+        '<div class="ship-customer">'+esc(s.customer||'—')+'</div>'+
+      '</div>'+
+      '<div class="ship-actions">'+
+        '<button class="btn btn-xs btn-ghost" onclick="openEditShipment(\''+s.id+'\')">Edit</button>'+
+      '</div>'+
+    '</div>'+
+    (s.lead_id?'<div class="lead-chip">🔗 Lead: '+esc(s.lead_id)+'</div>':'') +
+    '<div class="route-row">'+
+      '<span class="port-tag">'+esc(s.origin_port||'—')+'</span>'+
+      '<span class="route-arrow">→</span>'+
+      '<span class="port-tag">'+esc(s.destination_port||'—')+'</span>'+
+    '</div>'+
+    '<div class="ship-meta">'+
+      (s.vessel?'<span class="meta-item">🚢 <strong>'+esc(s.vessel)+'</strong></span>':'')+
+      (s.container_no?'<span class="meta-item">📦 <strong style="font-family:var(--mono)">'+esc(s.container_no)+'</strong></span>':'')+
+      (s.eta?'<span class="meta-item">ETA <strong'+(isOverdue?' style="color:var(--red-text)"':'')+'">'+s.eta+'</strong></span>':'')+
+      (s.weight_tons?'<span class="meta-item"><strong>'+s.weight_tons+'t</strong></span>':'')+
+    '</div>'+
+    '<div class="status-pipeline">'+pipeline+'</div>'+
+    '<div class="doc-checklist">'+
+      '<div class="doc-check-title">Documents ('+docsChecked+'/4)</div>'+
+      '<div class="doc-checks">'+docHTML+'</div>'+
+    '</div>'+
+    (s.notes?'<div style="font-size:11px;color:var(--text3);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(s.notes)+'">'+esc(s.notes)+'</div>':'')+
+  '</div>';
+}
+
+// ── Document checklist toggle ──
+async function toggleDoc(shipId,key,checked){
+  const ship=shipments.find(s=>s.id===shipId);if(!ship)return;
+  const doc={...(ship.doc_checklist||{}),[key]:checked};
+  const{error}=await sb.from('shipments').update({doc_checklist:doc}).eq('id',shipId);
+  if(error){toast('Save failed','err');return;}
+  ship.doc_checklist=doc;
+  renderShipments();
+  toast(checked?'✓ Document checked':'Document unchecked');
+}
+
+// ── Add/Edit modal ──
+function openAddShipment(prefill={}){
+  editingId=null;
+  document.getElementById('shipModalTitle').textContent='New Shipment';
+  document.getElementById('mDeleteBtn').style.display='none';
+  document.getElementById('mRef').value=prefill.ref||'SHP-'+new Date().getFullYear()+'-'+String(shipments.length+1).padStart(3,'0');
+  document.getElementById('mMode').value=prefill.mode||'Sea';
+  document.getElementById('mStatus').value='Booking';
+  document.getElementById('mCustomer').value=prefill.customer||'';
+  document.getElementById('mLeadId').value=prefill.lead_id||'';
+  document.getElementById('mOriginPort').value='';
+  document.getElementById('mDestPort').value='';
+  document.getElementById('mVessel').value='';
+  document.getElementById('mContainer').value='';
+  document.getElementById('mEtd').value='';
+  document.getElementById('mEta').value='';
+  document.getElementById('mWeight').value='';
+  document.getElementById('mFreight').value='';
+  document.getElementById('mIncoterms').value='';
+  document.getElementById('mProducts').value='';
+  document.getElementById('mNotes').value='';
+  document.getElementById('mSaveBtn').textContent='Save';
+  document.getElementById('shipModal').classList.add('open');
+}
+function openEditShipment(id){
+  const s=shipments.find(x=>x.id===id);if(!s)return;
+  editingId=id;
+  document.getElementById('shipModalTitle').textContent='Edit Shipment';
+  document.getElementById('mDeleteBtn').style.display='inline-flex';
+  document.getElementById('mRef').value=s.shipment_ref||'';
+  document.getElementById('mMode').value=s.transport_mode||'Sea';
+  document.getElementById('mStatus').value=s.status||'Booking';
+  updateModalForMode();
+  document.getElementById('mCustomer').value=s.customer||'';
+  document.getElementById('mLeadId').value=s.lead_id||'';
+  document.getElementById('mOriginPort').value=s.origin_port||'';
+  document.getElementById('mDestPort').value=s.destination_port||'';
+  document.getElementById('mVessel').value=s.vessel||'';
+  document.getElementById('mContainer').value=s.container_no||'';
+  document.getElementById('mEtd').value=s.etd||'';
+  document.getElementById('mEta').value=s.eta||'';
+  document.getElementById('mWeight').value=s.weight_tons||'';
+  document.getElementById('mFreight').value=s.freight_cost||'';
+  document.getElementById('mIncoterms').value=s.incoterms||'';
+  document.getElementById('mProducts').value=typeof s.products==='string'?s.products:JSON.stringify(s.products||'');
+  document.getElementById('mNotes').value=s.notes||'';
+  document.getElementById('mSaveBtn').textContent='Save';
+  document.getElementById('shipModal').classList.add('open');
+}
+function closeShipModal(){document.getElementById('shipModal').classList.remove('open');}
+
+async function saveShipment(){
+  const btn=document.getElementById('mSaveBtn');btn.disabled=true;btn.textContent='Saving…';
+  const newStatus=document.getElementById('mStatus').value;
+  const prevStatus=editingId?(shipments.find(s=>s.id===editingId)||{}).status:null;
+
+  const obj={
+    user_id:currentUser.id,
+    transport_mode:document.getElementById('mMode').value,
+    shipment_ref:document.getElementById('mRef').value.trim(),
+    customer:document.getElementById('mCustomer').value.trim(),
+    lead_id:document.getElementById('mLeadId').value.trim()||null,
+    origin_port:document.getElementById('mOriginPort').value.trim(),
+    destination_port:document.getElementById('mDestPort').value.trim(),
+    vessel:document.getElementById('mVessel').value.trim(),
+    container_no:document.getElementById('mContainer').value.trim(),
+    etd:document.getElementById('mEtd').value||null,
+    eta:document.getElementById('mEta').value||null,
+    status:newStatus,
+    weight_tons:Number(document.getElementById('mWeight').value)||null,
+    freight_cost:Number(document.getElementById('mFreight').value)||null,
+    incoterms:document.getElementById('mIncoterms').value.trim(),
+    products:document.getElementById('mProducts').value.trim(),
+    notes:document.getElementById('mNotes').value.trim(),
+  };
+
+  let error;
+  if(editingId){({error}=await sb.from('shipments').update(obj).eq('id',editingId));}
+  else{({error}=await sb.from('shipments').insert(obj));}
+
+  // If transport_mode column doesn't exist yet, retry without it
+  if(error&&error.message&&error.message.includes('transport_mode')){
+    const fallback={...obj};delete fallback.transport_mode;
+    if(editingId){({error}=await sb.from('shipments').update(fallback).eq('id',editingId));}
+    else{({error}=await sb.from('shipments').insert(fallback));}
+    if(!error){
+      toast('Saved ✓ — run ALTER TABLE to enable transport mode','warn');
+    }
+  }
+
+  btn.disabled=false;btn.textContent='Save';
+  if(error){toast('Save failed: '+error.message,'err');return;}
+  closeShipModal();
+  await loadShipments();
+  if(!error)toast(editingId?'Shipment updated ✓':'Shipment created ✓');
+  if(newStatus==='Delivered'&&prevStatus!=='Delivered')showDeliveredPrompt(obj);
+}
+
+async function deleteShipment(){
+  if(!confirm('Delete this shipment? This cannot be undone.'))return;
+  const{error}=await sb.from('shipments').delete().eq('id',editingId);
+  if(error){toast('Delete failed','err');return;}
+  closeShipModal();
+  await loadShipments();
+  toast('Shipment deleted');
+}
+
+// ── Delivered → invoice prompt ──
+let _dpTimer=null;
+function showDeliveredPrompt(obj){
+  const old=document.getElementById('deliveredPrompt');if(old)old.remove();
+  clearTimeout(_dpTimer);
+  const params=new URLSearchParams({shipment_ref:obj.shipment_ref||'',customer:obj.customer||''});
+  const el=document.createElement('div');
+  el.id='deliveredPrompt';el.className='delivered-prompt';
+  el.innerHTML=
+    '<div><div class="dp-text">✅ Shipment marked as Delivered!</div><div class="dp-sub">'+esc(obj.customer)+' — '+esc(obj.shipment_ref)+'</div></div>'+
+    '<a class="btn btn-green btn-sm" href="bookkeeping.html?'+params.toString()+'">Mark Invoice Paid →</a>'+
+    '<button class="btn btn-ghost btn-sm" onclick="document.getElementById(\'deliveredPrompt\').remove()" style="flex-shrink:0">×</button>';
+  document.body.appendChild(el);
+  _dpTimer=setTimeout(()=>{const e=document.getElementById('deliveredPrompt');if(e)e.remove();},12000);
+}
+
+// ── Tracker mode toggle ──
+function setTrackerMode(mode){
+  const isTruck=mode==='truck';
+  document.getElementById('seaCarriers').style.display=isTruck?'none':'grid';
+  document.getElementById('truckCarriers').style.display=isTruck?'grid':'none';
+  document.getElementById('modeSeaBtn').style.cssText=isTruck?'flex:1':'flex:1;background:var(--blue);color:#fff;border-color:var(--blue)';
+  document.getElementById('modeTruckBtn').style.cssText=isTruck?'flex:1;background:var(--blue);color:#fff;border-color:var(--blue)':'flex:1';
+}
+
+// ── Modal labels update by mode ──
+function updateModalForMode(){
+  const mode=document.getElementById('mMode')?.value||'Sea';
+  const isTruck=mode==='Truck';
+  const isMulti=mode==='Multimodal';
+  const set=(id,text)=>{const el=document.getElementById(id);if(el)el.textContent=text;};
+  if(isTruck){
+    set('lOrigin','Origin / Loading Point');
+    set('lDest','Destination / Delivery Point');
+    set('lVessel','Truck / Driver Name');
+    set('lContainer','Waybill / Plate No.');
+    set('lEtd','Dispatch Date');
+    set('lEta','Estimated Delivery');
+    // Replace "On Water" status option with "In Transit" for trucks
+    const sel=document.getElementById('mStatus');
+    if(sel){
+      [...sel.options].forEach(o=>{
+        if(o.value==='On Water')o.text='🚛 In Transit';
+      });
+    }
+  } else {
+    set('lOrigin','Origin Port / Location');
+    set('lDest','Destination Port / Location');
+    set('lVessel',isMulti?'Vessel / Truck / Driver':'Vessel Name');
+    set('lContainer',isMulti?'Container / Waybill / Plate':'Container No.');
+    set('lEtd','ETD / Dispatch Date');
+    set('lEta','ETA / Delivery Date');
+    const sel=document.getElementById('mStatus');
+    if(sel){
+      [...sel.options].forEach(o=>{
+        if(o.value==='On Water')o.text='On Water';
+      });
+    }
+  }
+}
+
+// ── Carrier Tracker ──
+function trackWith(baseUrl){
+  const n=document.getElementById('trackInput').value.trim();
+  if(!n){toast('Enter a tracking number first','warn');return;}
+  window.open(baseUrl+encodeURIComponent(n),'_blank');
+}
+
+// ══ CURRENCY RATES ══
+let rates={};
+const CURRENCIES=[
+  {code:'EUR',flag:'🇪🇺'},{code:'TRY',flag:'🇹🇷'},{code:'GBP',flag:'🇬🇧'},
+  {code:'DZD',flag:'🇩🇿'},{code:'CNY',flag:'🇨🇳'},{code:'AED',flag:'🇦🇪'},
+  {code:'SAR',flag:'🇸🇦'},{code:'JPY',flag:'🇯🇵'},
+];
+async function loadRates(){
+  const base=document.getElementById('curBase').value;
+  document.getElementById('curGrid').innerHTML='<div class="cur-loading"><span class="spinner"></span>Fetching…</div>';
+  document.getElementById('curError').style.display='none';
+  try{
+    const res=await fetch('https://open.er-api.com/v6/latest/'+base);
+    if(!res.ok)throw new Error('API error');
+    const data=await res.json();
+    rates=data.rates||{};rates[base]=1;
+    renderCurrencyCards(base);doConvert();
+    document.getElementById('curTs').textContent='Updated: '+new Date().toLocaleTimeString();
+  }catch(e){
+    rates={USD:1,EUR:0.92,TRY:32.5,GBP:0.79,DZD:134.5,CNY:7.24,JPY:151.3,AED:3.67,SAR:3.75};
+    if(base!=='USD'){const r=rates[base];const n={};for(const[k,v]of Object.entries(rates))n[k]=v/r;rates=n;}
+    renderCurrencyCards(base);doConvert();
+    document.getElementById('curError').textContent='Live data unavailable — indicative rates.';
+    document.getElementById('curError').style.display='block';
+    document.getElementById('curTs').textContent='Indicative';
+  }
+}
+function renderCurrencyCards(base){
+  const grid=document.getElementById('curGrid');
+  grid.innerHTML=CURRENCIES.filter(c=>c.code!==base).map(c=>{
+    const r=rates[c.code];if(!r)return'';
+    const d=r>100?r.toFixed(0):r>10?r.toFixed(2):r.toFixed(4);
+    return'<div class="cur-card"><div class="cur-flag">'+c.flag+'</div><div class="cur-pair">1 '+base+' =</div><div class="cur-rate">'+d+'</div><div class="cur-pair">'+c.code+'</div></div>';
+  }).join('');
+}
+function doConvert(){
+  const amt=parseFloat(document.getElementById('convAmount').value)||0;
+  const from=document.getElementById('convFrom').value;
+  const to=document.getElementById('convTo').value;
+  if(!rates[from]||!rates[to]){document.getElementById('convResult').textContent='—';return;}
+  const res=amt/rates[from]*rates[to];
+  const fmt=res>1000?res.toLocaleString(undefined,{maximumFractionDigits:2}):res.toFixed(4);
+  document.getElementById('convResult').textContent=fmt+' '+to;
+}
+
+// ══ INCOTERMS ══
+const INCOTERMS=[
+  {code:'EXW',full:'Ex Works',group:'E',mode:'Any',seller:'Makes goods available at premises only.',buyer:'Pays ALL costs: collection, export, freight, insurance, import.',risk:'At disposal at seller premises.',tip:'Maximum buyer obligation. Rare in steel trade.'},
+  {code:'FCA',full:'Free Carrier',group:'F',mode:'Any',seller:'Delivers to named carrier, handles export.',buyer:'Pays main carriage, insurance, import duties.',risk:'Handed to first carrier at named place.',tip:'Best for containers. Replaces FOB for containerized cargo.'},
+  {code:'FAS',full:'Free Alongside Ship',group:'F',mode:'Sea',seller:'Delivers alongside vessel at loading port, handles export.',buyer:'Pays loading, freight, insurance, import.',risk:'Alongside vessel at loading port.',tip:'Common for bulk steel or oversized project cargo.'},
+  {code:'FOB',full:'Free on Board',group:'F',mode:'Sea',seller:'Delivers on board vessel at loading port, handles export.',buyer:'Pays freight, insurance, import duties.',risk:'On board ship at loading port.',tip:'Most common for steel plates, coils, profiles.'},
+  {code:'CFR',full:'Cost and Freight',group:'C',mode:'Sea',seller:'Pays freight to destination port. Handles export.',buyer:'Pays insurance, unloading, import duties.',risk:'On board at loading port (same as FOB!)',tip:'Seller pays freight but buyer takes risk during voyage.'},
+  {code:'CIF',full:'Cost Insurance Freight',group:'C',mode:'Sea',seller:'Pays freight AND insurance (min cover) to destination.',buyer:'Pays unloading, import duties.',risk:'On board at loading port.',tip:'Very common in steel export. Verify insurance coverage level.'},
+  {code:'CPT',full:'Carriage Paid To',group:'C',mode:'Any',seller:'Pays freight to named destination. Export clearance.',buyer:'Pays insurance, import duties, on-carriage.',risk:'Handed to first carrier.',tip:'Like CFR but for any transport mode.'},
+  {code:'CIP',full:'Carriage & Insurance Paid',group:'C',mode:'Any',seller:'Pays freight AND insurance (all risks ICC A) to destination.',buyer:'Pays import duties, local delivery.',risk:'Handed to first carrier.',tip:'Higher insurance standard than CIF (all risks).'},
+  {code:'DAP',full:'Delivered at Place',group:'D',mode:'Any',seller:'Delivers ready for unloading at named place.',buyer:'Pays unloading, import duties.',risk:'Ready for unloading at destination.',tip:'Common door-to-door. Buyer handles import clearance.'},
+  {code:'DPU',full:'Delivered at Place Unloaded',group:'D',mode:'Any',seller:'Delivers AND unloads at named destination.',buyer:'Pays import duties.',risk:'Once unloaded at destination.',tip:'Seller must arrange unloading — check facilities.'},
+  {code:'DDP',full:'Delivered Duty Paid',group:'D',mode:'Any',seller:'Pays everything: freight, insurance, import duties, delivery.',buyer:'Simply receives goods.',risk:'Seller bears risk until delivery.',tip:'Maximum seller commitment. Know destination import rules.'},
+];
+function buildIncoGrid(){
+  const grid=document.getElementById('incoGrid');
+  grid.innerHTML=INCOTERMS.map(ic=>
+    '<div class="inco-chip" data-group="'+ic.group+'" onmouseenter="showIncoTip(event,\''+ic.code+'\')" onmouseleave="hideIncoTip()">'+
+    '<div class="inco-code">'+ic.code+'</div>'+
+    '<div class="inco-name">'+ic.full+'</div>'+
+    '<div class="inco-group">'+ic.group+'</div>'+
+    '</div>'
+  ).join('');
+}
+const tt=document.getElementById('incoTooltip');
+function showIncoTip(e,code){
+  const ic=INCOTERMS.find(x=>x.code===code);if(!ic)return;
+  tt.innerHTML=
+    '<div class="inco-tt-code">'+ic.code+'</div>'+
+    '<div class="inco-tt-full">'+ic.full+' · '+ic.mode+'</div>'+
+    '<div style="margin-bottom:5px"><div class="inco-tt-label">🟢 Seller:</div><div class="inco-tt-seller">'+ic.seller+'</div></div>'+
+    '<div style="margin-bottom:5px"><div class="inco-tt-label">🔴 Buyer:</div><div class="inco-tt-buyer">'+ic.buyer+'</div></div>'+
+    '<div style="margin-bottom:5px"><div class="inco-tt-label">⚡ Risk:</div><div>'+ic.risk+'</div></div>'+
+    '<div style="margin-top:6px;padding-top:6px;border-top:1px solid #333;color:#fde68a;font-size:11px">💡 '+ic.tip+'</div>';
+  const rect=e.target.closest('.inco-chip').getBoundingClientRect();
+  let top=rect.bottom+8,left=rect.left;
+  if(left+310>window.innerWidth)left=window.innerWidth-320;
+  if(top+240>window.innerHeight)top=rect.top-250;
+  tt.style.top=top+'px';tt.style.left=left+'px';
+  tt.classList.add('show');
+}
+function hideIncoTip(){tt.classList.remove('show');}
+
+// ── Utils ──
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+</script>
+</body>
+</html>
