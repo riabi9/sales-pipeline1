@@ -241,7 +241,7 @@ select.inp{cursor:pointer}
             <thead><tr>
               <th>Name / Email</th><th>Role</th><th>Commission Rate</th><th>Status</th><th>Joined</th><th style="width:160px">Actions</th>
             </tr></thead>
-            <tbody id="adminUsersBody"><tr><td colspan="5" class="empty-row"><span class="spinner"></span>Loading…</td></tr></tbody>
+            <tbody id="adminUsersBody"><tr><td colspan="6" class="empty-row"><span class="spinner"></span>Loading…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -323,7 +323,6 @@ async function callAdminAction(payload){
 
 // ── Pause / Unpause ──
 async function togglePauseUser(uid,makePaused){
-  const label=makePaused?'pause':'unpause';
   if(!confirm((makePaused?'Pause':'Unpause')+' this user? They '+(makePaused?'will not be able to access':'will regain access to')+' the platform.'))return;
   const{error}=await sb.from('profiles').update({is_active:!makePaused}).eq('id',uid);
   if(error){toast('Error: '+error.message,'err');return;}
@@ -332,9 +331,9 @@ async function togglePauseUser(uid,makePaused){
 }
 
 // ── Delete User (via Edge Function) ──
-async function deleteUser(uid,name){
+async function deleteUser(uid,name,btn){
   if(!confirm('Permanently delete '+name+'?\n\nThis removes their account and all login access. This CANNOT be undone.'))return;
-  const btn=event.target;btn.disabled=true;btn.textContent='Deleting…';
+  btn.disabled=true;btn.textContent='Deleting…';
   const result=await callAdminAction({action:'delete',userId:uid});
   if(result.error){
     btn.disabled=false;btn.textContent='🗑';
@@ -637,7 +636,7 @@ function renderAdminUsers(){
       const delBtn=document.createElement('button');
       delBtn.className='btn btn-xs btn-danger';delBtn.textContent='🗑';
       delBtn.title='Delete user permanently';
-      delBtn.addEventListener('click',()=>deleteUser(prof.id,prof.full_name||prof.email));
+      delBtn.addEventListener('click',()=>deleteUser(prof.id,prof.full_name||prof.email,delBtn));
       actsTd.appendChild(delBtn);
     }
 
