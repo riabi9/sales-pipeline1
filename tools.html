@@ -108,6 +108,17 @@ select.form-input{cursor:pointer}
 .thickness-check-row{display:flex;gap:8px;margin-bottom:14px;align-items:flex-end}
 .thickness-check-row .form-input{max-width:160px;flex-shrink:0}
 
+/* ── Cutting Visual ── */
+.cut-bar-wrap{margin-bottom:10px}
+.cut-bar-label{font-size:11px;color:var(--text3);margin-bottom:3px;font-weight:600}
+.cut-bar-track{height:28px;border-radius:6px;overflow:hidden;display:flex;background:var(--surface2);border:1px solid var(--border)}
+.cut-seg{height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;overflow:hidden;white-space:nowrap}
+.cut-seg-waste{background:var(--border2);color:var(--text3)}
+.cut-seg-offcut{background:var(--amber);color:#fff}
+.cut-legend{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
+.cut-legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.cut-legend-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+
 /* ── Floating Converter ── */
 .conv-float-btn{
   position:fixed;right:20px;bottom:20px;z-index:500;
@@ -156,7 +167,7 @@ select.form-input{cursor:pointer}
   </div>
   <nav class="sidebar-nav">
     <div class="nav-section">Pipeline</div>
-    <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
+    <a href="index.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
     <a href="index.html" class="nav-item"><span class="nav-icon">📋</span>CRM / Leads</a>
     <div class="nav-section">Inventory</div>
     <a href="stock.html" class="nav-item"><span class="nav-icon">📦</span>Stock</a>
@@ -195,6 +206,13 @@ select.form-input{cursor:pointer}
       <button class="tool-tab" onclick="showTool('price',this)">💰 Price Calculator</button>
       <button class="tool-tab" onclick="showTool('container',this)">🚢 Container Load</button>
       <button class="tool-tab" onclick="showTool('tolerance',this)">📐 Tolerance</button>
+      <button class="tool-tab" onclick="showTool('cutting',this)">✂️ Cutting Optimization</button>
+      <button class="tool-tab" onclick="showTool('slitting',this)">&#127959; Slitting</button>
+      <button class="tool-tab" onclick="showTool('coilcalc',this)">&#128260; Coil Calculator</button>
+      <button class="tool-tab" onclick="showTool('draft',this)">&#9875; Draft / Load</button>
+      <button class="tool-tab" onclick="showTool('hardness',this)">&#128296; Hardness</button>
+      <button class="tool-tab" onclick="showTool('bend',this)">&#128200; Bend Allowance</button>
+      <button class="tool-tab" onclick="showTool('landedcost',this)">&#127758; Landed Cost</button>
     </div>
 
     <!-- ── Weight Calculator ── -->
@@ -510,6 +528,421 @@ select.form-input{cursor:pointer}
         <p class="tol-note" id="tol-note"></p>
       </div>
     </div>
+    <!-- ── Cutting Optimization ── -->
+    <div class="tool-section" id="tool-cutting">
+      <div class="card">
+        <div class="card-title"><span>&#9986;</span> Cutting Optimization (1D Bar / Sheet)</div>
+        <div class="grid2">
+          <div>
+            <div class="form-row">
+              <label class="form-label">Stock Length (mm)</label>
+              <input class="form-input" type="number" id="cut-stock" placeholder="e.g. 6000" value="6000" min="1">
+            </div>
+            <div class="form-row">
+              <label class="form-label">Kerf / Saw Cut Width (mm)</label>
+              <input class="form-input" type="number" id="cut-kerf" placeholder="e.g. 3" value="3" min="0" step="0.5">
+            </div>
+            <div class="form-row">
+              <label class="form-label">Min Offcut to keep (mm)</label>
+              <input class="form-input" type="number" id="cut-min-offcut" placeholder="e.g. 200" value="200" min="0">
+            </div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:6px">Cut List</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px">One piece per line: <code style="background:var(--surface);padding:1px 4px;border-radius:4px">length qty</code> e.g. <code style="background:var(--surface);padding:1px 4px;border-radius:4px">1500 4</code></div>
+            <textarea id="cut-list" class="form-input" rows="8" style="height:auto;padding:10px;resize:vertical;font-family:monospace;font-size:12px">1500 4
+900 6
+2200 2
+750 10</textarea>
+          </div>
+        </div>
+        <button class="calc-btn" onclick="cutOptimize()" style="margin-top:14px">Optimize Cuts</button>
+      </div>
+
+      <div class="result-panel" id="cut-result">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px">
+          <div class="result-item"><div class="result-label">Bars Needed</div><div class="result-value" id="cut-out-bars" style="font-size:22px">-</div></div>
+          <div class="result-item"><div class="result-label">Material Used</div><div class="result-value" id="cut-out-used" style="font-size:22px">-</div><div class="result-unit">%</div></div>
+          <div class="result-item"><div class="result-label">Total Waste</div><div class="result-value" id="cut-out-waste" style="font-size:22px">-</div><div class="result-unit">mm</div></div>
+          <div class="result-item"><div class="result-label">Usable Offcuts</div><div class="result-value" id="cut-out-offcuts" style="font-size:22px">-</div></div>
+        </div>
+        <div id="cut-visual"></div>
+        <div class="result-formula" id="cut-formula"></div>
+      </div>
+    </div>
+
+    <!-- ── Slitting ── -->
+    <div class="tool-section" id="tool-slitting">
+      <div class="card">
+        <div class="card-title"><span>&#127959;</span> Coil Slitting Optimizer</div>
+        <div class="grid2">
+          <div>
+            <div class="form-row">
+              <label class="form-label">Master Coil Width (mm)</label>
+              <input class="form-input" type="number" id="slit-master" placeholder="e.g. 1500" value="1500" min="1">
+            </div>
+            <div class="form-row">
+              <label class="form-label">Edge Trim — each side (mm)</label>
+              <input class="form-input" type="number" id="slit-trim" placeholder="e.g. 10" value="10" min="0">
+            </div>
+            <div class="form-row">
+              <label class="form-label">Slitter Blade Gap / Kerf (mm)</label>
+              <input class="form-input" type="number" id="slit-kerf" placeholder="e.g. 0.5" value="0.5" min="0" step="0.1">
+            </div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:6px">Strip List</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px">One strip per line: <code style="background:var(--surface);padding:1px 4px;border-radius:4px">width qty</code></div>
+            <textarea id="slit-list" class="form-input" rows="8" style="height:auto;padding:10px;resize:vertical;font-family:monospace;font-size:12px">200 3
+350 2
+150 4
+250 1</textarea>
+          </div>
+        </div>
+        <button class="calc-btn" onclick="slitOptimize()" style="margin-top:14px">Optimize Slitting</button>
+      </div>
+      <div class="result-panel" id="slit-result">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px">
+          <div class="result-item"><div class="result-label">Passes Needed</div><div class="result-value" id="slit-out-passes" style="font-size:22px">-</div></div>
+          <div class="result-item"><div class="result-label">Usable Width</div><div class="result-value" id="slit-out-usable" style="font-size:22px">-</div><div class="result-unit">mm</div></div>
+          <div class="result-item"><div class="result-label">Yield</div><div class="result-value" id="slit-out-yield" style="font-size:22px">-</div><div class="result-unit">%</div></div>
+          <div class="result-item"><div class="result-label">Total Trim/Waste</div><div class="result-value" id="slit-out-waste" style="font-size:22px">-</div><div class="result-unit">mm</div></div>
+        </div>
+        <div id="slit-visual"></div>
+        <div class="result-formula" id="slit-formula"></div>
+      </div>
+    </div>
+
+    <!-- ── Coil Calculator ── -->
+    <div class="tool-section" id="tool-coilcalc">
+      <div class="card">
+        <div class="card-title"><span>&#128260;</span> Coil Weight / Length Calculator</div>
+        <div class="grid2">
+          <div>
+            <div class="form-row">
+              <label class="form-label">Mode</label>
+              <select class="form-input" id="coil-mode" onchange="coilModeChange()">
+                <option value="dims">Dimensions → Weight &amp; Length</option>
+                <option value="weight">Weight + Dims → Length</option>
+                <option value="length">Length + Dims → Weight</option>
+              </select>
+            </div>
+            <div class="grid2">
+              <div class="form-row">
+                <label class="form-label">Outer Diameter OD (mm)</label>
+                <input class="form-input" type="number" id="coil-od" placeholder="e.g. 1800" min="1">
+              </div>
+              <div class="form-row">
+                <label class="form-label">Inner Diameter ID (mm)</label>
+                <input class="form-input" type="number" id="coil-id" placeholder="e.g. 508" value="508" min="1">
+              </div>
+            </div>
+            <div class="grid2">
+              <div class="form-row">
+                <label class="form-label">Strip Width (mm)</label>
+                <input class="form-input" type="number" id="coil-width" placeholder="e.g. 1250" min="1">
+              </div>
+              <div class="form-row">
+                <label class="form-label">Thickness (mm)</label>
+                <input class="form-input" type="number" id="coil-thick" placeholder="e.g. 2.5" step="0.01" min="0.01">
+              </div>
+            </div>
+            <div class="form-row" id="coil-weight-row" style="display:none">
+              <label class="form-label">Known Weight (kg)</label>
+              <input class="form-input" type="number" id="coil-known-weight" placeholder="e.g. 18500" min="1">
+            </div>
+            <div class="form-row" id="coil-length-row" style="display:none">
+              <label class="form-label">Known Length (m)</label>
+              <input class="form-input" type="number" id="coil-known-length" placeholder="e.g. 1200" min="1">
+            </div>
+            <div class="form-row">
+              <label class="form-label">Density (kg/m³)</label>
+              <select class="form-input" id="coil-density">
+                <option value="7850" selected>Carbon Steel — 7850</option>
+                <option value="7900">Stainless 304 — 7900</option>
+                <option value="7930">Stainless 316L — 7930</option>
+                <option value="2710">Aluminium 6061 — 2710</option>
+                <option value="8960">Copper — 8960</option>
+                <option value="custom">Custom…</option>
+              </select>
+            </div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3)">Formula</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.8">
+              <p><b>Length:</b> L = π × (OD² − ID²) / (4 × t)</p>
+              <p><b>Weight:</b> W = L × width × t × density</p>
+              <p><b>Cross-section area:</b> A = π/4 × (OD² − ID²)</p>
+            </div>
+            <div style="margin-top:auto;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+              <div style="font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:700;margin-bottom:6px">Quick Reference — Standard Mandrel IDs</div>
+              <div style="font-size:11px;color:var(--text2);line-height:1.8">405 mm · 508 mm · 610 mm</div>
+            </div>
+          </div>
+        </div>
+        <button class="calc-btn" onclick="calcCoil()" style="margin-top:14px">Calculate</button>
+      </div>
+      <div class="result-panel" id="coil-result">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">
+          <div class="result-item"><div class="result-label">Coil Length</div><div class="result-value" id="coil-out-length">-</div><div class="result-unit">metres</div></div>
+          <div class="result-item"><div class="result-label">Coil Weight</div><div class="result-value" id="coil-out-weight">-</div><div class="result-unit">kg</div></div>
+          <div class="result-item"><div class="result-label">Weight</div><div class="result-value" id="coil-out-tons">-</div><div class="result-unit">tonnes</div></div>
+          <div class="result-item"><div class="result-label">kg per metre</div><div class="result-value" id="coil-out-kgm">-</div><div class="result-unit">kg/m</div></div>
+        </div>
+        <div class="result-formula" id="coil-formula"></div>
+      </div>
+    </div>
+
+    <!-- ── Draft / Load Calculator ── -->
+    <div class="tool-section" id="tool-draft">
+      <div class="card">
+        <div class="card-title"><span>&#9875;</span> Vessel Draft / Load Calculator</div>
+        <div class="grid2">
+          <div>
+            <div class="form-row">
+              <label class="form-label">Vessel Type</label>
+              <select class="form-input" id="draft-vessel" onchange="draftVesselChange()">
+                <option value="custom">Custom / Enter manually</option>
+                <option value="handysize">Handysize (~28,000 DWT)</option>
+                <option value="handymax">Handymax (~45,000 DWT)</option>
+                <option value="supramax">Supramax (~57,000 DWT)</option>
+                <option value="panamax">Panamax (~75,000 DWT)</option>
+              </select>
+            </div>
+            <div class="grid2">
+              <div class="form-row">
+                <label class="form-label">Deadweight (DWT, tonnes)</label>
+                <input class="form-input" type="number" id="draft-dwt" placeholder="e.g. 28000" min="1">
+              </div>
+              <div class="form-row">
+                <label class="form-label">Lightweight (LWT, tonnes)</label>
+                <input class="form-input" type="number" id="draft-lwt" placeholder="e.g. 4200" min="0">
+              </div>
+            </div>
+            <div class="grid2">
+              <div class="form-row">
+                <label class="form-label">Summer Draft (m)</label>
+                <input class="form-input" type="number" id="draft-summer" placeholder="e.g. 9.8" step="0.01" min="0">
+              </div>
+              <div class="form-row">
+                <label class="form-label">TPC (Tonnes per cm)</label>
+                <input class="form-input" type="number" id="draft-tpc" placeholder="e.g. 28" step="0.1" min="0">
+              </div>
+            </div>
+            <div class="grid2">
+              <div class="form-row">
+                <label class="form-label">Bunkers + Stores (tonnes)</label>
+                <input class="form-input" type="number" id="draft-bunkers" placeholder="e.g. 800" value="800" min="0">
+              </div>
+              <div class="form-row">
+                <label class="form-label">Cargo to Load (tonnes)</label>
+                <input class="form-input" type="number" id="draft-cargo" placeholder="e.g. 22000" min="0">
+              </div>
+            </div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:10px">Reference — Typical Vessel Specs</div>
+            <table style="width:100%;font-size:11px;border-collapse:collapse">
+              <tr style="color:var(--text3);font-weight:700"><td style="padding:4px 6px">Type</td><td style="padding:4px 6px">DWT</td><td style="padding:4px 6px">Draft</td><td style="padding:4px 6px">TPC</td></tr>
+              <tr style="border-top:1px solid var(--border)"><td style="padding:4px 6px;color:var(--text2)">Handysize</td><td style="padding:4px 6px;color:var(--text2)">28,000</td><td style="padding:4px 6px;color:var(--text2)">9.8m</td><td style="padding:4px 6px;color:var(--text2)">28</td></tr>
+              <tr style="border-top:1px solid var(--border)"><td style="padding:4px 6px;color:var(--text2)">Handymax</td><td style="padding:4px 6px;color:var(--text2)">45,000</td><td style="padding:4px 6px;color:var(--text2)">11.2m</td><td style="padding:4px 6px;color:var(--text2)">40</td></tr>
+              <tr style="border-top:1px solid var(--border)"><td style="padding:4px 6px;color:var(--text2)">Supramax</td><td style="padding:4px 6px;color:var(--text2)">57,000</td><td style="padding:4px 6px;color:var(--text2)">12.1m</td><td style="padding:4px 6px;color:var(--text2)">46</td></tr>
+              <tr style="border-top:1px solid var(--border)"><td style="padding:4px 6px;color:var(--text2)">Panamax</td><td style="padding:4px 6px;color:var(--text2)">75,000</td><td style="padding:4px 6px;color:var(--text2)">13.6m</td><td style="padding:4px 6px;color:var(--text2)">58</td></tr>
+            </table>
+          </div>
+        </div>
+        <button class="calc-btn" onclick="calcDraft()" style="margin-top:14px">Calculate Draft &amp; Cargo</button>
+      </div>
+      <div class="result-panel" id="draft-result">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">
+          <div class="result-item"><div class="result-label">Max Cargo Capacity</div><div class="result-value" id="draft-out-maxcargo">-</div><div class="result-unit">tonnes</div></div>
+          <div class="result-item"><div class="result-label">Displacement at Load</div><div class="result-value" id="draft-out-disp">-</div><div class="result-unit">tonnes</div></div>
+          <div class="result-item" style="border:2px solid var(--blue)"><div class="result-label">Expected Draft</div><div class="result-value" id="draft-out-draft">-</div><div class="result-unit">metres</div></div>
+          <div class="result-item"><div class="result-label">Remaining Capacity</div><div class="result-value" id="draft-out-remaining">-</div><div class="result-unit">tonnes</div></div>
+          <div class="result-item"><div class="result-label">Draft Utilisation</div><div class="result-value" id="draft-out-util">-</div><div class="result-unit">%</div></div>
+        </div>
+        <div class="result-formula" id="draft-formula"></div>
+      </div>
+    </div>
+
+    <!-- ── Hardness Converter ── -->
+    <div class="tool-section" id="tool-hardness">
+      <div class="card">
+        <div class="card-title"><span>&#128296;</span> Hardness Converter</div>
+        <div class="grid2">
+          <div>
+            <div class="form-row">
+              <label class="form-label">Input Scale</label>
+              <select class="form-input" id="hard-from" onchange="hardConvert()">
+                <option value="HB">HB — Brinell</option>
+                <option value="HRC">HRC — Rockwell C</option>
+                <option value="HRB">HRB — Rockwell B</option>
+                <option value="HV">HV — Vickers</option>
+                <option value="UTS">UTS — Tensile Strength (MPa)</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label class="form-label">Input Value</label>
+              <input class="form-input" type="number" id="hard-val" placeholder="e.g. 200" min="0" oninput="hardConvert()">
+            </div>
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:12px">
+              <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:8px">Conversion Basis</div>
+              <div style="font-size:11px;color:var(--text2);line-height:1.8">
+                <p>HV ≈ HB × 1.05 (for steel)</p>
+                <p>HRC ↔ HB via ASTM E140 table</p>
+                <p>UTS (MPa) ≈ HB × 3.45</p>
+                <p>HRB valid 60–100; HRC valid 20–70</p>
+              </div>
+            </div>
+          </div>
+          <div id="hard-results" style="display:flex;flex-direction:column;gap:10px">
+            <div class="result-item"><div class="result-label">Brinell (HB)</div><div class="result-value" id="hard-out-hb" style="font-size:22px">-</div></div>
+            <div class="result-item"><div class="result-label">Rockwell C (HRC)</div><div class="result-value" id="hard-out-hrc" style="font-size:22px">-</div></div>
+            <div class="result-item"><div class="result-label">Rockwell B (HRB)</div><div class="result-value" id="hard-out-hrb" style="font-size:22px">-</div></div>
+            <div class="result-item"><div class="result-label">Vickers (HV)</div><div class="result-value" id="hard-out-hv" style="font-size:22px">-</div></div>
+            <div class="result-item" style="border:2px solid var(--green)"><div class="result-label">Tensile Strength</div><div class="result-value" id="hard-out-uts" style="font-size:22px;color:var(--green-text)">-</div><div class="result-unit">MPa</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Bend Allowance ── -->
+    <div class="tool-section" id="tool-bend">
+      <div class="card">
+        <div class="card-title"><span>&#8735;</span> Bend Allowance / K-Factor Calculator</div>
+        <div class="grid2">
+          <div>
+            <div class="form-row">
+              <label class="form-label">Material Thickness (mm)</label>
+              <input class="form-input" type="number" id="bend-thick" placeholder="e.g. 3.0" step="0.1" min="0.1" oninput="calcBend()">
+            </div>
+            <div class="form-row">
+              <label class="form-label">Inside Bend Radius (mm)</label>
+              <input class="form-input" type="number" id="bend-radius" placeholder="e.g. 4.0" step="0.1" min="0" oninput="calcBend()">
+            </div>
+            <div class="form-row">
+              <label class="form-label">Bend Angle (degrees)</label>
+              <input class="form-input" type="number" id="bend-angle" placeholder="e.g. 90" value="90" step="1" min="1" max="180" oninput="calcBend()">
+            </div>
+            <div class="form-row">
+              <label class="form-label">K-Factor</label>
+              <select class="form-input" id="bend-kfactor" onchange="calcBend()">
+                <option value="0.33">0.33 — Soft material, tight bend</option>
+                <option value="0.38">0.38 — Soft material, air bend</option>
+                <option value="0.42" selected>0.42 — Steel, standard air bend</option>
+                <option value="0.44">0.44 — Hard material</option>
+                <option value="0.50">0.50 — Neutral axis at centre</option>
+                <option value="custom">Custom…</option>
+              </select>
+            </div>
+            <div class="form-row" id="bend-custom-k-row" style="display:none">
+              <label class="form-label">Custom K-Factor (0.0 – 0.5)</label>
+              <input class="form-input" type="number" id="bend-custom-k" placeholder="e.g. 0.42" step="0.01" min="0" max="0.5" oninput="calcBend()">
+            </div>
+            <div class="form-row">
+              <label class="form-label">Leg A — from edge to bend centre (mm)</label>
+              <input class="form-input" type="number" id="bend-leg-a" placeholder="e.g. 50" min="0" oninput="calcBend()">
+            </div>
+            <div class="form-row">
+              <label class="form-label">Leg B — from bend centre to other edge (mm)</label>
+              <input class="form-input" type="number" id="bend-leg-b" placeholder="e.g. 80" min="0" oninput="calcBend()">
+            </div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px">
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:8px">Formulas</div>
+            <div style="font-size:12px;color:var(--text2);line-height:2">
+              <p><b>Bend Allowance (BA):</b></p>
+              <p style="font-family:monospace;font-size:11px">BA = (π/180) × angle × (r + K × t)</p>
+              <p style="margin-top:8px"><b>Bend Deduction (BD):</b></p>
+              <p style="font-family:monospace;font-size:11px">BD = 2×OSSB − BA</p>
+              <p style="margin-top:8px"><b>Flat Blank Length:</b></p>
+              <p style="font-family:monospace;font-size:11px">Flat = A + B − BD</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="result-panel" id="bend-result">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">
+          <div class="result-item"><div class="result-label">Bend Allowance</div><div class="result-value" id="bend-out-ba">-</div><div class="result-unit">mm</div></div>
+          <div class="result-item"><div class="result-label">Bend Deduction</div><div class="result-value" id="bend-out-bd">-</div><div class="result-unit">mm</div></div>
+          <div class="result-item"><div class="result-label">Outside Setback</div><div class="result-value" id="bend-out-ossb">-</div><div class="result-unit">mm</div></div>
+          <div class="result-item" style="border:2px solid var(--blue)"><div class="result-label">Flat Blank Length</div><div class="result-value" id="bend-out-flat">-</div><div class="result-unit">mm</div></div>
+          <div class="result-item"><div class="result-label">Outside Radius</div><div class="result-value" id="bend-out-or">-</div><div class="result-unit">mm</div></div>
+          <div class="result-item"><div class="result-label">Min Bend Radius</div><div class="result-value" id="bend-out-minr">-</div><div class="result-unit">mm (≈ 1×t)</div></div>
+        </div>
+        <div class="result-formula" id="bend-formula"></div>
+      </div>
+    </div>
+
+    <!-- ── Landed Cost ── -->
+    <div class="tool-section" id="tool-landedcost">
+      <div class="card">
+        <div class="card-title"><span>&#127758;</span> Landed Cost Calculator</div>
+        <div class="grid2">
+          <div>
+            <div class="form-row">
+              <label class="form-label">Currency</label>
+              <select class="form-input" id="lc-cur">
+                <option value="USD">USD $</option><option value="EUR">EUR €</option><option value="GBP">GBP £</option><option value="TRY">TRY ₺</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label class="form-label">FOB Price per tonne</label>
+              <input class="form-input" type="number" id="lc-fob" placeholder="e.g. 620" min="0" step="0.01" oninput="calcLanded()">
+            </div>
+            <div class="form-row">
+              <label class="form-label">Weight (tonnes)</label>
+              <input class="form-input" type="number" id="lc-weight" placeholder="e.g. 25" min="0" step="0.01" oninput="calcLanded()">
+            </div>
+            <div class="form-row">
+              <label class="form-label">Ocean Freight (total)</label>
+              <input class="form-input" type="number" id="lc-freight" placeholder="e.g. 1800" min="0" step="0.01" oninput="calcLanded()">
+            </div>
+            <div class="form-row">
+              <label class="form-label">Marine Insurance (%)</label>
+              <input class="form-input" type="number" id="lc-insurance" placeholder="e.g. 0.3" value="0.3" min="0" step="0.01" oninput="calcLanded()">
+            </div>
+          </div>
+          <div>
+            <div class="form-row">
+              <label class="form-label">Import Duty (%)</label>
+              <input class="form-input" type="number" id="lc-duty" placeholder="e.g. 5" value="0" min="0" step="0.1" oninput="calcLanded()">
+            </div>
+            <div class="form-row">
+              <label class="form-label">Port Handling &amp; THC (total)</label>
+              <input class="form-input" type="number" id="lc-thc" placeholder="e.g. 350" value="0" min="0" step="0.01" oninput="calcLanded()">
+            </div>
+            <div class="form-row">
+              <label class="form-label">Customs Clearance &amp; Brokerage</label>
+              <input class="form-input" type="number" id="lc-customs" placeholder="e.g. 250" value="0" min="0" step="0.01" oninput="calcLanded()">
+            </div>
+            <div class="form-row">
+              <label class="form-label">Inland Transport (total)</label>
+              <input class="form-input" type="number" id="lc-inland" placeholder="e.g. 400" value="0" min="0" step="0.01" oninput="calcLanded()">
+            </div>
+            <div class="form-row">
+              <label class="form-label">VAT / Tax (%)</label>
+              <input class="form-input" type="number" id="lc-vat" placeholder="e.g. 20" value="0" min="0" step="0.1" oninput="calcLanded()">
+            </div>
+          </div>
+        </div>
+        <button class="calc-btn" onclick="calcLanded()" style="margin-top:14px">Calculate Landed Cost</button>
+      </div>
+      <div class="result-panel" id="lc-result">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">
+          <div class="result-item"><div class="result-label">FOB Total</div><div class="result-value" id="lc-out-fob" style="font-size:18px">-</div></div>
+          <div class="result-item"><div class="result-label">CIF Value</div><div class="result-value" id="lc-out-cif" style="font-size:18px">-</div></div>
+          <div class="result-item"><div class="result-label">Duty Amount</div><div class="result-value" id="lc-out-duty" style="font-size:18px">-</div></div>
+          <div class="result-item"><div class="result-label">All Other Charges</div><div class="result-value" id="lc-out-other" style="font-size:18px">-</div></div>
+          <div class="result-item"><div class="result-label">VAT Amount</div><div class="result-value" id="lc-out-vat" style="font-size:18px">-</div></div>
+          <div class="result-item" style="border:2px solid var(--blue)"><div class="result-label">Total Landed Cost</div><div class="result-value" id="lc-out-total">-</div></div>
+          <div class="result-item" style="border:2px solid var(--green)"><div class="result-label">Landed Cost / tonne</div><div class="result-value" id="lc-out-per-ton" style="color:var(--green-text)">-</div></div>
+        </div>
+        <div id="lc-bar" style="margin-top:14px"></div>
+        <div class="result-formula" id="lc-formula"></div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -872,6 +1305,428 @@ function calcContainer(){
   document.getElementById('cl-formula').textContent=
     `${pcs} pcs × ${pieceKg}kg = ${(pcs*pieceKg/1000).toFixed(2)}t · Limited by ${limitedBy} (max ${spec.maxKg/1000}t / ${spec.maxM3||'?'}m³)`;
   document.getElementById('cl-result').classList.add('show');
+}
+
+// ── Cutting Optimization ──
+const CUT_COLORS = ['#185FA5','#1D9E75','#7F77DD','#E24B4A','#EF9F27','#0891b2','#7c3aed','#be185d','#15803d','#b45309'];
+
+function cutParsePieces(){
+  var lines = (document.getElementById('cut-list').value||'').trim().split('\n');
+  var pieces = [];
+  for(var i=0;i<lines.length;i++){
+    var parts = lines[i].trim().split(/[\s,;]+/);
+    if(!parts[0]) continue;
+    var len = parseFloat(parts[0]);
+    var qty = parseInt(parts[1]||'1');
+    if(isNaN(len)||len<=0) continue;
+    if(isNaN(qty)||qty<1) qty=1;
+    for(var q=0;q<qty;q++) pieces.push(len);
+  }
+  return pieces;
+}
+
+function cutOptimize(){
+  var stock = parseFloat(document.getElementById('cut-stock').value)||0;
+  var kerf  = parseFloat(document.getElementById('cut-kerf').value)||0;
+  var minOffcut = parseFloat(document.getElementById('cut-min-offcut').value)||0;
+  var pieces = cutParsePieces();
+
+  if(!stock || pieces.length===0){
+    document.getElementById('cut-result').classList.remove('show');
+    return;
+  }
+
+  var tooBig = pieces.filter(function(p){return p>stock;});
+  if(tooBig.length){
+    alert('Error: '+tooBig.length+' piece(s) exceed the stock length of '+stock+' mm. Largest: '+Math.max.apply(null,tooBig)+' mm.');
+    return;
+  }
+
+  // First Fit Decreasing
+  var sorted = pieces.slice().sort(function(a,b){return b-a;});
+  var bars = [];
+  var uniqueLens = [];
+  sorted.forEach(function(l){ if(uniqueLens.indexOf(l)<0) uniqueLens.push(l); });
+  var colorMap = {};
+  uniqueLens.forEach(function(l,i){ colorMap[l]=CUT_COLORS[i%CUT_COLORS.length]; });
+
+  for(var pi=0;pi<sorted.length;pi++){
+    var piece = sorted[pi];
+    var placed = false;
+    for(var bi=0;bi<bars.length;bi++){
+      var need = (bars[bi].cuts.length>0 ? kerf : 0) + piece;
+      if(bars[bi].remaining >= need){
+        bars[bi].remaining -= need;
+        bars[bi].cuts.push({len:piece, color:colorMap[piece]});
+        placed = true;
+        break;
+      }
+    }
+    if(!placed){
+      bars.push({remaining: stock-piece, cuts:[{len:piece, color:colorMap[piece]}]});
+    }
+  }
+
+  var totalWaste=0, offcuts=0;
+  bars.forEach(function(bar){
+    if(bar.remaining>0 && bar.remaining>=minOffcut) offcuts++;
+    else totalWaste += bar.remaining;
+  });
+
+  var totalStock = bars.length * stock;
+  var totalUsed = pieces.reduce(function(s,p){return s+p;},0) + pieces.length*kerf;
+  var pctUsed = totalStock>0 ? (totalUsed/totalStock*100) : 0;
+
+  document.getElementById('cut-out-bars').textContent = bars.length;
+  document.getElementById('cut-out-used').textContent = pctUsed.toFixed(1);
+  document.getElementById('cut-out-waste').textContent = totalWaste.toLocaleString();
+  document.getElementById('cut-out-offcuts').textContent = offcuts;
+  document.getElementById('cut-formula').textContent =
+    pieces.length+' pieces across '+bars.length+' bars x '+stock+' mm stock | Kerf '+kerf+' mm | Efficiency '+pctUsed.toFixed(1)+'%';
+
+  // Draw bars
+  var html = '';
+  bars.forEach(function(bar,bi){
+    html += '<div class="cut-bar-wrap">';
+    html += '<div class="cut-bar-label">Bar '+(bi+1)+' — '+bar.cuts.length+' cuts, '+bar.remaining+' mm remaining</div>';
+    html += '<div class="cut-bar-track">';
+    bar.cuts.forEach(function(seg,si){
+      var pct = (seg.len/stock*100).toFixed(2);
+      if(si>0 && kerf>0){
+        var kpct = (kerf/stock*100).toFixed(2);
+        html += '<div class="cut-seg cut-seg-waste" style="width:'+kpct+'%;min-width:2px" title="Kerf '+kerf+'mm"></div>';
+      }
+      html += '<div class="cut-seg" style="width:'+pct+'%;background:'+seg.color+'" title="'+seg.len+' mm">'+(seg.len>=200?seg.len:'')+'</div>';
+    });
+    if(bar.remaining>0){
+      var remPct = (bar.remaining/stock*100).toFixed(2);
+      var isOff = bar.remaining>=minOffcut;
+      html += '<div class="cut-seg '+(isOff?'cut-seg-offcut':'cut-seg-waste')+'" style="width:'+remPct+'%" title="'+(isOff?'Offcut':'Waste')+': '+bar.remaining+'mm">'+(bar.remaining>=150?bar.remaining:'')+'</div>';
+    }
+    html += '</div></div>';
+  });
+
+  html += '<div class="cut-legend">';
+  uniqueLens.forEach(function(l){
+    var cnt = pieces.filter(function(p){return p===l;}).length;
+    html += '<div class="cut-legend-item"><div class="cut-legend-dot" style="background:'+colorMap[l]+'"></div>'+l+' mm x '+cnt+'</div>';
+  });
+  if(minOffcut>0) html += '<div class="cut-legend-item"><div class="cut-legend-dot" style="background:var(--amber)"></div>Offcut (>= '+minOffcut+' mm)</div>';
+  html += '<div class="cut-legend-item"><div class="cut-legend-dot" style="background:var(--border2)"></div>Waste</div>';
+  html += '</div>';
+
+  document.getElementById('cut-visual').innerHTML = html;
+  document.getElementById('cut-result').classList.add('show');
+}
+
+// ── Slitting Optimizer ──
+var SLIT_COLORS = ['#185FA5','#1D9E75','#7F77DD','#E24B4A','#EF9F27','#0891b2','#7c3aed','#be185d','#15803d','#b45309'];
+
+function slitParseStrips(){
+  var lines = (document.getElementById('slit-list').value||'').trim().split('\n');
+  var strips = [];
+  for(var i=0;i<lines.length;i++){
+    var parts = lines[i].trim().split(/[\s,;]+/);
+    if(!parts[0]) continue;
+    var w = parseFloat(parts[0]);
+    var qty = parseInt(parts[1]||'1');
+    if(isNaN(w)||w<=0) continue;
+    if(isNaN(qty)||qty<1) qty=1;
+    for(var q=0;q<qty;q++) strips.push(w);
+  }
+  return strips;
+}
+
+function slitOptimize(){
+  var master = parseFloat(document.getElementById('slit-master').value)||0;
+  var trim   = parseFloat(document.getElementById('slit-trim').value)||0;
+  var kerf   = parseFloat(document.getElementById('slit-kerf').value)||0;
+  var strips = slitParseStrips();
+  if(!master||strips.length===0){ document.getElementById('slit-result').classList.remove('show'); return; }
+
+  var usable = master - 2*trim;
+  var tooBig = strips.filter(function(s){return s>usable;});
+  if(tooBig.length){ alert('Error: '+tooBig.length+' strip(s) wider than usable width ('+usable+' mm).'); return; }
+
+  // FFD across passes
+  var sorted = strips.slice().sort(function(a,b){return b-a;});
+  var passes = [];
+  var uniqueW = []; sorted.forEach(function(w){if(uniqueW.indexOf(w)<0) uniqueW.push(w);});
+  var colorMap = {}; uniqueW.forEach(function(w,i){colorMap[w]=SLIT_COLORS[i%SLIT_COLORS.length];});
+
+  for(var si=0;si<sorted.length;si++){
+    var strip = sorted[si];
+    var placed = false;
+    for(var pi=0;pi<passes.length;pi++){
+      var need = (passes[pi].strips.length>0?kerf:0)+strip;
+      if(passes[pi].remaining>=need){
+        passes[pi].remaining -= need;
+        passes[pi].strips.push({w:strip,color:colorMap[strip]});
+        placed=true; break;
+      }
+    }
+    if(!placed) passes.push({remaining:usable-strip, strips:[{w:strip,color:colorMap[strip]}]});
+  }
+
+  var totalWaste=0;
+  passes.forEach(function(p){ totalWaste+=p.remaining; });
+  var totalUsable = passes.length*usable;
+  var totalStrips = strips.reduce(function(s,w){return s+w;},0);
+  var yld = totalUsable>0?(totalStrips/totalUsable*100):0;
+
+  document.getElementById('slit-out-passes').textContent = passes.length;
+  document.getElementById('slit-out-usable').textContent = usable;
+  document.getElementById('slit-out-yield').textContent = yld.toFixed(1);
+  document.getElementById('slit-out-waste').textContent = (totalWaste+passes.length*2*trim).toFixed(0);
+  document.getElementById('slit-formula').textContent =
+    strips.length+' strips across '+passes.length+' passes | Master: '+master+' mm | Edge trim: 2x'+trim+' mm | Kerf: '+kerf+' mm | Yield: '+yld.toFixed(1)+'%';
+
+  var html='';
+  passes.forEach(function(pass,pi){
+    html+='<div class="cut-bar-wrap">';
+    html+='<div class="cut-bar-label">Pass '+(pi+1)+' — '+pass.strips.length+' strips, '+pass.remaining.toFixed(1)+' mm side waste</div>';
+    html+='<div class="cut-bar-track">';
+    // left trim
+    if(trim>0){ var tp=(trim/master*100).toFixed(2); html+='<div class="cut-seg cut-seg-waste" style="width:'+tp+'%;min-width:3px" title="Edge trim '+trim+'mm"></div>'; }
+    pass.strips.forEach(function(seg,si){
+      var pct=(seg.w/master*100).toFixed(2);
+      if(si>0&&kerf>0){ var kp=(kerf/master*100).toFixed(2); html+='<div class="cut-seg cut-seg-waste" style="width:'+kp+'%;min-width:2px" title="Kerf"></div>'; }
+      html+='<div class="cut-seg" style="width:'+pct+'%;background:'+seg.color+'" title="'+seg.w+' mm">'+(seg.w>=100?seg.w:'')+'</div>';
+    });
+    // right trim + remaining
+    var remW = pass.remaining + trim;
+    if(remW>0){ var rp=(remW/master*100).toFixed(2); html+='<div class="cut-seg cut-seg-waste" style="width:'+rp+'%" title="Waste+trim: '+remW.toFixed(1)+'mm">'+(remW>=80?remW.toFixed(0):'')+'</div>'; }
+    html+='</div></div>';
+  });
+  html+='<div class="cut-legend">';
+  uniqueW.forEach(function(w){ var cnt=strips.filter(function(s){return s===w;}).length; html+='<div class="cut-legend-item"><div class="cut-legend-dot" style="background:'+colorMap[w]+'"></div>'+w+' mm x '+cnt+'</div>'; });
+  html+='<div class="cut-legend-item"><div class="cut-legend-dot" style="background:var(--border2)"></div>Trim / Waste</div></div>';
+  document.getElementById('slit-visual').innerHTML=html;
+  document.getElementById('slit-result').classList.add('show');
+}
+
+// ── Coil Calculator ──
+function coilModeChange(){
+  var mode = document.getElementById('coil-mode').value;
+  document.getElementById('coil-weight-row').style.display = mode==='weight'?'':'none';
+  document.getElementById('coil-length-row').style.display = mode==='length'?'':'none';
+}
+
+function calcCoil(){
+  var mode    = document.getElementById('coil-mode').value;
+  var od      = parseFloat(document.getElementById('coil-od').value)||0;
+  var id      = parseFloat(document.getElementById('coil-id').value)||0;
+  var width   = parseFloat(document.getElementById('coil-width').value)||0;
+  var thick   = parseFloat(document.getElementById('coil-thick').value)||0;
+  var density = parseFloat(document.getElementById('coil-density').value)||7850;
+  var odM=od/1000, idM=id/1000, widthM=width/1000, thickM=thick/1000;
+
+  if(!od||!id||!width||od<=id){ document.getElementById('coil-result').classList.remove('show'); return; }
+
+  var lengthM, weightKg;
+  if(mode==='weight'){
+    var kw = parseFloat(document.getElementById('coil-known-weight').value)||0;
+    if(!kw||!thick){ document.getElementById('coil-result').classList.remove('show'); return; }
+    weightKg = kw;
+    lengthM = weightKg/(widthM*thickM*density);
+  } else if(mode==='length'){
+    var kl = parseFloat(document.getElementById('coil-known-length').value)||0;
+    if(!kl){ document.getElementById('coil-result').classList.remove('show'); return; }
+    lengthM = kl;
+    weightKg = lengthM*widthM*thickM*density;
+  } else {
+    if(!thick){ document.getElementById('coil-result').classList.remove('show'); return; }
+    // L = π(OD²-ID²)/(4t)
+    lengthM = Math.PI*(odM*odM - idM*idM)/(4*thickM);
+    weightKg = lengthM*widthM*thickM*density;
+  }
+
+  var kgPerM = widthM*thickM*density;
+  document.getElementById('coil-out-length').textContent = lengthM.toFixed(1);
+  document.getElementById('coil-out-weight').textContent = Math.round(weightKg).toLocaleString();
+  document.getElementById('coil-out-tons').textContent = (weightKg/1000).toFixed(3);
+  document.getElementById('coil-out-kgm').textContent = kgPerM.toFixed(2);
+  document.getElementById('coil-formula').textContent =
+    'OD '+od+' mm | ID '+id+' mm | '+width+' mm wide | '+thick+' mm thick | '+density+' kg/m³ → '+lengthM.toFixed(1)+' m | '+Math.round(weightKg)+' kg';
+  document.getElementById('coil-result').classList.add('show');
+}
+
+// ── Draft / Load Calculator ──
+var VESSEL_PRESETS = {
+  handysize:{dwt:28000,lwt:4200,draft:9.8,tpc:28},
+  handymax:{dwt:45000,lwt:5800,draft:11.2,tpc:40},
+  supramax:{dwt:57000,lwt:7200,draft:12.1,tpc:46},
+  panamax:{dwt:75000,lwt:9500,draft:13.6,tpc:58}
+};
+function draftVesselChange(){
+  var v = document.getElementById('draft-vessel').value;
+  if(v==='custom') return;
+  var p = VESSEL_PRESETS[v];
+  document.getElementById('draft-dwt').value = p.dwt;
+  document.getElementById('draft-lwt').value = p.lwt;
+  document.getElementById('draft-summer').value = p.draft;
+  document.getElementById('draft-tpc').value = p.tpc;
+}
+function calcDraft(){
+  var dwt     = parseFloat(document.getElementById('draft-dwt').value)||0;
+  var lwt     = parseFloat(document.getElementById('draft-lwt').value)||0;
+  var summerD = parseFloat(document.getElementById('draft-summer').value)||0;
+  var tpc     = parseFloat(document.getElementById('draft-tpc').value)||0;
+  var bunkers = parseFloat(document.getElementById('draft-bunkers').value)||0;
+  var cargo   = parseFloat(document.getElementById('draft-cargo').value)||0;
+  if(!dwt||!tpc||!summerD){ document.getElementById('draft-result').classList.remove('show'); return; }
+
+  var maxCargo = dwt - bunkers;
+  var actualCargo = cargo > 0 ? Math.min(cargo, maxCargo) : maxCargo;
+  var displacement = lwt + bunkers + actualCargo;
+  // Approx draft from light draft + cargo/TPC
+  var lightDraft = summerD - (dwt/(tpc*100));
+  var loadedDraft = lightDraft + (actualCargo+bunkers)/(tpc*100);
+  var remaining = maxCargo - actualCargo;
+  var util = summerD>0?(loadedDraft/summerD*100):0;
+
+  document.getElementById('draft-out-maxcargo').textContent = Math.round(maxCargo).toLocaleString();
+  document.getElementById('draft-out-disp').textContent = Math.round(displacement).toLocaleString();
+  document.getElementById('draft-out-draft').textContent = loadedDraft.toFixed(2);
+  document.getElementById('draft-out-remaining').textContent = Math.round(remaining).toLocaleString();
+  document.getElementById('draft-out-util').textContent = Math.min(util,100).toFixed(1);
+  document.getElementById('draft-formula').textContent =
+    'DWT '+dwt.toLocaleString()+'t | Bunkers '+bunkers+'t | Max cargo '+Math.round(maxCargo).toLocaleString()+'t | Est. draft '+loadedDraft.toFixed(2)+'m / '+summerD+'m summer';
+  document.getElementById('draft-result').classList.add('show');
+}
+
+// ── Hardness Converter ──
+// ASTM E140 approximation lookup (HB → HRC, HRB)
+function hbToHrc(hb){ if(hb<150) return null; return Math.round((hb-80)*0.156); }
+function hbToHrb(hb){ if(hb>240) return null; return Math.round(135-(3500/hb)); }
+function hrcToHb(hrc){ return Math.round(hrc/0.156+80); }
+function hrbToHb(hrb){ return Math.round(3500/(135-hrb)); }
+
+function hardConvert(){
+  var from = document.getElementById('hard-from').value;
+  var val  = parseFloat(document.getElementById('hard-val').value);
+  if(isNaN(val)||val<=0){ ['hb','hrc','hrb','hv','uts'].forEach(function(k){document.getElementById('hard-out-'+k).textContent='-';}); return; }
+
+  var hb, hrc, hrb, hv, uts;
+  if(from==='HB'){
+    hb=val; hv=Math.round(hb*1.05); uts=Math.round(hb*3.45); hrc=hbToHrc(hb); hrb=hbToHrb(hb);
+  } else if(from==='HRC'){
+    hrc=val; hb=hrcToHb(hrc); hv=Math.round(hb*1.05); uts=Math.round(hb*3.45); hrb=hbToHrb(hb);
+  } else if(from==='HRB'){
+    hrb=val; hb=hrbToHb(hrb); hv=Math.round(hb*1.05); uts=Math.round(hb*3.45); hrc=hbToHrc(hb);
+  } else if(from==='HV'){
+    hv=val; hb=Math.round(hv/1.05); uts=Math.round(hb*3.45); hrc=hbToHrc(hb); hrb=hbToHrb(hb);
+  } else if(from==='UTS'){
+    uts=val; hb=Math.round(uts/3.45); hv=Math.round(hb*1.05); hrc=hbToHrc(hb); hrb=hbToHrb(hb);
+  }
+  document.getElementById('hard-out-hb').textContent  = hb  ? hb  : 'N/A';
+  document.getElementById('hard-out-hrc').textContent = hrc ? hrc : 'N/A';
+  document.getElementById('hard-out-hrb').textContent = hrb ? hrb : 'N/A';
+  document.getElementById('hard-out-hv').textContent  = hv  ? hv  : 'N/A';
+  document.getElementById('hard-out-uts').textContent = uts ? uts : 'N/A';
+}
+
+// ── Bend Allowance ──
+function calcBend(){
+  var t      = parseFloat(document.getElementById('bend-thick').value)||0;
+  var r      = parseFloat(document.getElementById('bend-radius').value);
+  var angle  = parseFloat(document.getElementById('bend-angle').value)||90;
+  var kSel   = document.getElementById('bend-kfactor').value;
+  var legA   = parseFloat(document.getElementById('bend-leg-a').value)||0;
+  var legB   = parseFloat(document.getElementById('bend-leg-b').value)||0;
+
+  document.getElementById('bend-custom-k-row').style.display = kSel==='custom'?'':'none';
+  var k = kSel==='custom' ? (parseFloat(document.getElementById('bend-custom-k').value)||0.42) : parseFloat(kSel);
+
+  if(!t||isNaN(r)){ document.getElementById('bend-result').classList.remove('show'); return; }
+
+  var rad = angle * Math.PI / 180;
+  var ba  = rad*(r + k*t);
+  var ossb = Math.tan(rad/2)*(r+t);
+  var bd  = 2*ossb - ba;
+  var flat = (legA&&legB) ? legA + legB - bd : null;
+  var outerR = r + t;
+  var minR = t;
+
+  document.getElementById('bend-out-ba').textContent   = ba.toFixed(3);
+  document.getElementById('bend-out-bd').textContent   = bd.toFixed(3);
+  document.getElementById('bend-out-ossb').textContent = ossb.toFixed(3);
+  document.getElementById('bend-out-flat').textContent = flat ? flat.toFixed(2) : '—';
+  document.getElementById('bend-out-or').textContent   = outerR.toFixed(2);
+  document.getElementById('bend-out-minr').textContent = minR.toFixed(2);
+  document.getElementById('bend-formula').textContent  =
+    't='+t+'mm | r='+r+'mm | angle='+angle+'° | K='+k+' → BA='+ba.toFixed(3)+'mm | BD='+bd.toFixed(3)+'mm'+(flat?' | Flat='+flat.toFixed(2)+'mm':'');
+  document.getElementById('bend-result').classList.add('show');
+}
+
+// ── Landed Cost ──
+function lcFmt(n, cur){
+  var symbols = {USD:'$',EUR:'€',GBP:'£',TRY:'₺'};
+  var sym = symbols[cur]||'$';
+  return sym+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function calcLanded(){
+  var cur      = document.getElementById('lc-cur').value;
+  var fobPt    = parseFloat(document.getElementById('lc-fob').value)||0;
+  var weight   = parseFloat(document.getElementById('lc-weight').value)||0;
+  var freight  = parseFloat(document.getElementById('lc-freight').value)||0;
+  var insPct   = parseFloat(document.getElementById('lc-insurance').value)||0;
+  var dutyPct  = parseFloat(document.getElementById('lc-duty').value)||0;
+  var thc      = parseFloat(document.getElementById('lc-thc').value)||0;
+  var customs  = parseFloat(document.getElementById('lc-customs').value)||0;
+  var inland   = parseFloat(document.getElementById('lc-inland').value)||0;
+  var vatPct   = parseFloat(document.getElementById('lc-vat').value)||0;
+
+  if(!fobPt||!weight){ document.getElementById('lc-result').classList.remove('show'); return; }
+
+  var fobTotal = fobPt * weight;
+  var insurance = fobTotal * insPct / 100;
+  var cif = fobTotal + freight + insurance;
+  var duty = cif * dutyPct / 100;
+  var otherCharges = thc + customs + inland;
+  var preTax = cif + duty + otherCharges;
+  var vat = preTax * vatPct / 100;
+  var total = preTax + vat;
+  var perTon = weight>0 ? total/weight : 0;
+
+  var f = function(n){return lcFmt(n,cur);};
+  document.getElementById('lc-out-fob').textContent    = f(fobTotal);
+  document.getElementById('lc-out-cif').textContent    = f(cif);
+  document.getElementById('lc-out-duty').textContent   = f(duty);
+  document.getElementById('lc-out-other').textContent  = f(otherCharges);
+  document.getElementById('lc-out-vat').textContent    = f(vat);
+  document.getElementById('lc-out-total').textContent  = f(total);
+  document.getElementById('lc-out-per-ton').textContent= f(perTon)+'/t';
+
+  // Stacked cost bar
+  var items = [
+    {label:'FOB',val:fobTotal,color:'var(--blue)'},
+    {label:'Freight',val:freight,color:'var(--purple)'},
+    {label:'Insurance',val:insurance,color:'var(--green)'},
+    {label:'Duty',val:duty,color:'var(--amber)'},
+    {label:'Port/THC',val:thc,color:'#0891b2'},
+    {label:'Customs',val:customs,color:'#7c3aed'},
+    {label:'Inland',val:inland,color:'#be185d'},
+    {label:'VAT',val:vat,color:'var(--red)'},
+  ].filter(function(i){return i.val>0;});
+
+  var bHtml='<div style="margin-bottom:6px;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase">Cost Breakdown</div>';
+  bHtml+='<div style="height:28px;border-radius:6px;overflow:hidden;display:flex;background:var(--surface2)">';
+  items.forEach(function(item){
+    var pct=(item.val/total*100).toFixed(2);
+    bHtml+='<div style="height:100%;width:'+pct+'%;background:'+item.color+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;overflow:hidden;white-space:nowrap" title="'+item.label+': '+f(item.val)+'">'+(item.val/total>0.08?item.label:'')+'</div>';
+  });
+  bHtml+='</div><div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">';
+  items.forEach(function(item){
+    var pct=(item.val/total*100).toFixed(1);
+    bHtml+='<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)"><div style="width:10px;height:10px;border-radius:2px;background:'+item.color+'"></div>'+item.label+' '+pct+'%</div>';
+  });
+  bHtml+='</div>';
+  document.getElementById('lc-bar').innerHTML=bHtml;
+
+  document.getElementById('lc-formula').textContent =
+    'FOB '+f(fobTotal)+' + Freight '+f(freight)+' + Insurance '+f(insurance)+' + Duty '+f(duty)+' + Charges '+f(otherCharges)+' + VAT '+f(vat)+' = '+f(total)+' ('+f(perTon)+'/t)';
+  document.getElementById('lc-result').classList.add('show');
 }
 
 // Init
