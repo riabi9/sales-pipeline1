@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Create Account — Steel Platform</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f0f0ee;--surface:#fff;--surface2:#ebebea;
+  --border:#e0e0de;--border2:#cacac6;
+  --text:#111110;--text2:#4a4a48;--text3:#888884;--text4:#bbbbb6;
+  --blue:#1456a0;--blue-bg:#e8f1fb;--blue-mid:#4a8fd4;
+  --green:#15895f;--green-bg:#e2f4ee;--green-text:#0c5e42;
+  --red:#cc3333;--red-bg:#fdeaea;--red-text:#922020;
+  --amber:#c47d00;--amber-bg:#fdf2de;--amber-text:#764900;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+}
+[data-theme="dark"]{
+  --bg:#0d0d0c;--surface:#181817;--surface2:#202020;
+  --border:#282826;--border2:#343432;
+  --text:#edecea;--text2:#b4b4b0;--text3:#727270;--text4:#424240;
+  --blue:#4a90d9;--blue-bg:#0a1f3a;
+  --green:#28b488;--green-bg:#082a1e;--green-text:#50c8a0;
+  --red:#e04848;--red-bg:#280c0c;--red-text:#ee8888;
+  --amber:#f0a820;--amber-bg:#281a00;--amber-text:#f8c860;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.card{background:var(--surface);border-radius:18px;border:1px solid var(--border);padding:32px;width:100%;max-width:400px;box-shadow:0 8px 32px rgba(0,0,0,.08)}
+.logo{font-size:22px;font-weight:700;color:var(--blue);letter-spacing:-.4px}
+.logo-sub{font-size:10px;font-family:var(--mono);color:var(--text4);margin-top:3px;text-transform:uppercase;letter-spacing:.8px}
+.divider{height:1px;background:var(--border);margin:20px 0}
+.title{font-size:17px;font-weight:700;margin-bottom:4px}
+.subtitle{font-size:12px;color:var(--text3);margin-bottom:20px;line-height:1.5}
+.lbl{font-size:10px;font-weight:700;color:var(--text3);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.inp{width:100%;height:42px;border:1px solid var(--border2);border-radius:9px;padding:0 13px;font-size:13px;background:var(--surface);color:var(--text);font-family:var(--sans);outline:none;transition:border-color .15s,box-shadow .15s;margin-bottom:12px}
+.inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+.inp.error{border-color:var(--red)}
+.strength-bar{height:3px;border-radius:3px;margin-top:-8px;margin-bottom:10px;transition:all .3s;background:var(--surface2);overflow:hidden}
+.strength-fill{height:100%;border-radius:3px;transition:width .3s,background .3s}
+.strength-label{font-size:10px;color:var(--text4);margin-bottom:10px;display:block}
+.btn{width:100%;height:44px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--sans);background:var(--blue);color:#fff;transition:opacity .15s;margin-top:4px}
+.btn:hover{opacity:.88}.btn:disabled{opacity:.4;cursor:not-allowed}
+.msg{font-size:12px;padding:10px 13px;border-radius:8px;margin-top:12px;text-align:center;line-height:1.5}
+.msg-err{background:var(--red-bg);color:var(--red-text)}
+.msg-ok{background:var(--green-bg);color:var(--green-text)}
+.msg-warn{background:var(--amber-bg);color:var(--amber-text)}
+.req{font-size:11px;color:var(--text4);margin-top:-6px;margin-bottom:10px;line-height:1.6}
+.req-item{display:flex;align-items:center;gap:5px}
+.req-dot{width:6px;height:6px;border-radius:50%;background:var(--border2);flex-shrink:0;transition:background .2s}
+.req-dot.ok{background:var(--green)}
+.signin-link{display:block;text-align:center;margin-top:16px;font-size:12px;color:var(--text3)}
+.signin-link a{color:var(--blue);text-decoration:none;font-weight:600}
+.signin-link a:hover{text-decoration:underline}
+/* Invalid invite screen */
+.invalid-wrap{text-align:center;padding:12px 0}
+.invalid-icon{font-size:40px;margin-bottom:14px}
+.invalid-title{font-size:16px;font-weight:700;margin-bottom:8px;color:var(--text)}
+.invalid-text{font-size:13px;color:var(--text3);line-height:1.6}
+/* Success screen */
+.success-wrap{text-align:center;padding:8px 0}
+.success-icon{font-size:44px;margin-bottom:14px}
+.success-title{font-size:18px;font-weight:700;margin-bottom:8px;color:var(--green-text)}
+.success-text{font-size:13px;color:var(--text3);margin-bottom:20px;line-height:1.6}
+.progress{height:4px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:16px}
+.progress-fill{height:100%;background:var(--green);border-radius:4px;animation:prog 3s linear forwards}
+@keyframes prog{from{width:0}to{width:100%}}
+</style>
+</head>
+<body>
+<div class="card" id="mainCard">
+  <div class="logo">⚙️ Steel Platform</div>
+  <div class="logo-sub">Export Management Suite</div>
+  <div class="divider"></div>
+
+  <!-- Invalid invite -->
+  <div id="invalidScreen" style="display:none">
+    <div class="invalid-wrap">
+      <div class="invalid-icon">🔒</div>
+      <div class="invalid-title">Invite required</div>
+      <div class="invalid-text">This page requires a valid invite link.<br>Ask your admin to send you an invite from the Team module.</div>
+    </div>
+    <a href="dashboard.html" style="display:block;text-align:center;margin-top:18px;font-size:12px;color:var(--blue);text-decoration:none;font-weight:600">← Back to sign in</a>
+  </div>
+
+  <!-- Registration form -->
+  <div id="formScreen" style="display:none">
+    <div class="title">Create your account</div>
+    <div class="subtitle" id="inviteInfo">You were invited to join Steel Platform.</div>
+
+    <label class="lbl">Full Name</label>
+    <input class="inp" type="text" id="fullName" placeholder="Your full name" autocomplete="name">
+
+    <label class="lbl">Password</label>
+    <input class="inp" type="password" id="password" placeholder="Create a strong password" autocomplete="new-password">
+    <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+    <span class="strength-label" id="strengthLabel">Enter a password</span>
+
+    <div class="req" id="reqList">
+      <div class="req-item"><div class="req-dot" id="req-len"></div>At least 8 characters</div>
+      <div class="req-item"><div class="req-dot" id="req-upper"></div>One uppercase letter</div>
+      <div class="req-item"><div class="req-dot" id="req-num"></div>One number</div>
+    </div>
+
+    <label class="lbl">Confirm Password</label>
+    <input class="inp" type="password" id="confirmPassword" placeholder="Repeat your password" autocomplete="new-password">
+
+    <button class="btn" id="createBtn" disabled>Create Account</button>
+    <div id="formMsg" style="display:none" class="msg"></div>
+    <div class="signin-link">Already have an account? <a href="dashboard.html">Sign in</a></div>
+  </div>
+
+  <!-- Success -->
+  <div id="successScreen" style="display:none">
+    <div class="success-wrap">
+      <div class="success-icon">✅</div>
+      <div class="success-title">Account created!</div>
+      <div class="success-text">Welcome to Steel Platform.<br>Redirecting you to the dashboard…</div>
+      <div class="progress"><div class="progress-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div id="loadingScreen" style="text-align:center;padding:20px">
+    <div style="font-size:28px;margin-bottom:12px">⚙️</div>
+    <div style="font-size:13px;color:var(--text3)">Verifying invite…</div>
+  </div>
+</div>
+
+<script>
+const SB_URL='https://fmmfofjkebdsrnkchrfo.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtbWZvZmprZWJkc3Jua2NocmZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDAxNDIsImV4cCI6MjA5MjA3NjE0Mn0.bQQJt06mucLCQCrY1NgN-ed2ngDeRLmITmOfQCAM7ZU';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+
+function show(id){['invalidScreen','formScreen','successScreen','loadingScreen'].forEach(s=>document.getElementById(s).style.display=s===id?'block':'none');}
+
+// ── Read token from URL ──
+// Supabase invite emails link to: yourdomain/register.html#access_token=...&type=invite
+// or: yourdomain/register.html?token_hash=...&type=invite
+async function init(){
+  // Check for active session from invite link (Supabase sets it via hash)
+  const{data:{session}}=await sb.auth.getSession();
+
+  // Also check hash params — Supabase v2 puts tokens in the hash
+  const hash=window.location.hash.substring(1);
+  const hashParams=new URLSearchParams(hash);
+  const accessToken=hashParams.get('access_token');
+  const type=hashParams.get('type');
+  const tokenHash=new URLSearchParams(window.location.search).get('token_hash');
+  const queryType=new URLSearchParams(window.location.search).get('type');
+
+  const isInvite=(type==='invite')||(queryType==='invite')||(queryType==='signup');
+  const hasToken=accessToken||tokenHash||session;
+
+  if(!hasToken&&!isInvite){
+    show('invalidScreen');return;
+  }
+
+  // If we have a session from clicking the invite link, show the form
+  if(session&&session.user){
+    const email=session.user.email||'';
+    document.getElementById('inviteInfo').textContent=
+      'Completing signup for '+email+'. Set your name and password below.';
+    show('formScreen');
+    return;
+  }
+
+  // If we have a token in the hash, exchange it
+  if(accessToken&&type==='invite'){
+    const{data,error}=await sb.auth.setSession({access_token:accessToken,refresh_token:hashParams.get('refresh_token')||''});
+    if(error||!data.session){show('invalidScreen');return;}
+    const email=data.session.user.email||'';
+    document.getElementById('inviteInfo').textContent='Completing signup for '+email+'. Set your name and password below.';
+    show('formScreen');
+    return;
+  }
+
+  // Token hash flow (newer Supabase)
+  if(tokenHash){
+    const{data,error}=await sb.auth.verifyOtp({token_hash:tokenHash,type:queryType||'invite'});
+    if(error||!data.session){show('invalidScreen');return;}
+    const email=data.session.user.email||'';
+    document.getElementById('inviteInfo').textContent='Completing signup for '+email+'. Set your name and password below.';
+    show('formScreen');
+    return;
+  }
+
+  show('invalidScreen');
+}
+
+// ── Password strength ──
+function checkStrength(pw){
+  const len=pw.length>=8;
+  const upper=/[A-Z]/.test(pw);
+  const num=/[0-9]/.test(pw);
+  document.getElementById('req-len').className='req-dot'+(len?' ok':'');
+  document.getElementById('req-upper').className='req-dot'+(upper?' ok':'');
+  document.getElementById('req-num').className='req-dot'+(num?' ok':'');
+  const score=[len,upper,num].filter(Boolean).length;
+  const fill=document.getElementById('strengthFill');
+  const label=document.getElementById('strengthLabel');
+  if(!pw){fill.style.width='0';fill.style.background='';label.textContent='Enter a password';return 0;}
+  if(score===1){fill.style.width='33%';fill.style.background='var(--red)';label.textContent='Weak password';}
+  else if(score===2){fill.style.width='66%';fill.style.background='var(--amber)';label.textContent='Getting stronger…';}
+  else{fill.style.width='100%';fill.style.background='var(--green)';label.textContent='Strong password ✓';}
+  return score;
+}
+
+function validateForm(){
+  const name=document.getElementById('fullName').value.trim();
+  const pw=document.getElementById('password').value;
+  const confirm=document.getElementById('confirmPassword').value;
+  const score=checkStrength(pw);
+  const btn=document.getElementById('createBtn');
+  btn.disabled=!(name&&score>=2&&pw===confirm&&pw.length>=8);
+}
+
+document.getElementById('fullName').addEventListener('input',validateForm);
+document.getElementById('password').addEventListener('input',validateForm);
+document.getElementById('confirmPassword').addEventListener('input',validateForm);
+
+// ── Create account ──
+document.getElementById('createBtn').addEventListener('click',async()=>{
+  const name=document.getElementById('fullName').value.trim();
+  const pw=document.getElementById('password').value;
+  const confirm=document.getElementById('confirmPassword').value;
+  const msgEl=document.getElementById('formMsg');
+
+  if(pw!==confirm){
+    msgEl.textContent='Passwords do not match.';
+    msgEl.className='msg msg-err';msgEl.style.display='block';return;
+  }
+  if(pw.length<8){
+    msgEl.textContent='Password must be at least 8 characters.';
+    msgEl.className='msg msg-err';msgEl.style.display='block';return;
+  }
+
+  const btn=document.getElementById('createBtn');
+  btn.disabled=true;btn.textContent='Creating account…';
+  msgEl.style.display='none';
+
+  // Update password (user already has a session from invite)
+  const{error:pwErr}=await sb.auth.updateUser({password:pw,data:{full_name:name}});
+  if(pwErr){
+    btn.disabled=false;btn.textContent='Create Account';
+    msgEl.textContent='Error: '+pwErr.message;
+    msgEl.className='msg msg-err';msgEl.style.display='block';return;
+  }
+
+  // Save to profiles table
+  const{data:{user}}=await sb.auth.getUser();
+  if(user){
+    await sb.from('profiles').upsert({
+      id:user.id,
+      email:user.email,
+      full_name:name,
+      display_name:name,
+      role:'sales',
+      is_admin:false,
+    },{onConflict:'id'}).catch(()=>{});
+  }
+
+  // Show success and redirect
+  show('successScreen');
+  setTimeout(()=>window.location.href='dashboard.html',3000);
+});
+
+// ── Init ──
+(()=>{
+  const t=localStorage.getItem('sp_theme')||'light';
+  document.documentElement.setAttribute('data-theme',t);
+})();
+init();
+</script>
+</body>
+</html>
