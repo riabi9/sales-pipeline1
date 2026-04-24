@@ -670,6 +670,69 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 </div>
 
 
+<div class="modal-bg" id="listNameModal">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-drag"></div>
+    <p class="modal-ttl" id="listNameTitle">New Stock List</p>
+    <div class="form-row"><label class="lbl">List name</label><input class="inp" id="listNameInput" placeholder="e.g. Supplier A — Q1 2025" onkeydown="if(event.key==='Enter')confirmListName()"></div>
+    <div id="listTypeRow" style="margin-bottom:12px">
+      <label class="lbl" style="margin-bottom:6px;display:block">Storage type</label>
+      <div style="display:flex;gap:8px">
+        <label style="flex:1;display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--border2);border-radius:8px;cursor:pointer;transition:border-color .15s" id="typeLocalLabel">
+          <input type="radio" name="listStorageType" value="local" id="typeLocal" checked onchange="updateListTypeUI()">
+          <div><div style="font-size:12px;font-weight:600;color:var(--purple-text)">🗄 Local</div><div style="font-size:10px;color:var(--text3);margin-top:1px">Browser only</div></div>
+        </label>
+        <label style="flex:1;display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--border2);border-radius:8px;cursor:pointer;transition:border-color .15s" id="typeCloudLabel">
+          <input type="radio" name="listStorageType" value="cloud" id="typeCloud" onchange="updateListTypeUI()">
+          <div><div style="font-size:12px;font-weight:600;color:var(--blue)">☁️ Cloud</div><div style="font-size:10px;color:var(--text3);margin-top:1px">All users can see it</div></div>
+        </label>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--text3)" id="listNameHint">Items will be stored locally in your browser.</p>
+    <div class="modal-acts">
+      <button class="btn btn-ghost btn-sm" onclick="closeListNameModal()">Cancel</button>
+      <button class="btn btn-blue btn-sm" id="listNameConfirmBtn" onclick="confirmListName()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete list confirm modal -->
+<div class="modal-bg" id="delListModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-drag"></div>
+    <p class="modal-ttl">Delete Stock List?</p>
+    <div id="delListMsg" style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.7"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost btn-sm" onclick="closeDelListModal()">Cancel</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmDeleteList()">🗑 Delete permanently</button>
+    </div>
+  </div>
+</div>
+
+<!-- Clear cloud modal -->
+<div class="modal-bg" id="clearCloudModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-drag"></div>
+    <p class="modal-ttl" style="color:var(--red-text)">⚠️ Clear All Cloud Stock?</p>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.8">
+      This will <strong>permanently delete every item</strong> in your cloud stock list.<br>
+      This cannot be undone.<br><br>
+      Type <strong style="font-family:var(--mono);color:var(--red-text)">CLEAR</strong> to confirm.
+    </div>
+    <div class="form-row">
+      <input class="inp mono" id="clearCloudConfirmInput" placeholder="Type CLEAR here" oninput="document.getElementById('clearCloudConfirmBtn').disabled=this.value!=='CLEAR'">
+    </div>
+    <div id="clearCloudProgress" style="display:none;font-size:12px;color:var(--blue);margin-bottom:8px;font-family:var(--mono)"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost btn-sm" onclick="closeClearCloudModal()">Cancel</button>
+      <button class="btn btn-danger btn-sm" id="clearCloudConfirmBtn" disabled onclick="confirmClearCloud()">🗑 Delete all cloud items</button>
+    </div>
+  </div>
+</div>
+
+<!-- SQL Setup modal -->
+<!-- AI Settings Modal -->
+
 <div class="modal-bg" id="sqlSetupModal">
   <div class="modal" style="max-width:580px">
     <div class="modal-drag"></div>
@@ -1703,6 +1766,38 @@ function copySQLSetup(){
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fmtNum(n){ const v=Number(n)||0; return v>=1000?v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2}):v.toFixed(2); }
 function fmtShort(n){ const v=Number(n)||0; if(!v)return'—'; return v>=1000?v.toLocaleString('en-US',{maximumFractionDigits:0}):v.toFixed(2); }
+
+function loadThresholds(){try{return JSON.parse(localStorage.getItem('sp_thresholds')||'{}');}catch(e){return{};}}
+function saveThresholds(t){localStorage.setItem('sp_thresholds',JSON.stringify(t));}
+function renderThresholdList(){
+  const t=loadThresholds();
+  const el=document.getElementById('thresholdList');if(!el)return;
+  const entries=Object.entries(t);
+  if(!entries.length){el.innerHTML='<span style="font-size:11px;color:var(--text4)">No thresholds set</span>';return;}
+  el.innerHTML=entries.map(([type,qty])=>`
+    <span style="display:inline-flex;align-items:center;gap:5px;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">
+      ${esc(type)}: ${qty}
+      <button onclick="deleteThreshold('${esc(type)}')" style="background:none;border:none;cursor:pointer;color:var(--amber-text);font-size:13px;line-height:1;padding:0;margin-left:2px">×</button>
+    </span>`).join('');
+}
+function deleteThreshold(type){const t=loadThresholds();delete t[type];saveThresholds(t);renderThresholdList();runSearch();}
+function openThresholdModal(){
+  const types=[...new Set((activeList()?.items||[]).map(s=>s.product_type).filter(Boolean))];
+  const dl=document.getElementById('knownTypes');
+  if(dl)dl.innerHTML=types.map(t=>`<option value="${esc(t)}">`).join('');
+  document.getElementById('thresholdType').value='';
+  document.getElementById('thresholdQty').value='';
+  document.getElementById('thresholdModal').classList.add('open');
+  setTimeout(()=>document.getElementById('thresholdType').focus(),100);
+}
+function closeThresholdModal(){document.getElementById('thresholdModal').classList.remove('open');}
+function saveThreshold(){
+  const type=(document.getElementById('thresholdType').value||'').trim();
+  const qty=Number(document.getElementById('thresholdQty').value)||0;
+  if(!type||!qty)return;
+  const t=loadThresholds();t[type]=qty;saveThresholds(t);
+  closeThresholdModal();renderThresholdList();runSearch();
+}
 
 </script>
 </body>
