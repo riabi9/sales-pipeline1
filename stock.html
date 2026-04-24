@@ -6,6 +6,7 @@
 <title>Steel Platform — Stock & Offer</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -304,14 +305,29 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .ai-typing span:nth-child(3){animation-delay:.3s}
 @keyframes ai-bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
 /* AI Settings modal */
-.ai-set-prov{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
-.ai-prov-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--border2);border-radius:9px;cursor:pointer;transition:border-color .15s,background .15s;background:var(--surface);text-align:left;font-family:var(--sans);width:100%}
-.ai-prov-btn:hover{border-color:var(--blue-mid);background:var(--blue-bg)}
-.ai-prov-btn.selected{border-color:var(--blue);background:var(--blue-bg)}
+.ai-keys-list{display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.ai-key-row{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);background:var(--surface);transition:background .12s}
+.ai-key-row:last-child{border-bottom:none}
+.ai-key-row.active-provider{background:var(--blue-bg)}
+.ai-key-icon{font-size:16px;flex-shrink:0;width:22px;text-align:center}
+.ai-key-name{font-size:12px;font-weight:600;color:var(--text);flex-shrink:0;width:90px}
+.ai-key-val{font-size:11px;color:var(--text3);font-family:var(--mono);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ai-key-actions{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.ai-free-badge{font-size:9px;font-weight:700;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green);border-radius:20px;padding:1px 5px;flex-shrink:0}
+/* Toggle switch */
+.ai-toggle{position:relative;display:inline-block;width:34px;height:18px;flex-shrink:0}
+.ai-toggle input{opacity:0;width:0;height:0;position:absolute}
+.ai-toggle-track{position:absolute;cursor:pointer;inset:0;background:var(--border2);border-radius:18px;transition:.2s}
+.ai-toggle-track:before{position:absolute;content:'';height:12px;width:12px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.ai-toggle input:checked+.ai-toggle-track{background:var(--green)}
+.ai-toggle input:checked+.ai-toggle-track:before{transform:translateX(16px)}
+.ai-toggle input:disabled+.ai-toggle-track{opacity:.4;cursor:not-allowed}
+/* Key expand area */
+.ai-key-expand{display:none;padding:10px 12px;background:var(--surface2);border-top:1px solid var(--border)}
+.ai-key-expand.open{display:block}
 .ai-prov-icon{font-size:18px;flex-shrink:0}
 .ai-prov-name{font-size:13px;font-weight:600;color:var(--text)}
 .ai-prov-sub{font-size:10px;color:var(--text3);margin-top:1px}
-.ai-free-badge{font-size:9px;font-weight:700;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green);border-radius:20px;padding:1px 6px;margin-left:6px;flex-shrink:0}
 .ai-offer-btn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans);background:var(--green);color:#fff;margin-top:8px;transition:opacity .15s}
 .ai-offer-btn:hover{opacity:.88}
 .ai-offer-success{font-size:11px;color:var(--green-text);background:var(--green-bg);border:1px solid var(--green);border-radius:6px;padding:6px 10px;margin-top:6px;display:block}
@@ -641,11 +657,15 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
            ondrop="event.preventDefault();this.classList.remove('drag');aiHandleFile(event.dataTransfer.files[0])">
         <div class="ai-drop-icon">📂</div>
         <div class="ai-drop-ttl">Drop your stock file here</div>
-        <div class="ai-drop-sub">Excel (.xlsx) or CSV · Any language · Any column structure<br>Turkish, English, Croatian — AI detects automatically</div>
+        <div class="ai-drop-sub">
+          <strong>Excel / CSV</strong> · Any language · Any columns<br>
+          <strong>PDF</strong> · Text or scanned · Multiple pages<br>
+          <strong>Image</strong> · Photo, screenshot, scan · AI reads it visually
+        </div>
         <div style="display:flex;justify-content:center;gap:8px;margin-top:4px">
           <button class="btn btn-blue btn-sm" onclick="event.stopPropagation();document.getElementById('aiFileInput').click()">Choose file</button>
         </div>
-        <input type="file" id="aiFileInput" accept=".xlsx,.csv,.xls" style="display:none" onchange="aiHandleFile(this.files[0])">
+        <input type="file" id="aiFileInput" accept=".xlsx,.csv,.xls,.pdf,.jpg,.jpeg,.png,.webp,.gif,.bmp,.tiff" style="display:none" onchange="aiHandleFile(this.files[0])">
         <div id="aiFileStatus" style="font-size:12px;margin-top:8px;min-height:16px;font-weight:500"></div>
       </div>
 
@@ -853,39 +873,36 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 <!-- SQL Setup modal -->
 <!-- AI Settings Modal -->
 <div class="modal-bg" id="aiSettingsModal">
-  <div class="modal" style="max-width:460px">
+  <div class="modal" style="max-width:480px">
     <div class="modal-drag"></div>
-    <p class="modal-ttl">⚙ AI Model Settings</p>
+    <p class="modal-ttl">⚙ AI Settings</p>
 
-    <div style="font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Select Provider</div>
-    <div class="ai-set-prov" id="aiProviderList"></div>
-
-    <div id="aiModelSection" style="margin-top:4px">
-      <div class="form-row">
+    <!-- Active provider + model -->
+    <div class="g2" style="margin-bottom:14px">
+      <div class="form-row" style="margin-bottom:0">
+        <label class="lbl">Active provider</label>
+        <select class="inp" id="aiProviderSelect" onchange="aiSelectProvider(this.value)"></select>
+      </div>
+      <div class="form-row" style="margin-bottom:0">
         <label class="lbl">Model</label>
-        <select class="inp" id="aiModelSelect" onchange="aiSaveSettings()"></select>
+        <select class="inp" id="aiModelSelect" onchange="aiSaveModelSettings()"></select>
       </div>
-      <div class="form-row" id="aiCustomUrlRow" style="display:none">
-        <label class="lbl">Base URL (e.g. https://api.groq.com/openai/v1)</label>
-        <input class="inp mono" id="aiCustomUrl" placeholder="https://…" oninput="aiSaveSettings()">
-      </div>
-      <div class="form-row" id="aiCustomModelRow" style="display:none">
-        <label class="lbl">Model name</label>
-        <input class="inp mono" id="aiCustomModel" placeholder="e.g. mistral-7b-instruct" oninput="aiSaveSettings()">
-      </div>
-      <div class="form-row">
-        <label class="lbl" id="aiKeyLabel">API Key</label>
-        <div style="display:flex;gap:6px">
-          <input class="inp mono" type="password" id="aiKeyField" placeholder="Paste your API key here" autocomplete="off" style="flex:1" oninput="aiSaveSettings()">
-          <button class="btn btn-danger btn-sm" onclick="aiClearKey()" title="Remove key" style="flex-shrink:0">✕ Remove</button>
-        </div>
-        <div id="aiKeyStatus" style="font-size:10px;margin-top:4px"></div>
-      </div>
-      <div id="aiFreeNote" style="display:none;font-size:11px;padding:8px 10px;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green);border-radius:7px;margin-top:4px"></div>
+    </div>
+    <div class="form-row" id="aiCustomUrlRow" style="display:none;margin-bottom:8px">
+      <label class="lbl">Base URL</label>
+      <input class="inp mono" id="aiCustomUrl" placeholder="https://api.groq.com/openai/v1" oninput="aiSaveModelSettings()">
+    </div>
+    <div class="form-row" id="aiCustomModelRow" style="display:none;margin-bottom:14px">
+      <label class="lbl">Model name</label>
+      <input class="inp mono" id="aiCustomModel" placeholder="e.g. llama-3-70b" oninput="aiSaveModelSettings()">
     </div>
 
+    <!-- Keys list -->
+    <div style="font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">API Keys — one per provider</div>
+    <div class="ai-keys-list" id="aiKeysList"></div>
+
     <div class="modal-acts">
-      <button class="btn btn-ghost btn-sm" onclick="closeAISettings()">Close</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeAISettings()">Done</button>
     </div>
   </div>
 </div>
@@ -1985,7 +2002,8 @@ const AI_PROVIDERS = {
 let aiState = {
   provider: 'anthropic',
   model: 'claude-sonnet-4-6',
-  keys: {},      // { anthropic: 'sk-ant-…', openai: 'sk-…', … }
+  keys: {},
+  keyActive: {},  // { anthropic: true, gemini: false, … } — per-provider on/off toggle
   customUrl: '',
   customModel: ''
 };
@@ -2002,61 +2020,52 @@ function aiLoadSettings(){
     if(s.provider && AI_PROVIDERS[s.provider]) aiState.provider=s.provider;
     if(s.model) aiState.model=s.model;
     if(s.keys && typeof s.keys==='object') aiState.keys=s.keys;
+    if(s.keyActive && typeof s.keyActive==='object') aiState.keyActive=s.keyActive;
     if(s.customUrl) aiState.customUrl=s.customUrl;
     if(s.customModel) aiState.customModel=s.customModel;
   }catch(e){}
   // Legacy: migrate old single key
   const old=localStorage.getItem('sp_claude_key');
-  if(old && !aiState.keys.anthropic){ aiState.keys.anthropic=old; aiSavePersist(); }
+  if(old && !aiState.keys.anthropic){ aiState.keys.anthropic=old; aiState.keyActive.anthropic=true; aiSavePersist(); }
 }
 function aiSavePersist(){
   localStorage.setItem('sp_ai_settings', JSON.stringify(aiState));
 }
-function aiSaveSettings(){
+function aiSaveModelSettings(){
   aiState.model = document.getElementById('aiModelSelect')?.value || aiState.model;
   const prov=AI_PROVIDERS[aiState.provider];
-  aiState.keys[aiState.provider] = document.getElementById('aiKeyField')?.value?.trim() || '';
   if(prov?.hasCustomUrl) aiState.customUrl = document.getElementById('aiCustomUrl')?.value?.trim()||'';
   if(prov?.hasCustomModel) aiState.customModel = document.getElementById('aiCustomModel')?.value?.trim()||'';
   aiSavePersist();
   aiUpdateProviderLabel();
-  aiUpdateKeyStatus();
-}
-function aiClearKey(){
-  aiState.keys[aiState.provider]='';
-  document.getElementById('aiKeyField').value='';
-  aiSavePersist();
-  aiUpdateKeyStatus();
 }
 
 // ══════════════════════════════════
 // AI — SETTINGS MODAL
 // ══════════════════════════════════
 function openAISettings(){
-  renderAIProviderList();
-  renderAIModelDropdown();
+  renderAISettingsModal();
   document.getElementById('aiSettingsModal').classList.add('open');
 }
 function closeAISettings(){ document.getElementById('aiSettingsModal').classList.remove('open'); }
 
-function renderAIProviderList(){
-  document.getElementById('aiProviderList').innerHTML = Object.entries(AI_PROVIDERS).map(([id,p])=>`
-    <button class="ai-prov-btn ${aiState.provider===id?'selected':''}" onclick="aiSelectProvider('${id}')">
-      <span class="ai-prov-icon">${p.icon}</span>
-      <div style="flex:1;min-width:0">
-        <div class="ai-prov-name">${p.label}${p.free?`<span class="ai-free-badge">FREE</span>`:''}</div>
-        <div class="ai-prov-sub">${p.models.length?p.models[0].label:p.freeNote||'Custom endpoint'}</div>
-      </div>
-      ${aiState.keys[id]?'<span style="font-size:10px;color:var(--green-text)">✓ Key set</span>':''}
-    </button>
-  `).join('');
+function renderAISettingsModal(){
+  // Provider dropdown
+  const sel=document.getElementById('aiProviderSelect');
+  sel.innerHTML=Object.entries(AI_PROVIDERS).map(([id,p])=>
+    `<option value="${id}" ${aiState.provider===id?'selected':''}>${p.icon} ${p.label}${p.free?' (FREE)':''}</option>`
+  ).join('');
+  // Model dropdown
+  renderAIModelDropdown();
+  // Keys list
+  renderAIKeysList();
 }
 
 function aiSelectProvider(id){
   aiState.provider=id;
   aiSavePersist();
-  renderAIProviderList();
   renderAIModelDropdown();
+  renderAIKeysList();
   aiUpdateProviderLabel();
 }
 
@@ -2066,49 +2075,113 @@ function renderAIModelDropdown(){
   const sel=document.getElementById('aiModelSelect');
   const customUrl=document.getElementById('aiCustomUrlRow');
   const customMod=document.getElementById('aiCustomModelRow');
-  document.getElementById('aiKeyLabel').textContent=prov.keyLabel;
-  document.getElementById('aiKeyField').placeholder=prov.keyPlaceholder;
-  document.getElementById('aiKeyField').value=aiState.keys[aiState.provider]||'';
-  // Models
   if(prov.hasCustomModel){
-    sel.innerHTML='<option value="custom">Custom model (see below)</option>';
+    sel.innerHTML='<option value="custom">Custom model</option>';
     customMod.style.display='block';
     document.getElementById('aiCustomModel').value=aiState.customModel||'';
   } else {
     sel.innerHTML=prov.models.map(m=>`<option value="${m.id}" ${aiState.model===m.id?'selected':''}>${m.label}</option>`).join('');
     customMod.style.display='none';
   }
-  // Custom URL
   if(prov.hasCustomUrl){
     customUrl.style.display='block';
     document.getElementById('aiCustomUrl').value=aiState.customUrl||'';
   } else {
     customUrl.style.display='none';
   }
-  // Free note
-  const freeNote=document.getElementById('aiFreeNote');
-  if(prov.freeNote){ freeNote.style.display='block'; freeNote.innerHTML=prov.freeNote; }
-  else freeNote.style.display='none';
-  aiUpdateKeyStatus();
 }
 
-function aiUpdateKeyStatus(){
-  const key=aiState.keys[aiState.provider]||'';
-  const el=document.getElementById('aiKeyStatus');
-  if(!el)return;
-  if(key) el.innerHTML=`<span style="color:var(--green-text)">✓ Key saved</span>`;
-  else el.innerHTML=`<span style="color:var(--amber-text)">No key — enter one above</span>`;
+function renderAIKeysList(){
+  const el=document.getElementById('aiKeysList');
+  el.innerHTML=Object.entries(AI_PROVIDERS).map(([id,p])=>{
+    const key=aiState.keys[id]||'';
+    const active=!!aiState.keyActive[id];
+    const isActive=aiState.provider===id;
+    const masked=key ? key.slice(0,6)+'…'+key.slice(-3) : '';
+    return `
+    <div class="ai-key-row ${isActive?'active-provider':''}">
+      <span class="ai-key-icon">${p.icon}</span>
+      <span class="ai-key-name">${p.label}${p.free?'<span class="ai-free-badge" style="margin-left:4px">FREE</span>':''}</span>
+      <span class="ai-key-val">${key ? masked : '<span style="color:var(--text4)">No key</span>'}</span>
+      <div class="ai-key-actions">
+        ${key ? `
+        <label class="ai-toggle" title="${active?'Active — click to deactivate':'Deactivated — click to activate'}">
+          <input type="checkbox" ${active?'checked':''} onchange="aiToggleKey('${id}',this.checked)">
+          <span class="ai-toggle-track"></span>
+        </label>` : ''}
+        <button class="btn btn-xs ${key?'':'btn-outline-blue'}" onclick="aiExpandKey('${id}')" style="font-size:10px">
+          ${key?'✏ Edit':'+ Add'}
+        </button>
+        ${key ? `<button class="btn btn-xs btn-danger" onclick="aiDeleteKey('${id}')" title="Delete key">✕</button>` : ''}
+      </div>
+    </div>
+    <div class="ai-key-expand" id="aiKeyExpand_${id}">
+      <div style="display:flex;gap:6px;align-items:center">
+        <input class="inp mono" type="password" id="aiKeyInp_${id}" placeholder="${p.keyPlaceholder}" value="${key}" autocomplete="off" style="flex:1;height:32px;font-size:12px">
+        <button class="btn btn-blue btn-sm" onclick="aiSaveKey('${id}')">Save</button>
+        <button class="btn btn-ghost btn-sm" onclick="aiCollapseKey('${id}')">Cancel</button>
+      </div>
+      ${p.freeNote?`<div style="font-size:10px;color:var(--green-text);margin-top:6px">${p.freeNote}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function aiExpandKey(id){
+  // Close all others first
+  Object.keys(AI_PROVIDERS).forEach(k=>{
+    const el=document.getElementById('aiKeyExpand_'+k);
+    if(el) el.classList.remove('open');
+  });
+  const el=document.getElementById('aiKeyExpand_'+id);
+  if(el){ el.classList.add('open'); setTimeout(()=>document.getElementById('aiKeyInp_'+id)?.focus(),50); }
+}
+function aiCollapseKey(id){
+  const el=document.getElementById('aiKeyExpand_'+id);
+  if(el) el.classList.remove('open');
+}
+function aiSaveKey(id){
+  const val=(document.getElementById('aiKeyInp_'+id)?.value||'').trim();
+  if(!val){alert('Please enter a key first.');return;}
+  aiState.keys[id]=val;
+  aiState.keyActive[id]=true; // auto-activate on save
+  aiSavePersist();
+  aiCollapseKey(id);
+  renderAIKeysList();
+  aiUpdateProviderLabel();
+}
+function aiDeleteKey(id){
+  if(!confirm(`Delete API key for ${AI_PROVIDERS[id]?.label}? This cannot be undone.`))return;
+  delete aiState.keys[id];
+  aiState.keyActive[id]=false;
+  aiSavePersist();
+  renderAIKeysList();
+  aiUpdateProviderLabel();
+}
+function aiToggleKey(id,active){
+  aiState.keyActive[id]=active;
+  aiSavePersist();
+  renderAIKeysList();
+  aiUpdateProviderLabel();
 }
 
 function aiUpdateProviderLabel(){
   const prov=AI_PROVIDERS[aiState.provider];
-  const model=AI_PROVIDERS[aiState.provider]?.models?.find(m=>m.id===aiState.model);
-  const label=prov?`${prov.icon} ${model?model.label.split('—')[0].trim():aiState.model}` : '';
+  const model=prov?.models?.find(m=>m.id===aiState.model);
+  const key=aiState.keys[aiState.provider]||'';
+  const active=aiState.keyActive[aiState.provider];
+  let label=prov?`${prov.icon} ${model?model.label.split('—')[0].trim():aiState.model}`:'';
+  if(key && !active) label+=' ⏸';
   const el=document.getElementById('aiProviderLabel');
   if(el) el.textContent=label;
 }
 
-function aiGetKey(){ return aiState.keys[aiState.provider]||''; }
+// Returns key only if provider is active; opens settings if not
+function aiGetKey(){
+  const key=aiState.keys[aiState.provider]||'';
+  const active=aiState.keyActive[aiState.provider];
+  if(key && !active) return ''; // deactivated
+  return key;
+}
 function aiHasKey(){ const k=aiGetKey(); if(!k){openAISettings();return false;} return true; }
 
 // ══════════════════════════════════
@@ -2257,65 +2330,400 @@ function aiCheckKey(){
 }
 
 // ══════════════════════════════════
-// AI — FILE HANDLING
+// AI — FILE HANDLING (Excel, CSV, PDF, Image)
 // ══════════════════════════════════
+let aiRawFullData = '';   // text content for CSV/Excel/text-PDF
+let aiVisionPages = [];   // [{base64, mimeType}] for images and scanned PDFs
+let aiInputMode = 'text'; // 'text' | 'vision'
+
 function aiHandleFile(file){
   if(!file)return;
-  const status=document.getElementById('aiFileStatus');
-  status.style.color='var(--blue)';
-  status.textContent='📂 '+file.name+' loaded — click "Parse with AI" to continue';
   const ext=file.name.split('.').pop().toLowerCase();
-  if(ext==='csv'){
+  aiRawFullData=''; aiVisionPages=[]; aiInputMode='text';
+  document.getElementById('aiFileStatus').style.color='var(--blue)';
+  const prev=document.getElementById('aiImgPreview');if(prev)prev.remove();
+  const vw=document.getElementById('aiVisionWarn');if(vw)vw.remove();
+  const lw=document.getElementById('aiLargeFileWarn');if(lw)lw.remove();
+
+  if(['jpg','jpeg','png','webp','gif','bmp','tiff','heic'].includes(ext)){
+    aiInputMode='vision'; aiHandleImageFile(file);
+  } else if(ext==='pdf'){
+    aiHandlePDFFile(file);
+  } else if(ext==='csv'){
     const reader=new FileReader();
-    reader.onload=e=>{document.getElementById('aiPasteArea').value=e.target.result.slice(0,8000);};
+    reader.onload=e=>{
+      aiRawFullData=e.target.result;
+      const rows=aiRawFullData.split('\n').filter(l=>l.trim()).length;
+      document.getElementById('aiPasteArea').value=aiRawFullData.split('\n').slice(0,6).join('\n')+(rows>6?'\n…':'');
+      document.getElementById('aiFileStatus').textContent=`📄 ${file.name} · ${rows-1} rows`;
+      aiShowLargeFileWarning(rows-1);
+    };
     reader.readAsText(file);
-  }else{
+  } else {
     const reader=new FileReader();
     reader.onload=e=>{
       try{
         const wb=XLSX.read(e.target.result,{type:'array'});
         const ws=wb.Sheets[wb.SheetNames[0]];
-        document.getElementById('aiPasteArea').value=XLSX.utils.sheet_to_csv(ws).slice(0,8000);
-      }catch(err){status.style.color='var(--red-text)';status.textContent='⚠ Could not read: '+err.message;}
+        aiRawFullData=XLSX.utils.sheet_to_csv(ws);
+        const rows=aiRawFullData.split('\n').filter(l=>l.trim()).length;
+        document.getElementById('aiPasteArea').value=aiRawFullData.split('\n').slice(0,6).join('\n')+(rows>6?'\n…':'');
+        document.getElementById('aiFileStatus').textContent=`📊 ${file.name} · ${rows-1} rows`;
+        aiShowLargeFileWarning(rows-1);
+      }catch(err){
+        document.getElementById('aiFileStatus').style.color='var(--red-text)';
+        document.getElementById('aiFileStatus').textContent='⚠ Could not read: '+err.message;
+      }
     };
     reader.readAsArrayBuffer(file);
   }
 }
 
+function aiHandleImageFile(file){
+  const status=document.getElementById('aiFileStatus');
+  status.textContent='🖼 Reading image…';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const dataUrl=e.target.result;
+    const base64=dataUrl.split(',')[1];
+    const mimeType=file.type||'image/jpeg';
+    aiVisionPages=[{base64,mimeType}];
+    document.getElementById('aiPasteArea').value=`[Image: ${file.name}]\nAI will read this visually — click "Parse with AI"`;
+    status.textContent=`🖼 ${file.name} ready`;
+    let prev=document.getElementById('aiImgPreview');
+    if(!prev){prev=document.createElement('div');prev.id='aiImgPreview';prev.style.cssText='text-align:center;padding:8px 0';document.getElementById('aiDropZone').after(prev);}
+    prev.innerHTML=`<img src="${dataUrl}" style="max-height:160px;max-width:100%;border-radius:8px;border:1px solid var(--border);object-fit:contain">`;
+    aiCheckVisionProvider();
+  };
+  reader.readAsDataURL(file);
+}
+
+async function aiHandlePDFFile(file){
+  const status=document.getElementById('aiFileStatus');
+  status.textContent=`📄 Loading ${file.name}…`;
+  let pdfLib=window.pdfjsLib;
+  if(!pdfLib&&typeof pdfjsLib!=='undefined') pdfLib=window.pdfjsLib=pdfjsLib;
+  if(!pdfLib){status.style.color='var(--red-text)';status.textContent='⚠ PDF library not loaded. Refresh and try again.';return;}
+  pdfLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  try{
+    const arrayBuffer=await file.arrayBuffer();
+    const pdf=await pdfLib.getDocument({data:arrayBuffer}).promise;
+    const numPages=pdf.numPages;
+    status.textContent=`📄 ${numPages} page(s) — checking type…`;
+    let allText='';
+    for(let p=1;p<=Math.min(numPages,8);p++){
+      const page=await pdf.getPage(p);
+      const tc=await page.getTextContent();
+      allText+=tc.items.map(i=>i.str).join(' ')+'\n';
+    }
+    if(allText.trim().length>200){
+      aiInputMode='text'; aiRawFullData=allText;
+      const rows=allText.split('\n').filter(l=>l.trim()).length;
+      document.getElementById('aiPasteArea').value=allText.split('\n').slice(0,6).join('\n')+(rows>6?'\n…':'');
+      status.textContent=`📄 ${file.name} · text PDF · ${numPages} page(s) · ~${rows} lines`;
+      aiShowLargeFileWarning(rows);
+    } else {
+      aiInputMode='vision'; aiVisionPages=[];
+      const maxP=Math.min(numPages,6);
+      for(let p=1;p<=maxP;p++){
+        status.textContent=`📄 Rendering page ${p}/${maxP}…`;
+        const page=await pdf.getPage(p);
+        const vp=page.getViewport({scale:2.0});
+        const cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;
+        await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+        aiVisionPages.push({base64:cv.toDataURL('image/jpeg',0.88).split(',')[1],mimeType:'image/jpeg'});
+      }
+      const note=numPages>maxP?` (first ${maxP} of ${numPages} pages)`:'';
+      document.getElementById('aiPasteArea').value=`[Scanned PDF: ${file.name} · ${aiVisionPages.length} page(s)${note}]\nAI vision will read it — click "Parse with AI"`;
+      status.textContent=`📄 ${file.name} · scanned · ${aiVisionPages.length} page(s) ready`;
+      aiCheckVisionProvider();
+    }
+  }catch(e){status.style.color='var(--red-text)';status.textContent='⚠ PDF error: '+e.message;}
+}
+
+function aiCheckVisionProvider(){
+  const noVision=['groq','mistral'];
+  const existing=document.getElementById('aiVisionWarn');if(existing)existing.remove();
+  if(!noVision.includes(aiState.provider))return;
+  const warn=document.createElement('div');
+  warn.id='aiVisionWarn';
+  warn.style.cssText='font-size:11px;padding:9px 12px;border-radius:8px;margin-top:6px;background:var(--red-bg);color:var(--red-text);border:1px solid var(--red)';
+  warn.innerHTML=`⚠ <strong>${AI_PROVIDERS[aiState.provider]?.label}</strong> does not support vision. To read images and scanned PDFs switch to <strong>Claude</strong>, <strong>GPT-4o</strong>, or <strong>Gemini</strong> in ⚙ settings.`;
+  document.getElementById('aiDropZone').after(warn);
+}
+
+function aiShowLargeFileWarning(rowCount){
+  const existing=document.getElementById('aiLargeFileWarn');
+  if(existing)existing.remove();
+  if(rowCount<100)return;
+  const isGroq=aiState.provider==='groq';
+  const warn=document.createElement('div');
+  warn.id='aiLargeFileWarn';
+  warn.style.cssText='font-size:11px;padding:8px 12px;border-radius:8px;margin-top:6px;border:1px solid;'+(isGroq?'background:var(--amber-bg);color:var(--amber-text);border-color:var(--amber)':'background:var(--blue-bg);color:var(--blue);border-color:var(--blue-light)');
+  warn.innerHTML=isGroq
+    ?`⚠ <strong>${rowCount} rows detected with Groq free tier.</strong> Processing will take ~${Math.ceil(rowCount/30/2)} min due to rate limits. For large files, <strong>Gemini Flash</strong> or <strong>Claude</strong> is faster. Change provider in ⚙ settings.`
+    :`ℹ <strong>${rowCount} rows</strong> will be processed in ${Math.ceil(rowCount/50)} batches automatically.`;
+  document.getElementById('aiDropZone').after(warn);
+}
+
 // ══════════════════════════════════
-// AI — PARSE STOCK FILE
+// AI — VISION API CALL
 // ══════════════════════════════════
-async function aiParseStock(){
-  if(!aiCheckKey())return;
-  const raw=(document.getElementById('aiPasteArea').value||'').trim();
-  if(!raw){alert('Upload a file or paste data first.');return;}
+async function aiCallOnceVision(systemPrompt, userMsg, base64, mimeType){
+  const key=aiGetKey();
+  const prov=aiState.provider;
+
+  if(prov==='anthropic'){
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:aiState.model,max_tokens:4000,system:systemPrompt,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:mimeType,data:base64}},
+          {type:'text',text:userMsg}
+        ]}]})
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+res.status);}
+    const data=await res.json();
+    return data.content.map(b=>b.text||'').join('');
+
+  } else if(prov==='gemini'){
+    const url=`https://generativelanguage.googleapis.com/v1beta/models/${aiState.model}:generateContent?key=${key}`;
+    const res=await fetch(url,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        systemInstruction:{parts:[{text:systemPrompt}]},
+        contents:[{role:'user',parts:[{inline_data:{mime_type:mimeType,data:base64}},{text:userMsg}]}],
+        generationConfig:{maxOutputTokens:4000}
+      })
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+res.status);}
+    const data=await res.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text||'';
+
+  } else if(prov==='openai'||prov==='custom'){
+    const baseUrl=AI_PROVIDERS[prov]?.baseUrl||aiState.customUrl||'https://api.openai.com/v1';
+    const model=prov==='custom'?aiState.customModel:aiState.model;
+    const res=await fetch(`${baseUrl}/chat/completions`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify({model,max_tokens:4000,messages:[
+        {role:'system',content:systemPrompt},
+        {role:'user',content:[
+          {type:'image_url',image_url:{url:`data:${mimeType};base64,${base64}`}},
+          {type:'text',text:userMsg}
+        ]}
+      ]})
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+res.status);}
+    const data=await res.json();
+    return data.choices?.[0]?.message?.content||'';
+
+  } else {
+    throw new Error(`${AI_PROVIDERS[prov]?.label||prov} does not support vision. Switch to Claude, GPT-4o, or Gemini in ⚙ settings.`);
+  }
+}
+
+async function aiParseWithVision(){
+  if(!aiVisionPages.length){alert('No image data loaded.');return;}
   const btn=document.getElementById('aiParseBtn');
   btn.disabled=true;
-  btn.innerHTML='<span class="ai-spinner"></span> Reading your stock…';
 
-  const systemPrompt=`You are a steel stock data parser. Return ONLY valid JSON, no markdown fences, no explanation.`;
-  const userMsg=`Parse this raw steel stock data. Columns may be in any language (English, Turkish, Croatian, German, French etc).
+  const sysPrompt=`You are an expert steel stock data extractor with vision. You must return ONLY a valid JSON object. No markdown. No explanation. No text before or after the JSON.`;
 
-Map each row to: product_type, grade, thickness (mm), width (mm), length (mm), quantity, unit (ton/kg/pcs/m), buy_price, currency (USD/EUR/GBP/TRY), supplier, location, origin, heat_no, notes.
+  const userMsg=`This image shows a steel products price list or stock list. It may have multiple supplier sections or columns side by side.
 
-Turkish hints: Kalite=grade, Kalınlık=thickness, En=width, Boy=length, Miktar=quantity, Fiyat=buy_price, Tedarikçi=supplier, Menşei=origin
-Croatian hints: Kvaliteta=grade, Debljina=thickness, Širina=width, Dužina=length, Količina=quantity
+TASK: Extract every single row of stock data from this image.
 
-Return JSON only:
-{"detected_language":"…","column_mapping":{"OrigCol":"mapped"},"items":[{"product_type":"Plate","grade":"S355","thickness":10,"width":1500,"length":6000,"quantity":50,"unit":"ton","buy_price":620,"currency":"USD","supplier":null,"location":null,"origin":"Turkey","heat_no":null,"notes":null}],"warnings":[]}
+PRODUCT CODE PATTERNS you may see:
+- Turkish format: "PPG-DX51D-GZ0-RAL3009-0.40X1000X0" → type=PPG, grade=DX51D, thickness=0.40, width=1000
+- "GZR-P-DX51D+Z-0.38-1000-0-Z050" → type=GZR-P, grade=DX51D+Z, thickness=0.38, width=1000
+- "GHR DX51D+Z 2,01X1004" → type=GHR, grade=DX51D+Z, thickness=2.01, width=1004
+- The number after X is width in mm, the last number is length (0 or blank = coil)
+- Supplier names appear as section headers (TEZCAN, TAT, ATAKAS, etc.)
 
-Raw data:
-${raw.slice(0,6000)}`;
+MAP each row to this schema:
+- product_type: the prefix code (PPG, GZR, GZR-P, GCR, GHR, GZRS, etc.)
+- grade: steel grade (DX51D, DX51D+Z, S250GD, etc.)
+- thickness: number in mm (e.g. 0.40, 0.50, 1.2)
+- width: number in mm (e.g. 1000, 1200, 1250)
+- length: number in mm or null if coil (0 = null)
+- quantity: null (not shown)
+- unit: "ton"
+- buy_price: the number shown next to the product code
+- currency: "TRY" (if Turkish list) or detect from context
+- supplier: the section header this row belongs to (e.g. "TEZCAN", "TAT", "ATAKAS")
+- origin: "Turkey"
+- heat_no: null
+- notes: any RAL color code or coating spec from the product code
 
-  try{
-    const text=await aiCallOnce(systemPrompt,userMsg);
-    const clean=text.replace(/```json|```/g,'').trim();
-    const parsed=JSON.parse(clean);
-    aiParsedItems=parsed.items||[];
-    renderAIResults(parsed);
-  }catch(e){
-    alert('Parse error: '+e.message+'\n\nCheck your API key and try again.');
+Return ONLY this JSON:
+{"detected_language":"Turkish","column_mapping":{"product_code":"product_type+grade+dimensions","price":"buy_price"},"items":[{"product_type":"PPG","grade":"DX51D","thickness":0.40,"width":1000,"length":null,"quantity":null,"unit":"ton","buy_price":7510,"currency":"TRY","supplier":"TEZCAN","location":null,"origin":"Turkey","heat_no":null,"notes":"GZ0-RAL3009"}],"warnings":[]}`;
+
+  let allItems=[],detectedLanguage='Turkish',columnMapping={},warnings=[];
+  let lastRawText='';
+
+  for(let i=0;i<aiVisionPages.length;i++){
+    btn.innerHTML=`<span class="ai-spinner"></span> Reading page ${i+1}/${aiVisionPages.length}…`;
+    try{
+      const text=await aiCallOnceVision(sysPrompt,userMsg,aiVisionPages[i].base64,aiVisionPages[i].mimeType);
+      lastRawText=text;
+      console.log('Vision AI raw response (page '+(i+1)+'):', text.slice(0,500));
+      const parsed=aiExtractJSON(text);
+      if(i===0){
+        detectedLanguage=parsed.detected_language||'Turkish';
+        columnMapping=parsed.column_mapping||{};
+        if(parsed.warnings) warnings=[...warnings,...parsed.warnings];
+      }
+      allItems=[...allItems,...(parsed.items||[])];
+    }catch(e){
+      console.error('Vision page '+(i+1)+' error:',e);
+      warnings.push(`Error on page ${i+1}: ${e.message}`);
+    }
+    if(i<aiVisionPages.length-1) await new Promise(r=>setTimeout(r,1500));
   }
+
+  if(allItems.length){
+    renderAIResults({detected_language:detectedLanguage,column_mapping:columnMapping,items:allItems,warnings});
+  } else {
+    // Show the ACTUAL error, not a generic blurry message
+    let msg='❌ Could not extract stock data.\n\n';
+    if(warnings.length){
+      msg+='What went wrong:\n'+warnings.map(w=>'• '+w).join('\n')+'\n\n';
+    }
+    if(lastRawText && lastRawText.length>0){
+      msg+='AI did respond but data could not be parsed.\nFirst 300 chars of response:\n'+lastRawText.slice(0,300)+'\n\n';
+    }
+    msg+='Suggested fixes:\n';
+    msg+='• Open ⚙ settings and confirm your Claude API key is a FRESH key (not the one you shared earlier)\n';
+    msg+='• Try switching to Gemini Flash (free, excellent at reading tables)\n';
+    msg+='• If auth error: go to platform.claude.com → create a new API key → paste in ⚙ settings';
+    alert(msg);
+  }
+  btn.disabled=false;
+  btn.innerHTML='<span>🤖 Parse with AI</span>';
+}
+
+// ══════════════════════════════════
+// AI — PARSE STOCK FILE (CHUNKED)
+// ══════════════════════════════════
+
+// Robustly extract JSON even if AI adds extra text around it
+function aiExtractJSON(text){
+  if(!text||!text.trim()) throw new Error('Empty response — check your API key and provider in ⚙ settings');
+  let clean=text.replace(/```json\n?|```\n?/g,'').trim();
+  // Direct parse
+  try{return JSON.parse(clean);}catch(e){}
+  // Find largest JSON object
+  const objM=clean.match(/\{[\s\S]*\}/);
+  if(objM){try{return JSON.parse(objM[0]);}catch(e){}}
+  // Find JSON array → wrap as items
+  const arrM=clean.match(/\[[\s\S]*\]/);
+  if(arrM){try{return{items:JSON.parse(arrM[0])};}catch(e){}}
+  throw new Error('AI returned invalid JSON. File may be too complex — try a smaller sample first.');
+}
+
+// Delay between batches (ms) per provider to respect rate limits
+const AI_BATCH_DELAY={anthropic:0,openai:800,gemini:1500,groq:12000,mistral:1000,custom:1000};
+// Rows per batch per provider
+const AI_BATCH_SIZE={anthropic:150,openai:100,gemini:80,groq:30,mistral:80,custom:80};
+
+async function aiParseStock(){
+  if(!aiCheckKey())return;
+
+  // Route to vision if image or scanned PDF
+  if(aiInputMode==='vision'){
+    await aiParseWithVision();
+    return;
+  }
+
+  // Use full stored data, fall back to textarea
+  const raw=(aiRawFullData||document.getElementById('aiPasteArea').value||'').trim();
+  if(!raw){alert('Upload a file or paste data first.');return;}
+
+  const btn=document.getElementById('aiParseBtn');
+  btn.disabled=true;
+
+  // Split into header + data rows
+  const allLines=raw.split('\n').filter(l=>l.trim());
+  const header=allLines[0]||'';
+  const dataRows=allLines.slice(1);
+  const total=dataRows.length;
+  const CHUNK=AI_BATCH_SIZE[aiState.provider]||50;
+  const DELAY=AI_BATCH_DELAY[aiState.provider]||1000;
+
+  // Build chunks
+  const chunks=[];
+  for(let i=0;i<dataRows.length;i+=CHUNK) chunks.push(dataRows.slice(i,i+CHUNK));
+
+  let allItems=[];
+  let detectedLanguage='Unknown';
+  let columnMapping={};
+  let warnings=[];
+  let failedBatches=0;
+
+  const sysFirst=`You are a steel stock data parser. Return ONLY a valid JSON object, no markdown fences, no explanation text before or after.`;
+  const sysNext=`You are a steel stock data parser. Use this column mapping: ${'{}'}.  Return ONLY a JSON object: {"items":[…]}. No markdown, no explanation.`;
+
+  for(let ci=0;ci<chunks.length;ci++){
+    const isFirst=ci===0;
+    const chunkRows=chunks[ci];
+    const batchLabel=`Batch ${ci+1}/${chunks.length} · ${Math.min((ci+1)*CHUNK,total)}/${total} rows`;
+    btn.innerHTML=`<span class="ai-spinner"></span> ${batchLabel}…`;
+
+    const chunkCsv=[header,...chunkRows].join('\n');
+
+    const prompt=isFirst
+      ?`Parse this steel stock data. Columns may be in English, Turkish, Croatian, German, French or any other language.
+
+Map each row to: product_type, grade, thickness(mm), width(mm), length(mm), quantity, unit(ton/kg/pcs/m), buy_price, currency(USD/EUR/GBP/TRY), supplier, location, origin, heat_no, notes.
+
+Language hints — Turkish: Kalite=grade,Kalınlık=thickness,En=width,Boy=length,Miktar=quantity,Fiyat=buy_price,Tedarikçi=supplier,Menşei=origin. Croatian: Kvaliteta=grade,Debljina=thickness,Širina=width,Dužina=length,Količina=quantity.
+
+Return ONLY this JSON (no other text):
+{"detected_language":"…","column_mapping":{"OriginalColName":"schema_field"},"items":[{"product_type":"Plate","grade":"S355","thickness":10,"width":1500,"length":6000,"quantity":50,"unit":"ton","buy_price":620,"currency":"USD","supplier":null,"location":null,"origin":"Turkey","heat_no":null,"notes":null}],"warnings":[]}
+
+Data:\n${chunkCsv}`
+      :`Parse these stock rows using column mapping ${JSON.stringify(columnMapping)}.
+Return ONLY this JSON (no other text): {"items":[{"product_type":…,"grade":…,"thickness":…,"width":…,"length":…,"quantity":…,"unit":…,"buy_price":…,"currency":…,"supplier":…,"location":…,"origin":…,"heat_no":…,"notes":…}]}
+
+Data:\n${chunkCsv}`;
+
+    try{
+      const sys=isFirst?sysFirst:sysNext.replace('{}',JSON.stringify(columnMapping));
+      const text=await aiCallOnce(sys,prompt);
+      const parsed=aiExtractJSON(text);
+
+      if(isFirst){
+        detectedLanguage=parsed.detected_language||'Unknown';
+        columnMapping=parsed.column_mapping||{};
+        if(parsed.warnings) warnings=[...warnings,...parsed.warnings];
+      }
+      allItems=[...allItems,...(parsed.items||[])];
+
+    }catch(e){
+      failedBatches++;
+      warnings.push(`Batch ${ci+1} failed (rows ${ci*CHUNK+1}–${Math.min((ci+1)*CHUNK,total)}): ${e.message}`);
+      console.warn('Batch failed:',e);
+    }
+
+    // Delay before next batch (respect rate limits)
+    if(ci<chunks.length-1 && DELAY>0){
+      for(let t=DELAY;t>0;t-=500){
+        btn.innerHTML=`<span class="ai-spinner"></span> ${batchLabel} done · Next in ${Math.ceil(t/1000)}s…`;
+        await new Promise(r=>setTimeout(r,Math.min(500,t)));
+      }
+    }
+  }
+
+  if(!allItems.length && failedBatches===chunks.length){
+    alert(`All batches failed.\n\nMost likely cause: wrong API key or provider.\n\nOpen ⚙ settings and check your ${AI_PROVIDERS[aiState.provider]?.label||'provider'} key.`);
+  } else {
+    if(failedBatches>0) warnings.unshift(`${failedBatches} of ${chunks.length} batches failed — ${allItems.length} rows recovered`);
+    renderAIResults({detected_language:detectedLanguage,column_mapping:columnMapping,items:allItems,warnings});
+  }
+
   btn.disabled=false;
   btn.innerHTML='<span>🤖 Parse with AI</span>';
 }
