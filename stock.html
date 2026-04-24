@@ -2095,7 +2095,7 @@ function renderAIKeysList(){
   const el=document.getElementById('aiKeysList');
   el.innerHTML=Object.entries(AI_PROVIDERS).map(([id,p])=>{
     const key=aiState.keys[id]||'';
-    const active=!!aiState.keyActive[id];
+    const active=aiState.keyActive[id]!==false; // undefined = active by default
     const isActive=aiState.provider===id;
     const masked=key ? key.slice(0,6)+'…'+key.slice(-3) : '';
     return `
@@ -2168,18 +2168,19 @@ function aiUpdateProviderLabel(){
   const prov=AI_PROVIDERS[aiState.provider];
   const model=prov?.models?.find(m=>m.id===aiState.model);
   const key=aiState.keys[aiState.provider]||'';
-  const active=aiState.keyActive[aiState.provider];
+  const active=aiState.keyActive[aiState.provider]!==false;
   let label=prov?`${prov.icon} ${model?model.label.split('—')[0].trim():aiState.model}`:'';
   if(key && !active) label+=' ⏸';
   const el=document.getElementById('aiProviderLabel');
   if(el) el.textContent=label;
 }
 
-// Returns key only if provider is active; opens settings if not
+// Returns key only if provider has a key AND is not explicitly deactivated
 function aiGetKey(){
   const key=aiState.keys[aiState.provider]||'';
-  const active=aiState.keyActive[aiState.provider];
-  if(key && !active) return ''; // deactivated
+  if(!key) return '';
+  // Only block if explicitly set to false — undefined means "never toggled" = treat as active
+  if(aiState.keyActive[aiState.provider]===false) return '';
   return key;
 }
 function aiHasKey(){ const k=aiGetKey(); if(!k){openAISettings();return false;} return true; }
