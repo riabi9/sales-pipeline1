@@ -208,14 +208,24 @@ main{padding:12px;max-width:1100px;margin:0 auto;width:100%}
           </div>
           <!-- Collapsible API key panel -->
           <div id="keyPanel" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+            <!-- Groq Key -->
             <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px">Groq API Key</div>
-            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
               <input class="search-input" id="groqKey" type="password" placeholder="gsk_..." style="flex:1;min-width:200px;max-width:360px">
               <button class="hbtn hbtn-icon" id="eyeBtn" onclick="toggleKeyVisibility()" title="Show/hide key" style="font-size:14px">👁</button>
               <button class="hbtn" onclick="saveGroqKey()" style="background:var(--green-bg);color:var(--green-text);border-color:var(--green)">✅ Save</button>
               <button class="hbtn" onclick="deleteGroqKey()" style="background:var(--red-bg);color:var(--red-text);border-color:var(--red)">🗑 Delete</button>
             </div>
-            <div style="font-size:10px;color:var(--text4);margin-top:6px">Key is stored in your browser only. Get a free key at <a href="https://console.groq.com" target="_blank" style="color:var(--blue)">console.groq.com</a></div>
+            <div style="font-size:10px;color:var(--text4);margin-bottom:14px">Free key at <a href="https://console.groq.com" target="_blank" style="color:var(--blue)">console.groq.com</a></div>
+            <!-- NewsAPI Key -->
+            <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px">NewsData.io Key</div>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
+              <input class="search-input" id="newsApiKey" type="password" placeholder="Enter NewsData.io key..." style="flex:1;min-width:200px;max-width:360px">
+              <button class="hbtn hbtn-icon" id="eyeNewsBtn" onclick="toggleNewsKeyVisibility()" title="Show/hide key" style="font-size:14px">👁</button>
+              <button class="hbtn" onclick="saveNewsApiKey()" style="background:var(--green-bg);color:var(--green-text);border-color:var(--green)">✅ Save</button>
+              <button class="hbtn" onclick="deleteNewsApiKey()" style="background:var(--red-bg);color:var(--red-text);border-color:var(--red)">🗑 Delete</button>
+            </div>
+            <div style="font-size:10px;color:var(--text4)">Free key at <a href="https://newsdata.io/register" target="_blank" style="color:var(--blue)">newsdata.io/register</a></div>
           </div>
 
           <!-- Region panel -->
@@ -341,14 +351,75 @@ let selectedRegions = ['Global','MENA','Europe'];
 let selectedLang    = 'English';
 let selectedTopics  = ['Raw materials (iron ore, scrap, coal)','Steel prices and market trends','Energy costs and supply','Trade policies and tariffs','Construction and infrastructure demand'];
 
-function onGroqKeyInput() {
-  const key = document.getElementById('groqKey').value.trim();
-  if (key) localStorage.setItem('sp_groq_key', key);
-  document.getElementById('groqStatus').textContent = key ? '✅ Key saved' : '';
+function toggleKeyPanel() {
+  const panel = document.getElementById('keyPanel');
+  const isOpen = panel.style.display !== 'none';
+  ['regionPanel','langPanel','topicPanel'].forEach(p => document.getElementById(p).style.display = 'none');
+  panel.style.display = isOpen ? 'none' : 'block';
 }
 
+function toggleKeyVisibility() {
+  const input = document.getElementById('groqKey');
+  const btn = document.getElementById('eyeBtn');
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+  else { input.type = 'password'; btn.textContent = '👁️'; }
+}
+
+function saveGroqKey() {
+  const key = document.getElementById('groqKey').value.trim();
+  if (!key) { showGroqStatus('⚠️ Enter a key first', 'var(--amber-text)'); return; }
+  localStorage.setItem('sp_groq_key', key);
+  updateKeyDot(true);
+  showGroqStatus('✅ Key saved', 'var(--green-text)');
+  document.getElementById('keyPanel').style.display = 'none';
+}
+
+function deleteGroqKey() {
+  localStorage.removeItem('sp_groq_key');
+  document.getElementById('groqKey').value = '';
+  updateKeyDot(false);
+  showGroqStatus('🗑 Key deleted', 'var(--red-text)');
+}
+
+function saveNewsApiKey() {
+  const key = document.getElementById('newsApiKey').value.trim();
+  if (!key) { showGroqStatus('⚠️ Enter a NewsData.io key first', 'var(--amber-text)'); return; }
+  localStorage.setItem('sp_newsdata_key', key);
+  showGroqStatus('✅ NewsData.io key saved', 'var(--green-text)');
+  document.getElementById('keyPanel').style.display = 'none';
+}
+
+function deleteNewsApiKey() {
+  localStorage.removeItem('sp_newsdata_key');
+  document.getElementById('newsApiKey').value = '';
+  showGroqStatus('🗑 NewsData.io key deleted', 'var(--red-text)');
+}
+
+function toggleNewsKeyVisibility() {
+  const input = document.getElementById('newsApiKey');
+  const btn   = document.getElementById('eyeNewsBtn');
+  if (input.type === 'password') { input.type = 'text';     btn.textContent = '🙈'; }
+  else                           { input.type = 'password'; btn.textContent = '👁️'; }
+}
+
+function updateKeyDot(hasKey) {
+  const dot = document.getElementById('keyDot');
+  if (dot) dot.style.background = hasKey ? 'var(--green)' : 'var(--text4)';
+}
+
+function showGroqStatus(msg, color) {
+  const el = document.getElementById('groqStatus');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = color || 'var(--text4)';
+  setTimeout(() => { el.textContent = ''; }, 4000);
+}
+
+function onGroqKeyInput() {}
+
+
 function togglePanel(id) {
-  ['regionPanel','langPanel','topicPanel'].forEach(p => {
+  ['regionPanel','langPanel','topicPanel','keyPanel'].forEach(p => {
     if (p !== id) document.getElementById(p).style.display = 'none';
   });
   const el = document.getElementById(id);
@@ -381,93 +452,147 @@ let currentTab = 'all';
 let savedArticles = JSON.parse(localStorage.getItem('sp_news_saved') || '[]');
 
 async function loadAllFeeds(searchQuery) {
-  const apiKey = document.getElementById('groqKey').value.trim() || localStorage.getItem('sp_groq_key') || '';
-  if (document.getElementById('groqKey').value === '' && apiKey) {
-    document.getElementById('groqKey').value = apiKey;
-  }
+  const groqKey    = document.getElementById('groqKey').value.trim()    || localStorage.getItem('sp_groq_key') || '';
+  const newsApiKey = document.getElementById('newsApiKey').value.trim() || localStorage.getItem('sp_newsdata_key') || '';
 
-  if (!apiKey) {
-    document.getElementById('cardsList').innerHTML = '<div class="empty-state">🔑 Please enter your Groq API key above to load news.</div>';
-    document.getElementById('statusTxt').textContent = 'API key required';
+  // Restore keys into inputs if loaded from storage
+  if (!document.getElementById('groqKey').value    && groqKey)    document.getElementById('groqKey').value = groqKey;
+  if (!document.getElementById('newsApiKey').value && newsApiKey) document.getElementById('newsApiKey').value = newsApiKey;
+
+  if (!groqKey || !newsApiKey) {
+    document.getElementById('cardsList').innerHTML = '<div class="empty-state">🔑 Please enter both your <strong>Groq</strong> and <strong>NewsData.io</strong> keys above.</div>';
+    document.getElementById('statusTxt').textContent = 'API keys required';
     return;
   }
 
-  document.getElementById('cardsList').innerHTML = '<div class="loading-state"><span class="spinner"></span>Asking Groq for the latest steel industry news…</div>';
-  document.getElementById('statusTxt').textContent = 'Fetching via Groq…';
+  document.getElementById('cardsList').innerHTML = '<div class="loading-state"><span class="spinner"></span>Fetching real news articles…</div>';
+  document.getElementById('statusTxt').textContent = 'Fetching news…';
   document.getElementById('refreshBtn').disabled = true;
 
-  const regions   = selectedRegions.length ? selectedRegions.join(', ') : 'Global';
-  const topics    = selectedTopics.length  ? selectedTopics.join(', ')  : 'steel industry';
-  const extra     = searchQuery ? ` Focus especially on: "${searchQuery}".` : '';
-  const today     = new Date().toISOString().slice(0,10);
+  const regions = selectedRegions.length ? selectedRegions.join(' OR ') : 'steel';
+  const topics  = selectedTopics.length  ? selectedTopics  : ['steel industry'];
+  const extra   = searchQuery || '';
 
-  const prompt = `You are a news analyst for a steel export company based in Algeria.
-Today is ${today}. Your job is to generate the 5 most important and relevant recent news articles for a steel company.
+  // Build search query for NewsAPI
+  const topicKeywords = {
+    'Raw materials (iron ore, scrap, coal)': 'iron ore OR scrap metal OR coal',
+    'Steel prices and market trends':        'steel prices OR steel market',
+    'Energy costs and supply':               'energy prices OR gas prices OR electricity',
+    'Trade policies and tariffs':            'steel tariffs OR trade policy OR import duty',
+    'Construction and infrastructure demand':'construction OR infrastructure OR building'
+  };
 
-Topics to cover: ${topics}
-Geographic focus: ${regions}
-${extra}
-
-Return ONLY a valid JSON array of exactly 5 objects. No markdown, no explanation, just the JSON.
-Each object must have these exact keys:
-- "title": string — a realistic, specific news headline (not generic)
-- "summary": string — 2-3 sentence summary in ${selectedLang}, explaining why it matters to a steel company
-- "source": string — a real credible news source name (Reuters, Bloomberg, SteelOrbis, Metal Bulletin, Financial Times, Arab News, etc.)
-- "url": string — a plausible but clearly illustrative URL (e.g. https://www.reuters.com/markets/commodities/...)
-- "category": one of: "steel", "both", "mena", "politics"
-- "date": string — a realistic recent date like "2h ago" or "1d ago" or "3d ago"
-
-Make the headlines specific, realistic, and genuinely useful for a steel trader. Cover a variety of the requested topics.`;
+  const qParts = topics.map(t => topicKeywords[t] || t).slice(0, 4);
+  const q = extra ? extra : qParts.join(' OR ');
 
   try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    // NewsData.io /latest — free tier only supports: apikey, q, language, country, category, domain
+    // Strip any chars that could break the query, keep it short
+    const safeQ = q.replace(/[()'"]/g, '').slice(0, 80);
+    const newsDataUrl = `https://newsdata.io/api/1/latest?apikey=${newsApiKey}&q=${encodeURIComponent(safeQ)}&language=en`;
+
+    let newsData = null;
+    let lastErr  = '';
+    try {
+      const r      = await fetch(newsDataUrl, { signal: AbortSignal.timeout(10000) });
+      const parsed = await r.json();
+      if (!r.ok || parsed.status === 'error' || parsed.status === 'failure') {
+        lastErr = parsed.message || ('HTTP ' + r.status);
+      } else if (Array.isArray(parsed.results) && parsed.results.length > 0) {
+        newsData = {
+          articles: parsed.results.map(a => ({
+            title:       a.title       || '',
+            description: (a.description || a.content || '').slice(0, 200),
+            url:         a.link        || '',
+            publishedAt: a.pubDate     || '',
+            source:      { name: a.source_id || a.source_name || '' }
+          }))
+        };
+      } else {
+        lastErr = 'No articles found — try different topic filters';
+      }
+    } catch(e) { lastErr = e.message; }
+
+    if (!newsData || !newsData.articles || newsData.articles.length === 0) {
+      throw new Error('Could not reach NewsAPI (' + lastErr + '). Check your NewsData.io key or internet connection.');
+    }
+
+    // Prepare article list for Groq
+    const articleList = newsData.articles.slice(0, 25).map((a, i) =>
+      `${i+1}. TITLE: ${a.title}
+SOURCE: ${a.source?.name || ''}
+URL: ${a.url}
+DATE: ${a.publishedAt?.slice(0,10) || ''}
+DESC: ${(a.description||'').slice(0,120)}`
+    ).join('\n\n');
+
+    document.getElementById('cardsList').innerHTML = '<div class="loading-state"><span class="spinner"></span>Ranking and summarising with Groq…</div>';
+
+    const prompt = [
+      'You are a news analyst for a steel export company in Algeria.',
+      'From this list of REAL news articles, pick the 10 most relevant for topics: ' + topics.join(', ') + '.',
+      '',
+      'ARTICLES:',
+      articleList,
+      '',
+      'Reply ONLY with a valid JSON array of exactly 10 objects (no markdown, no explanation):',
+      '[{"title":"exact title from list","summary":"2-3 sentences in ' + selectedLang + ' on why it matters to a steel company","source":"source name","url":"exact URL from list","category":"steel|both|mena|politics","date":"Xh ago or Xd ago"}]'
+    ].join('\n');
+
+    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'llama-3.1-8b-instant',
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7,
-        max_tokens: 2000
+        temperature: 0.2,
+        max_tokens: 1500
       })
     });
 
-    if (!res.ok) {
-      const err = await res.json().catch(()=>({error:{message:'Unknown error'}}));
-      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    if (!groqRes.ok) {
+      const err = await groqRes.json().catch(()=>({error:{message:'Unknown error'}}));
+      throw new Error('Groq: ' + (err.error?.message || `HTTP ${groqRes.status}`));
     }
 
-    const data = await res.json();
-    let raw = data.choices?.[0]?.message?.content || '[]';
-    // Strip markdown code fences if present
-    raw = raw.replace(/```json|```/g,'').trim();
+    const groqData = await groqRes.json();
+    let raw = (groqData.choices?.[0]?.message?.content || '[]').replace(/```json|```/g,'').trim();
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    if (jsonMatch) raw = jsonMatch[0];
 
     let articles = JSON.parse(raw);
-    if (!Array.isArray(articles)) throw new Error('Invalid response format');
+    if (!Array.isArray(articles)) throw new Error('Invalid Groq response');
 
-    // Assign IDs and pubDate for sorting
-    articles = articles.map((a, i) => ({
-      ...a,
-      id: 'groq_' + i + '_' + Date.now(),
-      pubDate: new Date(Date.now() - i * 60000),
-    }));
+    // Lock URLs to real NewsAPI ones to prevent hallucination
+    const realArticles = newsData.articles;
+    articles = articles.map((a, i) => {
+      const match = realArticles.find(r =>
+        r.url === a.url ||
+        r.title?.toLowerCase().includes((a.title||'').slice(0,30).toLowerCase()) ||
+        (a.title||'').toLowerCase().includes((r.title||'').slice(0,30).toLowerCase())
+      );
+      return {
+        ...a,
+        url:     match ? match.url     : (realArticles[i]?.url || a.url),
+        source:  match ? (match.source?.name || a.source) : a.source,
+        id:      'news_' + i + '_' + Date.now(),
+        pubDate: new Date(match?.publishedAt || Date.now() - i * 3600000),
+      };
+    });
 
     allArticles = articles;
     renderCards();
+    document.getElementById('statusTxt').textContent = 'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + ' · NewsAPI + Groq';
+    updateKeyDot(true);
 
-    document.getElementById('statusTxt').textContent = 'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + ' via Groq AI';
-    document.getElementById('groqStatus').textContent = '✅ Key saved';
   } catch(e) {
-    console.error('Groq error:', e);
-    document.getElementById('cardsList').innerHTML = `<div class="empty-state">❌ Error: ${e.message}<br><br><small>Check your Groq API key or network connection.</small></div>`;
-    document.getElementById('statusTxt').textContent = 'Failed — see error above';
+    console.error('Error:', e);
+    document.getElementById('cardsList').innerHTML = `<div class="empty-state">❌ ${e.message}<br><br><small>Check your API keys or adjust your topic/region filters.</small></div>`;
+    document.getElementById('statusTxt').textContent = 'Failed';
   }
 
   document.getElementById('refreshBtn').disabled = false;
 }
-
 // ── Render ──
 function isSaved(id) { return savedArticles.some(s => s.id === id); }
 
@@ -501,7 +626,7 @@ function renderCards() {
 
   document.getElementById('cardsList').innerHTML = articles.map(a => {
     const pinned = isSaved(a.id);
-    return `<div class="news-card" onclick="openArticle('${esc(a.url)}')">
+    return `<div class="news-card" onclick="openArticle('${esc(a.url)}','${esc(a.title)}')">
       <button class="pin-btn ${pinned?'pinned':''}" onclick="event.stopPropagation();toggleSave('${a.id}','${esc(a.title)}','${esc(a.summary)}','${esc(a.url)}','${a.source}','${a.date}','${a.category}')" title="${pinned?'Remove bookmark':'Save article'}">📌</button>
       <div class="card-meta">
         <span class="cat-badge ${catClass[a.category]||'cat-politics'}">${catLabel[a.category]||a.category}</span>
@@ -510,12 +635,18 @@ function renderCards() {
       </div>
       <div class="card-title">${a.title}</div>
       <div class="card-summary">${a.summary}</div>
+      <div style="font-size:10px;color:var(--text4);margin-top:6px">🔗 Real article link · click to open</div>
     </div>`;
   }).join('');
 }
 
-function openArticle(url) {
-  if (url && url !== 'undefined') window.open(url, '_blank');
+function openArticle(url, title) {
+  if (url && url.startsWith('http') && !url.includes('example.com')) {
+    window.open(url, '_blank');
+  } else {
+    // Fallback: search Google News by headline
+    window.open('https://news.google.com/search?q=' + encodeURIComponent(title || url), '_blank');
+  }
 }
 
 function esc(s) { return String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
@@ -646,20 +777,19 @@ async function checkAdmin() {
 // ── Init ──
 document.addEventListener('DOMContentLoaded', () => {
   // Restore saved Groq key
-  const savedKey = localStorage.getItem('sp_groq_key');
-  if (savedKey) {
-    document.getElementById('groqKey').value = savedKey;
-    document.getElementById('groqStatus').textContent = '✅ Key saved';
-  }
+  const savedKey     = localStorage.getItem('sp_groq_key');
+  const savedNewsKey = localStorage.getItem('sp_newsdata_key');
+  if (savedKey)     { document.getElementById('groqKey').value    = savedKey;     updateKeyDot(true); }
+  if (savedNewsKey) { document.getElementById('newsApiKey').value = savedNewsKey; }
   loadPrices();
   checkAdmin();
   updateSavedCount();
   // Show prompt if no key, otherwise auto-load
-  if (savedKey) {
+  if (savedKey && savedNewsKey) {
     loadAllFeeds();
   } else {
-    document.getElementById('cardsList').innerHTML = '<div class="empty-state">🔑 Enter your Groq API key above and click <strong>↻ Refresh</strong> to load news.</div>';
-    document.getElementById('statusTxt').textContent = 'Ready — enter Groq API key';
+    document.getElementById('cardsList').innerHTML = '<div class="empty-state">🔑 Enter your <strong>Groq</strong> and <strong>NewsData.io</strong> keys via the <strong>🔑 API Key</strong> button above, then click <strong>↻ Refresh</strong>.</div>';
+    document.getElementById('statusTxt').textContent = 'Ready — enter API keys';
   }
 });
 </script>

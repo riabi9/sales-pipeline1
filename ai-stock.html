@@ -820,10 +820,19 @@ async function sendChat(){
   body.appendChild(typing);typing.scrollIntoView({behavior:'smooth',block:'end'});
 
   let fullText='';
+  let typingRemoved=false;
   try{
-    typing.remove();
     const{bubble,wrap}=addMsg('ai','');
+    // Hide the real bubble until typing dots are replaced
+    bubble.parentElement.style.display='none';
+
     fullText=await callStream(buildSysPrompt(),chatMsgs,(chunk,full)=>{
+      // Remove typing dots and reveal bubble on first chunk
+      if(!typingRemoved){
+        typing.remove();
+        bubble.parentElement.style.display='';
+        typingRemoved=true;
+      }
       const display=full.replace(/```offer-build[\s\S]*?```/g,'').trim();
       bubble.innerHTML=fmtMsg(display||'…');bubble.scrollIntoView({behavior:'smooth',block:'end'});
     });
@@ -844,7 +853,7 @@ async function sendChat(){
     }
     chatMsgs.push({role:'assistant',content:fullText});
   }catch(e){
-    typing.remove();
+    if(!typingRemoved) typing.remove();
     addMsg('ai',`⚠ Error: ${e.message}\n\nCheck your API key in ⚙ Settings.`);
   }
 

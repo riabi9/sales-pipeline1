@@ -6,6 +6,30 @@
 <title>Steel Platform — Stock & Offer</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+// Load PDF.js dynamically with fallback CDN URLs
+(function(){
+  const PDFJS_URLS=[
+    'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.min.js',
+    'https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js',
+  ];
+  function tryLoad(urls,i){
+    if(i>=urls.length){console.warn('PDF.js failed to load from all CDNs');return;}
+    const s=document.createElement('script');
+    s.src=urls[i];
+    s.onload=()=>{
+      if(window.pdfjsLib){
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc=urls[i].replace('pdf.min.js','pdf.worker.min.js');
+        console.log('PDF.js loaded from',urls[i]);
+      }
+    };
+    s.onerror=()=>tryLoad(urls,i+1);
+    document.head.appendChild(s);
+  }
+  tryLoad(PDFJS_URLS,0);
+})();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -241,6 +265,95 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .alb-count{font-size:11px;color:var(--text3)}
 .lists-toggle-btn{display:none;height:30px;padding:0 10px;border:1px solid var(--border2);border-radius:7px;font-size:11px;background:var(--surface);color:var(--text);cursor:pointer;font-family:var(--sans);gap:4px;align-items:center;white-space:nowrap}
 @media(max-width:900px){.lists-toggle-btn{display:inline-flex}}
+
+/* ── AI IMPORT PANEL ── */
+.ai-wrap{display:flex;gap:14px;padding:14px;max-width:1400px;margin:0 auto;min-height:calc(100vh - 52px)}
+@media(max-width:900px){.ai-wrap{flex-direction:column}}
+.ai-left{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
+.ai-right{width:360px;flex-shrink:0;display:flex;flex-direction:column;gap:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+@media(max-width:900px){.ai-right{width:100%;min-height:420px}}
+.ai-key-banner{background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ai-key-text{font-size:12px;color:var(--amber-text);flex:1;min-width:160px}
+.ai-key-row{display:flex;gap:6px;flex:1;min-width:180px}
+.ai-key-inp{height:32px;border:1px solid var(--amber);border-radius:7px;padding:0 10px;font-size:12px;background:var(--surface);color:var(--text);outline:none;font-family:var(--mono);flex:1}
+.ai-key-inp:focus{border-color:var(--blue)}
+.ai-key-btn{height:32px;padding:0 12px;border:none;border-radius:7px;font-size:12px;font-weight:700;background:var(--amber);color:#fff;cursor:pointer;font-family:var(--sans);white-space:nowrap}
+.ai-drop{background:var(--surface);border:2px dashed var(--border2);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+.ai-drop:hover,.ai-drop.drag{border-color:var(--blue);background:var(--blue-bg)}
+.ai-drop-icon{font-size:26px;margin-bottom:6px}
+.ai-drop-ttl{font-size:14px;font-weight:600;margin-bottom:4px}
+.ai-drop-sub{font-size:11px;color:var(--text3);line-height:1.6;margin-bottom:10px}
+.ai-paste-area{width:100%;min-height:90px;border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-size:12px;font-family:var(--mono);background:var(--surface);color:var(--text);outline:none;resize:vertical;transition:border-color .15s}
+.ai-paste-area:focus{border-color:var(--blue)}
+.ai-parse-btn{width:100%;height:40px;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--sans);background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
+.ai-parse-btn:hover{opacity:.88}
+.ai-parse-btn:disabled{opacity:.45;cursor:not-allowed}
+.ai-result-card{background:var(--surface);border:1px solid var(--green);border-radius:12px;overflow:hidden}
+.ai-result-hdr{background:var(--green-bg);border-bottom:1px solid var(--green);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.ai-result-title{font-size:12px;font-weight:700;color:var(--green-text)}
+.ai-result-actions{display:flex;gap:6px;flex-wrap:wrap}
+.ai-mapping-info{padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:11px;color:var(--text3);line-height:1.6}
+.ai-mapping-tag{display:inline-block;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-mid);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;font-family:var(--mono);margin:1px}
+.ai-result-tbl-wrap{overflow-x:auto;max-height:340px;overflow-y:auto}
+.ai-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.ai-tbl th{background:var(--surface2);color:var(--text3);font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.4px;padding:7px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border);position:sticky;top:0}
+.ai-tbl td{padding:6px 10px;border-bottom:1px solid var(--border);color:var(--text2);white-space:nowrap;font-family:var(--mono)}
+.ai-tbl tr:last-child td{border-bottom:none}
+.ai-tbl tr:hover td{background:var(--surface2)}
+.ai-tbl td.grade-c{font-weight:700;color:var(--text)}
+.ai-check{accent-color:var(--blue);width:14px;height:14px;cursor:pointer}
+.ai-warn-pill{display:inline-block;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:600;margin-top:6px}
+/* Chat panel */
+.ai-chat-hdr{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.ai-chat-hdr-title{font-size:12px;font-weight:700;color:var(--text)}
+.ai-chat-hdr-sub{font-size:10px;color:var(--text4)}
+.ai-chat-body{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:200px}
+.ai-msg{font-size:12px;line-height:1.6;padding:9px 11px;border-radius:9px;max-width:100%;word-break:break-word}
+.ai-msg.user{background:var(--blue);color:#fff;align-self:flex-end;border-radius:9px 9px 2px 9px}
+.ai-msg.ai{background:var(--surface2);color:var(--text);border-radius:2px 9px 9px 9px;border:1px solid var(--border)}
+.ai-msg.ai strong{font-weight:700}
+.ai-chat-input-row{padding:10px;border-top:1px solid var(--border);display:flex;gap:6px}
+.ai-chat-inp{flex:1;height:34px;border:1px solid var(--border2);border-radius:7px;padding:0 10px;font-size:12px;background:var(--surface);color:var(--text);font-family:var(--sans);outline:none;transition:border-color .15s}
+.ai-chat-inp:focus{border-color:var(--blue)}
+.ai-chat-send{width:34px;height:34px;border:none;border-radius:7px;background:var(--blue);color:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ai-chat-send:disabled{opacity:.4;cursor:not-allowed}
+.ai-quick-prompts{display:flex;gap:5px;flex-wrap:wrap;padding:0 10px 8px}
+.ai-qp-btn{height:24px;padding:0 10px;border:1px solid var(--border2);border-radius:20px;font-size:10px;background:var(--surface);color:var(--text3);cursor:pointer;font-family:var(--sans);white-space:nowrap;transition:all .15s}
+.ai-qp-btn:hover{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-mid)}
+@keyframes ai-spin{to{transform:rotate(360deg)}}
+.ai-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:ai-spin .7s linear infinite;vertical-align:middle}
+.ai-typing{display:flex;gap:3px;align-items:center;padding:4px 0}
+.ai-typing span{width:6px;height:6px;border-radius:50%;background:var(--text4);animation:ai-bounce .9s infinite}
+.ai-typing span:nth-child(2){animation-delay:.15s}
+.ai-typing span:nth-child(3){animation-delay:.3s}
+@keyframes ai-bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+/* AI Settings modal */
+.ai-keys-list{display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.ai-key-row{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);background:var(--surface);transition:background .12s}
+.ai-key-row:last-child{border-bottom:none}
+.ai-key-row.active-provider{background:var(--blue-bg)}
+.ai-key-icon{font-size:16px;flex-shrink:0;width:22px;text-align:center}
+.ai-key-name{font-size:12px;font-weight:600;color:var(--text);flex-shrink:0;width:90px}
+.ai-key-val{font-size:11px;color:var(--text3);font-family:var(--mono);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ai-key-actions{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.ai-free-badge{font-size:9px;font-weight:700;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green);border-radius:20px;padding:1px 5px;flex-shrink:0}
+/* Toggle switch */
+.ai-toggle{position:relative;display:inline-block;width:34px;height:18px;flex-shrink:0}
+.ai-toggle input{opacity:0;width:0;height:0;position:absolute}
+.ai-toggle-track{position:absolute;cursor:pointer;inset:0;background:var(--border2);border-radius:18px;transition:.2s}
+.ai-toggle-track:before{position:absolute;content:'';height:12px;width:12px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.ai-toggle input:checked+.ai-toggle-track{background:var(--green)}
+.ai-toggle input:checked+.ai-toggle-track:before{transform:translateX(16px)}
+.ai-toggle input:disabled+.ai-toggle-track{opacity:.4;cursor:not-allowed}
+/* Key expand area */
+.ai-key-expand{display:none;padding:10px 12px;background:var(--surface2);border-top:1px solid var(--border)}
+.ai-key-expand.open{display:block}
+.ai-prov-icon{font-size:18px;flex-shrink:0}
+.ai-prov-name{font-size:13px;font-weight:600;color:var(--text)}
+.ai-prov-sub{font-size:10px;color:var(--text3);margin-top:1px}
+.ai-offer-btn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans);background:var(--green);color:#fff;margin-top:8px;transition:opacity .15s}
+.ai-offer-btn:hover{opacity:.88}
+.ai-offer-success{font-size:11px;color:var(--green-text);background:var(--green-bg);border:1px solid var(--green);border-radius:6px;padding:6px 10px;margin-top:6px;display:block}
 </style>
 </head>
 <body>
@@ -322,7 +435,41 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
       </div>
     </header>
 
+    <!-- OFFER HEADER -->
+    <header id="hdrOffer" style="display:none">
+      <div class="h-left">
+        <button class="menu-btn" onclick="openSidebar()">☰</button>
+        <span class="h-title">📄 Offer Builder</span>
+      </div>
+      <div class="h-right">
+        <button class="btn" onclick="newOffer()">New</button>
+        <button class="btn" onclick="togglePreview()">👁 Preview</button>
+        <button class="btn btn-green" onclick="window.print()">🖨 Print PDF</button>
+        <button class="btn btn-outline-blue" onclick="exportExcel()">📊 Excel</button>
+      </div>
+    </header>
+
+    <!-- AI IMPORT HEADER -->
+    <header id="hdrAI" style="display:none">
+      <div class="h-left">
+        <button class="menu-btn" onclick="openSidebar()">☰</button>
+        <span class="h-title">🤖 AI Stock Assistant</span>
+      </div>
+      <div class="h-right">
+        <span id="aiProviderLabel" style="font-size:11px;color:var(--text4);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+        <button class="btn btn-sm" onclick="openAISettings()" title="AI Settings" style="font-size:15px;padding:0 8px">⚙</button>
+        <button class="btn btn-outline-blue btn-sm" onclick="showView('stock')">← Stock</button>
+      </div>
+    </header>
+
     <!-- STOCK VIEW -->
+    <!-- AI Offer Banner (shown when landing from ai-stock.html with offer data) -->
+    <div id="aiOfferBanner" style="display:none;background:var(--green-bg);border-bottom:1px solid var(--green);padding:10px 16px;font-size:12px;color:var(--green-text);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span id="aiOfferBannerText" style="flex:1;font-weight:600"></span>
+      <button class="btn btn-green btn-sm" onclick="openAIOfferBuilder()">📄 Open Offer Builder →</button>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('aiOfferBanner').style.display='none'">✕</button>
+    </div>
+
     <div id="viewStock" class="stock-view-wrap">
       <div class="lists-rail" id="listsRail">
         <div class="lr-hdr">
@@ -529,67 +676,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   </div>
 </div>
 
-<!-- MODALS -->
-<!-- Stock item modal -->
-<div class="modal-bg" id="stockModal">
-  <div class="modal">
-    <div class="modal-drag"></div>
-    <p class="modal-ttl" id="stockModalTitle">Add Stock Item</p>
-    <div class="msec">Product</div>
-    <div class="g2">
-      <div class="form-row"><label class="lbl">Product type</label><input class="inp" id="mType" placeholder="Plate, Coil, Pipe…"></div>
-      <div class="form-row"><label class="lbl">Grade</label><input class="inp" id="mGrade" placeholder="S235, A36…"></div>
-    </div>
-    <div class="msec">Dimensions</div>
-    <div class="g3">
-      <div class="form-row"><label class="lbl">Thickness (mm)</label><input class="inp mono" type="number" id="mThick"></div>
-      <div class="form-row"><label class="lbl">Width (mm)</label><input class="inp mono" type="number" id="mWidth"></div>
-      <div class="form-row"><label class="lbl">Length (mm)</label><input class="inp mono" type="number" id="mLength"></div>
-    </div>
-    <div class="msec">Stock &amp; Pricing</div>
-    <div class="g2">
-      <div class="form-row"><label class="lbl">Available Qty</label><input class="inp mono" type="number" id="mQty"></div>
-      <div class="form-row"><label class="lbl">Unit</label><select class="inp" id="mUnit"><option>ton</option><option>kg</option><option>pcs</option><option>m</option></select></div>
-    </div>
-    <div class="g2">
-      <div class="form-row"><label class="lbl">Price Ex-Works</label><input class="inp mono" type="number" id="mPrice"></div>
-      <div class="form-row"><label class="lbl">Currency</label><select class="inp" id="mCurrency"><option>USD</option><option>EUR</option><option>GBP</option><option>TRY</option></select></div>
-    </div>
-    <div class="msec">Sourcing</div>
-    <div class="g2">
-      <div class="form-row"><label class="lbl">Supplier</label><input class="inp" id="mSupplier"></div>
-      <div class="form-row"><label class="lbl">Location</label><input class="inp" id="mLocation"></div>
-    </div>
-    <div class="g2">
-      <div class="form-row"><label class="lbl">Origin</label><input class="inp" id="mOrigin"></div>
-      <div class="form-row"><label class="lbl">Heat #</label><input class="inp mono" id="mHeat"></div>
-    </div>
-    <div class="g2">
-      <div class="form-row"><label class="lbl">Weight (kg)</label><input class="inp mono" type="number" id="mWeight"></div>
-      <div class="form-row" id="mAvailRow" style="display:none"><label class="lbl">Availability</label><select class="inp" id="mAvail"><option value="yes">Available</option><option value="no">Sold/Reserved</option></select></div>
-    </div>
-    <div class="form-row"><label class="lbl">Alt. grades (/ separated)</label><input class="inp" id="mAlts" placeholder="S275JR / A36 / Q235"></div>
-    <div class="form-row"><label class="lbl">Notes</label><textarea class="inp" id="mNotes" style="height:52px"></textarea></div>
-    <div class="msec">Reservation (CRM link)</div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-      <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:500">
-        <input type="checkbox" id="mReserved" onchange="toggleReservedBy()" style="accent-color:var(--amber);width:15px;height:15px">
-        Mark as Reserved
-      </label>
-    </div>
-    <div id="mReservedByRow" style="display:none" class="form-row">
-      <label class="lbl">Reserved for (Lead / Deal name)</label>
-      <input class="inp" id="mReservedBy" placeholder="e.g. ABC Corp — S355 Offer">
-    </div>
-    <div class="modal-acts">
-      <button class="btn btn-danger btn-sm" id="mDeleteBtn" style="display:none;margin-right:auto" onclick="deleteStockItem()">Delete</button>
-      <button class="btn btn-ghost btn-sm" onclick="closeStockModal()">Cancel</button>
-      <button class="btn btn-blue btn-sm" onclick="saveStockItem()">Save</button>
-    </div>
-  </div>
-</div>
 
-<!-- New / Rename list modal -->
 <div class="modal-bg" id="listNameModal">
   <div class="modal" style="max-width:380px">
     <div class="modal-drag"></div>
@@ -651,6 +738,26 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 </div>
 
 <!-- SQL Setup modal -->
+<!-- AI Settings Modal -->
+
+<!-- AI Import: pick which list to add to -->
+<div class="modal-bg" id="aiImportModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-drag"></div>
+    <p class="modal-ttl">🤖 AI Import — Choose List</p>
+    <div id="aiImportSummary" style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.7"></div>
+    <div class="form-row">
+      <label class="lbl">Add items to this stock list</label>
+      <select class="inp" id="aiImportListSel" style="font-size:13px"></select>
+    </div>
+    <p style="font-size:11px;color:var(--text3);margin-top:-6px;margin-bottom:14px">Duplicates will be skipped automatically.</p>
+    <div class="modal-acts">
+      <button class="btn btn-ghost btn-sm" onclick="closeAIImportModal()">Cancel</button>
+      <button class="btn btn-blue btn-sm" id="aiImportConfirmBtn" onclick="confirmAIImport()">✓ Import items</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="sqlSetupModal">
   <div class="modal" style="max-width:580px">
     <div class="modal-drag"></div>
@@ -839,6 +946,160 @@ async function initLists(){
   activeListId = stockLists.find(l=>l.id===saved) ? saved : 'cloud';
   await loadCloudStock();
   renderAll();
+  // Check for AI queue AFTER lists are loaded so we have the full list of targets
+  checkAIQueue();
+}
+
+// ══════════════════════════════════
+// AI IMPORT / OFFER BRIDGE
+// ══════════════════════════════════
+let aiImportQueue = [];
+let aiOfferQueue  = [];
+let aiOfferMeta   = {};
+
+function checkAIQueue(){
+  const params = new URLSearchParams(window.location.search);
+
+  // ── AI Import
+  if(params.has('ai_import')){
+    try{
+      const raw = localStorage.getItem('sp_ai_import_queue');
+      if(raw){
+        aiImportQueue = JSON.parse(raw);
+        localStorage.removeItem('sp_ai_import_queue');
+        // Clean URL without reload
+        window.history.replaceState({}, '', window.location.pathname);
+        if(aiImportQueue.length) openAIImportModal();
+      }
+    }catch(e){ console.warn('AI import queue error:', e); }
+  }
+
+  // ── AI Offer
+  if(params.has('ai_offer')){
+    try{
+      const rawLines = localStorage.getItem('sp_ai_offer_queue');
+      const rawMeta  = localStorage.getItem('sp_ai_offer_meta');
+      if(rawLines){
+        aiOfferQueue = JSON.parse(rawLines);
+        aiOfferMeta  = rawMeta ? JSON.parse(rawMeta) : {};
+        localStorage.removeItem('sp_ai_offer_queue');
+        localStorage.removeItem('sp_ai_offer_meta');
+        window.history.replaceState({}, '', window.location.pathname);
+        if(aiOfferQueue.length) showAIOfferBanner();
+      }
+    }catch(e){ console.warn('AI offer queue error:', e); }
+  }
+}
+
+// ── Import modal
+function openAIImportModal(){
+  const n = aiImportQueue.length;
+  document.getElementById('aiImportSummary').innerHTML =
+    `<strong>${n} item${n!==1?'s':''}</strong> parsed by AI are ready to import.<br>` +
+    `Choose which stock list to add them to:`;
+
+  // Populate list selector
+  const sel = document.getElementById('aiImportListSel');
+  sel.innerHTML = stockLists.map(l =>
+    `<option value="${l.id}" ${l.id===activeListId?'selected':''}>${l.name} (${l.items.length} items)</option>`
+  ).join('');
+
+  document.getElementById('aiImportModal').classList.add('open');
+}
+
+function closeAIImportModal(){
+  document.getElementById('aiImportModal').classList.remove('open');
+  aiImportQueue = [];
+}
+
+async function confirmAIImport(){
+  const selId = document.getElementById('aiImportListSel').value;
+  if(!selId){ alert('Please select a list.'); return; }
+
+  // Switch active list to the selected one
+  activeListId = selId;
+  localStorage.setItem('sp_active_list', selId);
+  await loadCloudStock();
+  renderAll();
+
+  // Map AI schema → stock schema and load into previewData
+  previewData = aiImportQueue.map(it => ({
+    product_type: it.product_type||'',
+    grade:        it.grade||'',
+    thickness:    Number(it.thickness)||null,
+    width:        Number(it.width)||null,
+    length:       Number(it.length)||null,
+    supplier:     it.supplier||'',
+    location:     it.location||'',
+    quantity:     Number(it.quantity)||0,
+    unit:         it.unit||'ton',
+    buy_price:    Number(it.buy_price)||0,
+    currency:     it.currency||'USD',
+    origin:       it.origin||'',
+    heat_number:  it.heat_no||'',
+    available:    'yes',
+    notes:        it.notes||''
+  }));
+
+  closeAIImportModal();
+
+  // Run the existing confirmUpload — handles dedup, cloud vs local, banners etc.
+  await confirmUpload();
+}
+
+// ── Offer banner
+function showAIOfferBanner(){
+  const n = aiOfferQueue.length;
+  document.getElementById('aiOfferBannerText').textContent =
+    `✓ AI built an offer with ${n} line${n!==1?'s':''} — ready to review and export`;
+  document.getElementById('aiOfferBanner').style.display = 'flex';
+}
+
+function openAIOfferBuilder(){
+  document.getElementById('aiOfferBanner').style.display = 'none';
+  showView('offer');
+
+  // Pre-fill offer meta if available
+  const meta = aiOfferMeta;
+  const setVal = (id, val) => { const el=document.getElementById(id); if(el&&val) el.value=val; };
+  setVal('clientCompany',   meta.client_company);
+  setVal('clientContact',   meta.client_contact);
+  setVal('clientEmail',     meta.client_email);
+  setVal('clientPhone',     meta.client_phone);
+  setVal('termPayment',     meta.payment_terms);
+  setVal('termDelivery',    meta.delivery);
+  setVal('termIncoterms',   meta.incoterms);
+  setVal('termOrigin',      meta.origin);
+  setVal('termNotes',       meta.notes);
+  setVal('offerCurrency',   meta.currency);
+
+  // Add offer lines
+  aiOfferQueue.forEach(line => {
+    addOfferLine({
+      grade:     line.grade||'',
+      type:      line.type||line.product_type||'',
+      thick:     line.thickness||'',
+      width:     line.width||'',
+      length:    line.length||'',
+      unit:      line.unit||'ton',
+      buy_price: Number(line.buy_price)||0
+    });
+    // Set quantity on the last added line
+    const last = offerLines[offerLines.length-1];
+    if(last && line.quantity){
+      setTimeout(()=>{
+        const qEl = document.getElementById(`ol_q_${last.id}`);
+        if(qEl){ qEl.value = line.quantity; recalcOffer(); }
+        if(line.margin){
+          const mEl = document.getElementById(`ol_m_${last.id}`);
+          if(mEl){ mEl.value = line.margin; recalcOffer(); }
+        }
+      }, 80);
+    }
+  });
+
+  aiOfferQueue = [];
+  aiOfferMeta  = {};
 }
 
 async function loadCloudStock(){
@@ -1367,8 +1628,8 @@ function showView(v){
   document.getElementById('viewOffer').style.display=v==='offer'?'block':'none';
   document.getElementById('hdrStock').style.display=v==='stock'?'flex':'none';
   document.getElementById('hdrOffer').style.display=v==='offer'?'flex':'none';
-  document.getElementById('nav-stock').classList.toggle('active',v==='stock');
-  document.getElementById('nav-offer').classList.toggle('active',v==='offer');
+  document.getElementById('nav-stock').classList.toggle('active',v==='stock'||v==='offer');
+  const navOffer=document.getElementById('nav-offer');if(navOffer)navOffer.classList.toggle('active',v==='offer');
   closeSidebar();
   if(v==='offer'){updateListSelect();renderSSPSaved();}
 }
@@ -1685,41 +1946,22 @@ function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 function fmtNum(n){ const v=Number(n)||0; return v>=1000?v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2}):v.toFixed(2); }
 function fmtShort(n){ const v=Number(n)||0; if(!v)return'—'; return v>=1000?v.toLocaleString('en-US',{maximumFractionDigits:0}):v.toFixed(2); }
 
-// ── Country flag helper
-function countryFlag(origin){
-  if(!origin)return'';
-  const o=origin.toLowerCase();
-  const flags={turkey:'🇹🇷',türkiye:'🇹🇷',ukraine:'🇺🇦',ukrayna:'🇺🇦',china:'🇨🇳',çin:'🇨🇳',germany:'🇩🇪',almanya:'🇩🇪',russia:'🇷🇺',rusya:'🇷🇺',spain:'🇪🇸',ispanya:'🇪🇸',italy:'🇮🇹',italya:'🇮🇹',france:'🇫🇷',fransa:'🇫🇷',india:'🇮🇳',hindistan:'🇮🇳',japan:'🇯🇵',japonya:'🇯🇵','south korea':'🇰🇷','güney kore':'🇰🇷',brazil:'🇧🇷',brezilya:'🇧🇷',usa:'🇺🇸','united states':'🇺🇸',uk:'🇬🇧','united kingdom':'🇬🇧',poland:'🇵🇱',polonya:'🇵🇱',romania:'🇷🇴',romanya:'🇷🇴',czech:'🇨🇿',czechia:'🇨🇿',sweden:'🇸🇪',isveç:'🇸🇪',netherlands:'🇳🇱',hollanda:'🇳🇱',belgium:'🇧🇪',belçika:'🇧🇪',austria:'🇦🇹',avusturya:'🇦🇹',slovakia:'🇸🇰',hungary:'🇭🇺',macaristan:'🇭🇺'};
-  for(const[k,v]of Object.entries(flags)){if(o.includes(k))return v;}
-  return'';
-}
-
-// ── Reserve toggle
-function toggleReservedBy(){
-  const checked=document.getElementById('mReserved')?.checked;
-  const row=document.getElementById('mReservedByRow');
-  if(row)row.style.display=checked?'block':'none';
-}
-
-// ── Low stock threshold management
 function loadThresholds(){try{return JSON.parse(localStorage.getItem('sp_thresholds')||'{}');}catch(e){return{};}}
 function saveThresholds(t){localStorage.setItem('sp_thresholds',JSON.stringify(t));}
 function renderThresholdList(){
   const t=loadThresholds();
   const el=document.getElementById('thresholdList');if(!el)return;
   const entries=Object.entries(t);
-  if(!entries.length){el.innerHTML=`<span style="font-size:11px;color:var(--text4)">No thresholds set</span>`;return;}
+  if(!entries.length){el.innerHTML='<span style="font-size:11px;color:var(--text4)">No thresholds set</span>';return;}
   el.innerHTML=entries.map(([type,qty])=>`
     <span style="display:inline-flex;align-items:center;gap:5px;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">
       ${esc(type)}: ${qty}
       <button onclick="deleteThreshold('${esc(type)}')" style="background:none;border:none;cursor:pointer;color:var(--amber-text);font-size:13px;line-height:1;padding:0;margin-left:2px">×</button>
-    </span>
-  `).join('');
+    </span>`).join('');
 }
 function deleteThreshold(type){const t=loadThresholds();delete t[type];saveThresholds(t);renderThresholdList();runSearch();}
 function openThresholdModal(){
-  // Populate datalist with known product types from current list
-  const types=[...new Set(activeList().items.map(s=>s.product_type).filter(Boolean))];
+  const types=[...new Set((activeList()?.items||[]).map(s=>s.product_type).filter(Boolean))];
   const dl=document.getElementById('knownTypes');
   if(dl)dl.innerHTML=types.map(t=>`<option value="${esc(t)}">`).join('');
   document.getElementById('thresholdType').value='';
@@ -1735,6 +1977,7 @@ function saveThreshold(){
   const t=loadThresholds();t[type]=qty;saveThresholds(t);
   closeThresholdModal();renderThresholdList();runSearch();
 }
+
 </script>
 </body>
 </html>
