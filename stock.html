@@ -303,6 +303,18 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .ai-typing span:nth-child(2){animation-delay:.15s}
 .ai-typing span:nth-child(3){animation-delay:.3s}
 @keyframes ai-bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+/* AI Settings modal */
+.ai-set-prov{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.ai-prov-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--border2);border-radius:9px;cursor:pointer;transition:border-color .15s,background .15s;background:var(--surface);text-align:left;font-family:var(--sans);width:100%}
+.ai-prov-btn:hover{border-color:var(--blue-mid);background:var(--blue-bg)}
+.ai-prov-btn.selected{border-color:var(--blue);background:var(--blue-bg)}
+.ai-prov-icon{font-size:18px;flex-shrink:0}
+.ai-prov-name{font-size:13px;font-weight:600;color:var(--text)}
+.ai-prov-sub{font-size:10px;color:var(--text3);margin-top:1px}
+.ai-free-badge{font-size:9px;font-weight:700;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green);border-radius:20px;padding:1px 6px;margin-left:6px;flex-shrink:0}
+.ai-offer-btn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans);background:var(--green);color:#fff;margin-top:8px;transition:opacity .15s}
+.ai-offer-btn:hover{opacity:.88}
+.ai-offer-success{font-size:11px;color:var(--green-text);background:var(--green-bg);border:1px solid var(--green);border-radius:6px;padding:6px 10px;margin-top:6px;display:block}
 </style>
 </head>
 <body>
@@ -389,11 +401,12 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
     <header id="hdrAI" style="display:none">
       <div class="h-left">
         <button class="menu-btn" onclick="openSidebar()">☰</button>
-        <span class="h-title">🤖 AI Stock Import</span>
+        <span class="h-title">🤖 AI Stock Assistant</span>
       </div>
       <div class="h-right">
-        <span id="aiModelLabel" style="font-size:11px;color:var(--text4)">Claude Sonnet 4.6</span>
-        <button class="btn btn-outline-blue" onclick="showView('stock')">← Back to Stock</button>
+        <span id="aiProviderLabel" style="font-size:11px;color:var(--text4);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+        <button class="btn btn-sm" onclick="openAISettings()" title="AI Settings" style="font-size:15px;padding:0 8px">⚙</button>
+        <button class="btn btn-outline-blue btn-sm" onclick="showView('stock')">← Stock</button>
       </div>
     </header>
 
@@ -838,6 +851,45 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 </div>
 
 <!-- SQL Setup modal -->
+<!-- AI Settings Modal -->
+<div class="modal-bg" id="aiSettingsModal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-drag"></div>
+    <p class="modal-ttl">⚙ AI Model Settings</p>
+
+    <div style="font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Select Provider</div>
+    <div class="ai-set-prov" id="aiProviderList"></div>
+
+    <div id="aiModelSection" style="margin-top:4px">
+      <div class="form-row">
+        <label class="lbl">Model</label>
+        <select class="inp" id="aiModelSelect" onchange="aiSaveSettings()"></select>
+      </div>
+      <div class="form-row" id="aiCustomUrlRow" style="display:none">
+        <label class="lbl">Base URL (e.g. https://api.groq.com/openai/v1)</label>
+        <input class="inp mono" id="aiCustomUrl" placeholder="https://…" oninput="aiSaveSettings()">
+      </div>
+      <div class="form-row" id="aiCustomModelRow" style="display:none">
+        <label class="lbl">Model name</label>
+        <input class="inp mono" id="aiCustomModel" placeholder="e.g. mistral-7b-instruct" oninput="aiSaveSettings()">
+      </div>
+      <div class="form-row">
+        <label class="lbl" id="aiKeyLabel">API Key</label>
+        <div style="display:flex;gap:6px">
+          <input class="inp mono" type="password" id="aiKeyField" placeholder="Paste your API key here" autocomplete="off" style="flex:1" oninput="aiSaveSettings()">
+          <button class="btn btn-danger btn-sm" onclick="aiClearKey()" title="Remove key" style="flex-shrink:0">✕ Remove</button>
+        </div>
+        <div id="aiKeyStatus" style="font-size:10px;margin-top:4px"></div>
+      </div>
+      <div id="aiFreeNote" style="display:none;font-size:11px;padding:8px 10px;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green);border-radius:7px;margin-top:4px"></div>
+    </div>
+
+    <div class="modal-acts">
+      <button class="btn btn-ghost btn-sm" onclick="closeAISettings()">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="sqlSetupModal">
   <div class="modal" style="max-width:580px">
     <div class="modal-drag"></div>
@@ -1877,38 +1929,335 @@ function fmtNum(n){ const v=Number(n)||0; return v>=1000?v.toLocaleString('en-US
 function fmtShort(n){ const v=Number(n)||0; if(!v)return'—'; return v>=1000?v.toLocaleString('en-US',{maximumFractionDigits:0}):v.toFixed(2); }
 
 // ══════════════════════════════════
-// AI IMPORT — STATE
+// AI — PROVIDER CONFIGS
 // ══════════════════════════════════
-let AI_KEY = localStorage.getItem('sp_claude_key')||'';
+const AI_PROVIDERS = {
+  anthropic: {
+    label:'Anthropic Claude', icon:'🟠', keyLabel:'Anthropic API Key', keyPlaceholder:'sk-ant-api03-…',
+    models:[
+      {id:'claude-sonnet-4-6',       label:'Claude Sonnet 4.6 — Recommended'},
+      {id:'claude-haiku-4-5-20251001',label:'Claude Haiku 4.5 — Fast & cheap'},
+      {id:'claude-opus-4-6',         label:'Claude Opus 4.6 — Most powerful'},
+    ], free:false
+  },
+  openai: {
+    label:'OpenAI', icon:'⚫', keyLabel:'OpenAI API Key', keyPlaceholder:'sk-…',
+    models:[
+      {id:'gpt-4o-mini', label:'GPT-4o Mini — Cheap'},
+      {id:'gpt-4o',      label:'GPT-4o'},
+      {id:'o1-mini',     label:'o1-mini — Reasoning'},
+    ], free:false
+  },
+  gemini: {
+    label:'Google Gemini', icon:'🔵', keyLabel:'Google AI Studio Key', keyPlaceholder:'AIza…',
+    models:[
+      {id:'gemini-2.0-flash-exp', label:'Gemini 2.0 Flash — FREE ✓'},
+      {id:'gemini-1.5-flash',     label:'Gemini 1.5 Flash — FREE ✓'},
+      {id:'gemini-1.5-pro',       label:'Gemini 1.5 Pro'},
+    ], free:true, freeNote:'Free tier — get key at <a href="https://aistudio.google.com" target="_blank" style="color:var(--green-text)">aistudio.google.com</a>'
+  },
+  groq: {
+    label:'Groq (Free)', icon:'🟣', keyLabel:'Groq API Key', keyPlaceholder:'gsk_…',
+    models:[
+      {id:'llama-3.3-70b-versatile', label:'Llama 3.3 70B — FREE ✓'},
+      {id:'llama-3.1-8b-instant',    label:'Llama 3.1 8B Fast — FREE ✓'},
+      {id:'mixtral-8x7b-32768',      label:'Mixtral 8x7B — FREE ✓'},
+    ], baseUrl:'https://api.groq.com/openai/v1',
+    free:true, freeNote:'Free tier — get key at <a href="https://console.groq.com" target="_blank" style="color:var(--green-text)">console.groq.com</a>'
+  },
+  mistral: {
+    label:'Mistral AI', icon:'🟡', keyLabel:'Mistral API Key', keyPlaceholder:'…',
+    models:[
+      {id:'mistral-small-latest',  label:'Mistral Small — Cheap'},
+      {id:'mistral-medium-latest', label:'Mistral Medium'},
+      {id:'open-mistral-7b',       label:'Open Mistral 7B — FREE tier'},
+    ], baseUrl:'https://api.mistral.ai/v1',
+    free:false, freeNote:'Free trial credits at <a href="https://console.mistral.ai" target="_blank" style="color:var(--green-text)">console.mistral.ai</a>'
+  },
+  custom: {
+    label:'Custom / Other', icon:'🔧', keyLabel:'API Key', keyPlaceholder:'your-api-key',
+    models:[], free:false, hasCustomUrl:true, hasCustomModel:true,
+    freeNote:'Any OpenAI-compatible API — Ollama, Together AI, Hugging Face TGI, etc.'
+  }
+};
+
+// ── State
+let aiState = {
+  provider: 'anthropic',
+  model: 'claude-sonnet-4-6',
+  keys: {},      // { anthropic: 'sk-ant-…', openai: 'sk-…', … }
+  customUrl: '',
+  customModel: ''
+};
 let aiParsedItems = [];
 let aiChatMessages = [];
 let aiChatStreaming = false;
-const AI_MODEL = 'claude-sonnet-4-6';
 
-// ── Key management
-function aiSaveKey(){
-  const v=(document.getElementById('aiKeyInput').value||'').trim();
-  if(!v.startsWith('sk-ant-')){alert('Invalid key — must start with sk-ant-');return;}
-  AI_KEY=v; localStorage.setItem('sp_claude_key',v);
-  document.getElementById('aiKeyBanner').style.display='none';
+// ══════════════════════════════════
+// AI — SETTINGS PERSISTENCE
+// ══════════════════════════════════
+function aiLoadSettings(){
+  try{
+    const s=JSON.parse(localStorage.getItem('sp_ai_settings')||'{}');
+    if(s.provider && AI_PROVIDERS[s.provider]) aiState.provider=s.provider;
+    if(s.model) aiState.model=s.model;
+    if(s.keys && typeof s.keys==='object') aiState.keys=s.keys;
+    if(s.customUrl) aiState.customUrl=s.customUrl;
+    if(s.customModel) aiState.customModel=s.customModel;
+  }catch(e){}
+  // Legacy: migrate old single key
+  const old=localStorage.getItem('sp_claude_key');
+  if(old && !aiState.keys.anthropic){ aiState.keys.anthropic=old; aiSavePersist(); }
 }
-function aiCheckKey(){
-  if(!AI_KEY){document.getElementById('aiKeyBanner').style.display='flex';return false;}
-  document.getElementById('aiKeyBanner').style.display='none'; return true;
+function aiSavePersist(){
+  localStorage.setItem('sp_ai_settings', JSON.stringify(aiState));
+}
+function aiSaveSettings(){
+  aiState.model = document.getElementById('aiModelSelect')?.value || aiState.model;
+  const prov=AI_PROVIDERS[aiState.provider];
+  aiState.keys[aiState.provider] = document.getElementById('aiKeyField')?.value?.trim() || '';
+  if(prov?.hasCustomUrl) aiState.customUrl = document.getElementById('aiCustomUrl')?.value?.trim()||'';
+  if(prov?.hasCustomModel) aiState.customModel = document.getElementById('aiCustomModel')?.value?.trim()||'';
+  aiSavePersist();
+  aiUpdateProviderLabel();
+  aiUpdateKeyStatus();
+}
+function aiClearKey(){
+  aiState.keys[aiState.provider]='';
+  document.getElementById('aiKeyField').value='';
+  aiSavePersist();
+  aiUpdateKeyStatus();
 }
 
-// ── Init view
+// ══════════════════════════════════
+// AI — SETTINGS MODAL
+// ══════════════════════════════════
+function openAISettings(){
+  renderAIProviderList();
+  renderAIModelDropdown();
+  document.getElementById('aiSettingsModal').classList.add('open');
+}
+function closeAISettings(){ document.getElementById('aiSettingsModal').classList.remove('open'); }
+
+function renderAIProviderList(){
+  document.getElementById('aiProviderList').innerHTML = Object.entries(AI_PROVIDERS).map(([id,p])=>`
+    <button class="ai-prov-btn ${aiState.provider===id?'selected':''}" onclick="aiSelectProvider('${id}')">
+      <span class="ai-prov-icon">${p.icon}</span>
+      <div style="flex:1;min-width:0">
+        <div class="ai-prov-name">${p.label}${p.free?`<span class="ai-free-badge">FREE</span>`:''}</div>
+        <div class="ai-prov-sub">${p.models.length?p.models[0].label:p.freeNote||'Custom endpoint'}</div>
+      </div>
+      ${aiState.keys[id]?'<span style="font-size:10px;color:var(--green-text)">✓ Key set</span>':''}
+    </button>
+  `).join('');
+}
+
+function aiSelectProvider(id){
+  aiState.provider=id;
+  aiSavePersist();
+  renderAIProviderList();
+  renderAIModelDropdown();
+  aiUpdateProviderLabel();
+}
+
+function renderAIModelDropdown(){
+  const prov=AI_PROVIDERS[aiState.provider];
+  if(!prov)return;
+  const sel=document.getElementById('aiModelSelect');
+  const customUrl=document.getElementById('aiCustomUrlRow');
+  const customMod=document.getElementById('aiCustomModelRow');
+  document.getElementById('aiKeyLabel').textContent=prov.keyLabel;
+  document.getElementById('aiKeyField').placeholder=prov.keyPlaceholder;
+  document.getElementById('aiKeyField').value=aiState.keys[aiState.provider]||'';
+  // Models
+  if(prov.hasCustomModel){
+    sel.innerHTML='<option value="custom">Custom model (see below)</option>';
+    customMod.style.display='block';
+    document.getElementById('aiCustomModel').value=aiState.customModel||'';
+  } else {
+    sel.innerHTML=prov.models.map(m=>`<option value="${m.id}" ${aiState.model===m.id?'selected':''}>${m.label}</option>`).join('');
+    customMod.style.display='none';
+  }
+  // Custom URL
+  if(prov.hasCustomUrl){
+    customUrl.style.display='block';
+    document.getElementById('aiCustomUrl').value=aiState.customUrl||'';
+  } else {
+    customUrl.style.display='none';
+  }
+  // Free note
+  const freeNote=document.getElementById('aiFreeNote');
+  if(prov.freeNote){ freeNote.style.display='block'; freeNote.innerHTML=prov.freeNote; }
+  else freeNote.style.display='none';
+  aiUpdateKeyStatus();
+}
+
+function aiUpdateKeyStatus(){
+  const key=aiState.keys[aiState.provider]||'';
+  const el=document.getElementById('aiKeyStatus');
+  if(!el)return;
+  if(key) el.innerHTML=`<span style="color:var(--green-text)">✓ Key saved</span>`;
+  else el.innerHTML=`<span style="color:var(--amber-text)">No key — enter one above</span>`;
+}
+
+function aiUpdateProviderLabel(){
+  const prov=AI_PROVIDERS[aiState.provider];
+  const model=AI_PROVIDERS[aiState.provider]?.models?.find(m=>m.id===aiState.model);
+  const label=prov?`${prov.icon} ${model?model.label.split('—')[0].trim():aiState.model}` : '';
+  const el=document.getElementById('aiProviderLabel');
+  if(el) el.textContent=label;
+}
+
+function aiGetKey(){ return aiState.keys[aiState.provider]||''; }
+function aiHasKey(){ const k=aiGetKey(); if(!k){openAISettings();return false;} return true; }
+
+// ══════════════════════════════════
+// AI — UNIFIED API CALLER
+// ══════════════════════════════════
+async function aiCall(systemPrompt, messages, onChunk){
+  const prov=AI_PROVIDERS[aiState.provider];
+  const key=aiGetKey();
+  const model=aiState.model;
+
+  if(aiState.provider==='anthropic'){
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model,max_tokens:2000,system:systemPrompt,messages,stream:true})
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+res.status);}
+    const reader=res.body.getReader();const decoder=new TextDecoder();let full='';
+    while(true){
+      const{done,value}=await reader.read();if(done)break;
+      const chunk=decoder.decode(value,{stream:true});
+      for(const line of chunk.split('\n')){
+        if(!line.startsWith('data:'))continue;
+        const d=line.slice(5).trim();if(d==='[DONE]')break;
+        try{const j=JSON.parse(d);if(j.type==='content_block_delta'&&j.delta?.type==='text_delta'){full+=j.delta.text;onChunk(j.delta.text,full);}}catch(e){}
+      }
+    }
+    return full;
+
+  } else if(aiState.provider==='gemini'){
+    // Gemini uses different API format
+    const gemModel=model;
+    const url=`https://generativelanguage.googleapis.com/v1beta/models/${gemModel}:streamGenerateContent?key=${key}&alt=sse`;
+    const contents=messages.map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}));
+    const res=await fetch(url,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({systemInstruction:{parts:[{text:systemPrompt}]},contents,generationConfig:{maxOutputTokens:2000}})
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+res.status);}
+    const reader=res.body.getReader();const decoder=new TextDecoder();let full='';let buf='';
+    while(true){
+      const{done,value}=await reader.read();if(done)break;
+      buf+=decoder.decode(value,{stream:true});
+      const lines=buf.split('\n');buf=lines.pop()||'';
+      for(const line of lines){
+        if(!line.startsWith('data:'))continue;
+        const d=line.slice(5).trim();if(!d||d==='[DONE]')continue;
+        try{const j=JSON.parse(d);const txt=j.candidates?.[0]?.content?.parts?.[0]?.text||'';if(txt){full+=txt;onChunk(txt,full);}}catch(e){}
+      }
+    }
+    return full;
+
+  } else {
+    // OpenAI-compatible (openai, groq, mistral, custom)
+    const baseUrl=prov.baseUrl||aiState.customUrl||'https://api.openai.com/v1';
+    const useModel=prov.hasCustomModel?aiState.customModel:model;
+    const res=await fetch(`${baseUrl}/chat/completions`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify({model:useModel,max_tokens:2000,stream:true,messages:[{role:'system',content:systemPrompt},...messages]})
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+res.status);}
+    const reader=res.body.getReader();const decoder=new TextDecoder();let full='';
+    while(true){
+      const{done,value}=await reader.read();if(done)break;
+      const chunk=decoder.decode(value,{stream:true});
+      for(const line of chunk.split('\n')){
+        if(!line.startsWith('data:'))continue;
+        const d=line.slice(5).trim();if(d==='[DONE]')break;
+        try{const j=JSON.parse(d);const txt=j.choices?.[0]?.delta?.content||'';if(txt){full+=txt;onChunk(txt,full);}}catch(e){}
+      }
+    }
+    return full;
+  }
+}
+
+// Non-streaming call for parse (returns full text)
+async function aiCallOnce(systemPrompt, userMessage){
+  const prov=AI_PROVIDERS[aiState.provider];
+  const key=aiGetKey();
+  const model=aiState.model;
+
+  if(aiState.provider==='anthropic'){
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model,max_tokens:4000,system:systemPrompt,messages:[{role:'user',content:userMessage}]})
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+res.status);}
+    const data=await res.json();
+    return data.content.map(b=>b.text||'').join('');
+
+  } else if(aiState.provider==='gemini'){
+    const gemModel=model;
+    const url=`https://generativelanguage.googleapis.com/v1beta/models/${gemModel}:generateContent?key=${key}`;
+    const res=await fetch(url,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({systemInstruction:{parts:[{text:systemPrompt}]},contents:[{role:'user',parts:[{text:userMessage}]}],generationConfig:{maxOutputTokens:4000}})
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+res.status);}
+    const data=await res.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text||'';
+
+  } else {
+    const baseUrl=prov.baseUrl||aiState.customUrl||'https://api.openai.com/v1';
+    const useModel=prov.hasCustomModel?aiState.customModel:model;
+    const res=await fetch(`${baseUrl}/chat/completions`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify({model:useModel,max_tokens:4000,messages:[{role:'system',content:systemPrompt},{role:'user',content:userMessage}]})
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+res.status);}
+    const data=await res.json();
+    return data.choices?.[0]?.message?.content||'';
+  }
+}
+
+// ══════════════════════════════════
+// AI — INIT
+// ══════════════════════════════════
 function aiInitView(){
-  if(!AI_KEY) document.getElementById('aiKeyBanner').style.display='flex';
+  aiLoadSettings();
+  aiUpdateProviderLabel();
+  if(!aiGetKey()) document.getElementById('aiKeyBanner').style.display='flex';
   else document.getElementById('aiKeyBanner').style.display='none';
-  // Update chat context label
   const list=activeList();
   const n=list?list.items.length:0;
   document.getElementById('aiChatContext').textContent=`${list?list.name:'No list'} · ${n} item${n!==1?'s':''} loaded`;
 }
+function aiSaveKey(){
+  const v=(document.getElementById('aiKeyInput').value||'').trim();
+  if(!v){alert('Please paste an API key first.');return;}
+  aiState.keys[aiState.provider]=v;
+  aiSavePersist();
+  document.getElementById('aiKeyBanner').style.display='none';
+}
+function aiCheckKey(){
+  if(!aiGetKey()){
+    document.getElementById('aiKeyBanner').style.display='flex';
+    return false;
+  }
+  document.getElementById('aiKeyBanner').style.display='none';
+  return true;
+}
 
 // ══════════════════════════════════
-// AI IMPORT — FILE HANDLING
+// AI — FILE HANDLING
 // ══════════════════════════════════
 function aiHandleFile(file){
   if(!file)return;
@@ -1918,262 +2267,232 @@ function aiHandleFile(file){
   const ext=file.name.split('.').pop().toLowerCase();
   if(ext==='csv'){
     const reader=new FileReader();
-    reader.onload=e=>{
-      document.getElementById('aiPasteArea').value=e.target.result.slice(0,8000);
-    };
+    reader.onload=e=>{document.getElementById('aiPasteArea').value=e.target.result.slice(0,8000);};
     reader.readAsText(file);
   }else{
-    // xlsx — use SheetJS
     const reader=new FileReader();
     reader.onload=e=>{
       try{
         const wb=XLSX.read(e.target.result,{type:'array'});
         const ws=wb.Sheets[wb.SheetNames[0]];
-        const csv=XLSX.utils.sheet_to_csv(ws);
-        document.getElementById('aiPasteArea').value=csv.slice(0,8000);
-      }catch(err){
-        status.style.color='var(--red-text)';
-        status.textContent='⚠ Could not read file: '+err.message;
-      }
+        document.getElementById('aiPasteArea').value=XLSX.utils.sheet_to_csv(ws).slice(0,8000);
+      }catch(err){status.style.color='var(--red-text)';status.textContent='⚠ Could not read: '+err.message;}
     };
     reader.readAsArrayBuffer(file);
   }
 }
 
 // ══════════════════════════════════
-// AI IMPORT — PARSE WITH CLAUDE
+// AI — PARSE STOCK FILE
 // ══════════════════════════════════
 async function aiParseStock(){
   if(!aiCheckKey())return;
   const raw=(document.getElementById('aiPasteArea').value||'').trim();
-  if(!raw){alert('Please upload a file or paste some data first.');return;}
-
+  if(!raw){alert('Upload a file or paste data first.');return;}
   const btn=document.getElementById('aiParseBtn');
   btn.disabled=true;
-  btn.innerHTML='<span class="ai-spinner"></span> AI is reading your stock…';
+  btn.innerHTML='<span class="ai-spinner"></span> Reading your stock…';
 
-  const prompt=`You are a steel stock data parser for an international steel trading company.
+  const systemPrompt=`You are a steel stock data parser. Return ONLY valid JSON, no markdown fences, no explanation.`;
+  const userMsg=`Parse this raw steel stock data. Columns may be in any language (English, Turkish, Croatian, German, French etc).
 
-The user has provided raw stock data. The columns and values may be in English, Turkish, Croatian, German, French, or any other language. Column names and formats vary.
+Map each row to: product_type, grade, thickness (mm), width (mm), length (mm), quantity, unit (ton/kg/pcs/m), buy_price, currency (USD/EUR/GBP/TRY), supplier, location, origin, heat_no, notes.
 
-Your task:
-1. Detect the language and column meanings
-2. Map every row to this EXACT schema:
-   - product_type: string (e.g. "Plate","Coil","Pipe","Rebar","Billet","HRC","CRC","Wire Rod","Angle","Beam","Sheet")
-   - grade: string (steel grade, e.g. "S235","S355","A36","Q235","St52","DX51","DC01")
-   - thickness: number in mm or null
-   - width: number in mm or null
-   - length: number in mm or null
-   - quantity: number or null
-   - unit: "ton" or "kg" or "pcs" or "m" (default "ton")
-   - buy_price: number (price per unit) or null
-   - currency: "USD" or "EUR" or "GBP" or "TRY" (default "USD")
-   - supplier: string or null
-   - location: string or null
-   - origin: country of origin as string or null
-   - heat_no: heat/certificate number as string or null
-   - notes: any extra info as string or null
+Turkish hints: Kalite=grade, Kalınlık=thickness, En=width, Boy=length, Miktar=quantity, Fiyat=buy_price, Tedarikçi=supplier, Menşei=origin
+Croatian hints: Kvaliteta=grade, Debljina=thickness, Širina=width, Dužina=length, Količina=quantity
 
-LANGUAGE HINTS:
-Turkish: Ürün/Ürün Tipi=product_type, Kalite/Çelik Kalitesi=grade, Kalınlık/Et=thickness, En/Genişlik=width, Boy/Uzunluk=length, Miktar/Adet=quantity, Birim=unit, Fiyat/Satış Fiyatı=buy_price, Tedarikçi=supplier, Konum/Depo=location, Menşei/Köken=origin
-Croatian: Vrsta=product_type, Kvaliteta=grade, Debljina=thickness, Širina=width, Dužina=length, Količina=quantity, Dobavljač=supplier, Podrijetlo=origin
-
-IMPORTANT RULES:
-- Dimensions might be combined like "10x1500x6000" → thickness=10, width=1500, length=6000
-- Quantities might include units like "50 ton", "1000 kg" — parse them
-- Prices might include currency symbols — strip them
-- Skip header rows
-- Return max 200 rows
-
-Return ONLY valid JSON, no markdown, no explanation:
-{
-  "detected_language": "English",
-  "column_mapping": {"OriginalCol": "mapped_field"},
-  "items": [
-    {"product_type":"Plate","grade":"S355","thickness":10,"width":1500,"length":6000,"quantity":50,"unit":"ton","buy_price":620,"currency":"USD","supplier":null,"location":null,"origin":"Turkey","heat_no":null,"notes":null}
-  ],
-  "warnings": []
-}
+Return JSON only:
+{"detected_language":"…","column_mapping":{"OrigCol":"mapped"},"items":[{"product_type":"Plate","grade":"S355","thickness":10,"width":1500,"length":6000,"quantity":50,"unit":"ton","buy_price":620,"currency":"USD","supplier":null,"location":null,"origin":"Turkey","heat_no":null,"notes":null}],"warnings":[]}
 
 Raw data:
 ${raw.slice(0,6000)}`;
 
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key':AI_KEY,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
-      body:JSON.stringify({
-        model:AI_MODEL,
-        max_tokens:4000,
-        messages:[{role:'user',content:prompt}]
-      })
-    });
-
-    if(!res.ok){
-      const err=await res.json().catch(()=>({error:{message:'HTTP '+res.status}}));
-      throw new Error(err?.error?.message||'API error '+res.status);
-    }
-
-    const data=await res.json();
-    const text=data.content.map(b=>b.text||'').join('');
+    const text=await aiCallOnce(systemPrompt,userMsg);
     const clean=text.replace(/```json|```/g,'').trim();
     const parsed=JSON.parse(clean);
-
     aiParsedItems=parsed.items||[];
     renderAIResults(parsed);
-
   }catch(e){
-    alert('AI parse error: '+e.message+'\n\nMake sure your API key is correct.');
+    alert('Parse error: '+e.message+'\n\nCheck your API key and try again.');
   }
-
   btn.disabled=false;
   btn.innerHTML='<span>🤖 Parse with AI</span>';
 }
 
 function renderAIResults(parsed){
   const items=parsed.items||[];
+  if(!items.length){alert('No items found. Try pasting in a different format.');return;}
   const panel=document.getElementById('aiResultPanel');
-  if(!items.length){alert('No items found in the data. Try pasting the data in a different format.');return;}
   panel.style.display='block';
-
-  // Title
-  document.getElementById('aiResultTitle').textContent=`✓ AI found ${items.length} item${items.length!==1?'s':''} · Language: ${parsed.detected_language||'Unknown'}`;
-
-  // Column mapping
+  document.getElementById('aiResultTitle').textContent=`✓ ${items.length} item${items.length!==1?'s':''} detected · Language: ${parsed.detected_language||'Auto'}`;
   const mapping=parsed.column_mapping||{};
-  const mapHtml=Object.entries(mapping).map(([orig,mapped])=>`<span class="ai-mapping-tag">${esc(orig)}</span> → ${esc(mapped)}`).join('  ');
-  document.getElementById('aiMappingInfo').innerHTML=`<strong>Column mapping detected:</strong> ${mapHtml||'(auto-detected)'}`;
-
-  // Warnings
-  const warns=parsed.warnings||[];
-  document.getElementById('aiWarnings').innerHTML=warns.map(w=>`<span class="ai-warn-pill">⚠ ${esc(w)}</span>`).join('');
-
-  // Table
+  document.getElementById('aiMappingInfo').innerHTML=`<strong>Columns mapped:</strong> `+Object.entries(mapping).map(([o,m])=>`<span class="ai-mapping-tag">${esc(o)}</span>→${esc(m)}`).join(' ');
+  document.getElementById('aiWarnings').innerHTML=(parsed.warnings||[]).map(w=>`<span class="ai-warn-pill">⚠ ${esc(w)}</span>`).join('');
   document.getElementById('aiResultBody').innerHTML=items.map((item,i)=>`
     <tr>
       <td><input type="checkbox" class="ai-check ai-row-check" data-idx="${i}" checked></td>
-      <td>${esc(item.product_type||'—')}</td>
-      <td class="grade-c">${esc(item.grade||'—')}</td>
-      <td>${item.thickness??'—'}</td>
-      <td>${item.width??'—'}</td>
-      <td>${item.length??'—'}</td>
-      <td>${item.quantity??'—'}</td>
-      <td>${esc(item.unit||'ton')}</td>
+      <td>${esc(item.product_type||'—')}</td><td class="grade-c">${esc(item.grade||'—')}</td>
+      <td>${item.thickness??'—'}</td><td>${item.width??'—'}</td><td>${item.length??'—'}</td>
+      <td>${item.quantity??'—'}</td><td>${esc(item.unit||'ton')}</td>
       <td style="color:var(--green-text);font-weight:700">${item.buy_price??'—'}</td>
-      <td>${esc(item.currency||'USD')}</td>
-      <td>${esc(item.supplier||'—')}</td>
-      <td>${esc(item.origin||'—')}</td>
-      <td style="max-width:100px;overflow:hidden;text-overflow:ellipsis">${esc(item.notes||'')}</td>
-    </tr>
-  `).join('');
-
+      <td>${esc(item.currency||'USD')}</td><td>${esc(item.supplier||'—')}</td>
+      <td>${esc(item.origin||'—')}</td><td style="max-width:100px;overflow:hidden;text-overflow:ellipsis">${esc(item.notes||'')}</td>
+    </tr>`).join('');
   document.getElementById('aiCheckAll').checked=true;
   panel.scrollIntoView({behavior:'smooth',block:'start'});
-
-  // Auto-suggest grade conversions in chat
+  // Auto-run grade conversions in chat
   const grades=[...new Set(items.map(i=>i.grade).filter(Boolean))].slice(0,8);
-  if(grades.length){
-    setTimeout(()=>aiQuick(`What are the ASTM and EN/DIN equivalents for these grades: ${grades.join(', ')}? Show a conversion table.`),600);
-  }
+  if(grades.length) setTimeout(()=>aiQuick(`Show ASTM and EN/DIN equivalents for: ${grades.join(', ')}`),500);
 }
 
-// ── Select all / toggle
-function aiSelectAll(){ document.querySelectorAll('.ai-row-check').forEach(c=>c.checked=true); document.getElementById('aiCheckAll').checked=true; }
-function aiToggleAll(checked){ document.querySelectorAll('.ai-row-check').forEach(c=>c.checked=checked); }
-
+function aiSelectAll(){document.querySelectorAll('.ai-row-check').forEach(c=>c.checked=true);document.getElementById('aiCheckAll').checked=true;}
+function aiToggleAll(v){document.querySelectorAll('.ai-row-check').forEach(c=>c.checked=v);}
 function aiGetSelected(){
-  const selected=[];
-  document.querySelectorAll('.ai-row-check').forEach(c=>{
-    if(c.checked){ const i=parseInt(c.dataset.idx); if(aiParsedItems[i]) selected.push(aiParsedItems[i]); }
-  });
-  return selected;
+  const out=[];
+  document.querySelectorAll('.ai-row-check').forEach(c=>{if(c.checked&&aiParsedItems[+c.dataset.idx])out.push(aiParsedItems[+c.dataset.idx]);});
+  return out;
 }
 
-// ══════════════════════════════════
-// AI IMPORT — IMPORT TO STOCK LIST
-// ══════════════════════════════════
 async function aiImportSelected(){
   const items=aiGetSelected();
-  if(!items.length){alert('Select at least one item to import.');return;}
-  const list=activeList();
-  if(!list){alert('No active stock list.');return;}
-
-  // Map AI schema → stock schema
+  if(!items.length){alert('Select at least one item.');return;}
   previewData=items.map(item=>({
-    product_type: item.product_type||'',
-    grade:        item.grade||'',
-    thickness:    Number(item.thickness)||null,
-    width:        Number(item.width)||null,
-    length:       Number(item.length)||null,
-    quantity:     Number(item.quantity)||0,
-    unit:         item.unit||'ton',
-    buy_price:    Number(item.buy_price)||0,
-    currency:     item.currency||'USD',
-    supplier:     item.supplier||'',
-    location:     item.location||'',
-    origin:       item.origin||'',
-    heat_number:  item.heat_no||'',
-    notes:        item.notes||'',
-    available:    'yes'
+    product_type:item.product_type||'',grade:item.grade||'',
+    thickness:Number(item.thickness)||null,width:Number(item.width)||null,length:Number(item.length)||null,
+    quantity:Number(item.quantity)||0,unit:item.unit||'ton',
+    buy_price:Number(item.buy_price)||0,currency:item.currency||'USD',
+    supplier:item.supplier||'',location:item.location||'',origin:item.origin||'',
+    heat_number:item.heat_no||'',notes:item.notes||'',available:'yes'
   }));
-
   await confirmUpload();
   showView('stock');
 }
 
-// ══════════════════════════════════
-// AI IMPORT — BUILD OFFER
-// ══════════════════════════════════
 function aiBuildOffer(){
   const items=aiGetSelected();
-  if(!items.length){alert('Select at least one item to add to the offer.');return;}
+  if(!items.length){alert('Select at least one item.');return;}
   showView('offer');
   items.forEach(item=>{
-    addOfferLine({
-      grade:     item.grade||'',
-      type:      item.product_type||'',
-      thick:     item.thickness||'',
-      width:     item.width||'',
-      length:    item.length||'',
-      unit:      item.unit||'ton',
-      buy_price: Number(item.buy_price)||0
-    });
+    addOfferLine({grade:item.grade||'',type:item.product_type||'',thick:item.thickness||'',width:item.width||'',length:item.length||'',unit:item.unit||'ton',buy_price:Number(item.buy_price)||0});
+    const last=offerLines[offerLines.length-1];
+    if(last){setTimeout(()=>{const el=document.getElementById(`ol_q_${last.id}`);if(el){el.value=item.quantity||0;recalcOffer();}},60);}
   });
 }
 
 // ══════════════════════════════════
-// AI CHAT — STOCK ASSISTANT
+// AI — POPULATE OFFER BUILDER
+// ══════════════════════════════════
+function aiPopulateOffer(data){
+  // Clear lines
+  offerLines=[];
+  // Client info
+  if(data.client_company) document.getElementById('clientCompany').value=data.client_company;
+  if(data.client_contact) document.getElementById('clientContact').value=data.client_contact;
+  if(data.client_email)   document.getElementById('clientEmail').value=data.client_email;
+  if(data.client_phone)   document.getElementById('clientPhone').value=data.client_phone;
+  // Terms
+  if(data.payment_terms)  document.getElementById('termPayment').value=data.payment_terms;
+  if(data.delivery)       document.getElementById('termDelivery').value=data.delivery;
+  if(data.incoterms)      document.getElementById('termIncoterms').value=data.incoterms;
+  if(data.origin)         document.getElementById('termOrigin').value=data.origin;
+  if(data.notes)          document.getElementById('termNotes').value=data.notes;
+  if(data.currency)       document.getElementById('offerCurrency').value=data.currency;
+  // Lines
+  const lines=data.lines||[];
+  lines.forEach(line=>{
+    addOfferLine({grade:line.grade||'',type:line.type||'',thick:line.thickness||'',width:line.width||'',length:line.length||'',unit:line.unit||'ton',buy_price:Number(line.buy_price)||0});
+    const last=offerLines[offerLines.length-1];
+    if(last){
+      setTimeout(()=>{
+        const qEl=document.getElementById(`ol_q_${last.id}`);
+        if(qEl){qEl.value=line.quantity||0;}
+        const mEl=document.getElementById(`ol_m_${last.id}`);
+        if(mEl&&line.margin){mEl.value=line.margin;}
+        recalcOffer();
+      },80);
+    }
+  });
+  renderOfferLines();
+}
+
+// ══════════════════════════════════
+// AI — STOCK CHAT
 // ══════════════════════════════════
 function aiGetStockContext(){
   const list=activeList();
-  if(!list||!list.items.length){
-    // Use AI parsed items if available
-    if(aiParsedItems.length) return 'Imported stock (not yet saved):\n'+JSON.stringify(aiParsedItems.slice(0,60),null,1);
-    return 'No stock loaded yet.';
-  }
-  const items=list.items.slice(0,80);
-  return `Stock list: ${list.name} (${list.items.length} items total, showing first 80)\n`+
-    items.map(s=>`${s.product_type||'?'} | ${s.grade||'?'} | ${s.thickness??''}x${s.width??''}x${s.length??''} | ${s.quantity??0} ${s.unit||'ton'} | $${s.buy_price??0}/t | Origin: ${s.origin||'?'} | Supplier: ${s.supplier||'?'}`).join('\n');
+  const items=(list&&list.items.length)?list.items:aiParsedItems;
+  if(!items.length) return 'No stock loaded.';
+  const label=list&&list.items.length?`Stock list: ${list.name} (${list.items.length} items)`:'AI-imported stock (not yet saved)';
+  return `${label}\n`+items.slice(0,80).map(s=>`${s.product_type||'?'} | ${s.grade||'?'} | ${s.thickness??''}×${s.width??''}×${s.length??''} mm | ${s.quantity??0} ${s.unit||'ton'} | $${s.buy_price??0} ${s.currency||'USD'} | ${s.origin||'?'} | ${s.supplier||'?'}`).join('\n');
 }
 
-function aiAddChatMsg(role,content){
+function aiBuildSystemPrompt(){
+  return `You are an expert steel trade assistant embedded in a stock management platform.
+
+You have access to the user's stock data below. Help them with:
+- Answering questions about stock (quantities, prices, availability)
+- Grade conversions: EN/DIN ↔ ASTM ↔ JIS/KS ↔ GB (Chinese) — show as clear tables
+- Unit conversions (tons/kg, mm/inches)
+- Drafting professional offer emails
+- Market insights and Incoterms advice
+
+BUILDING OFFERS — CRITICAL INSTRUCTION:
+When the user asks to BUILD, CREATE, MAKE, PREPARE, or GENERATE an offer/quote/proposal, you MUST:
+1. Find matching items from the stock data below
+2. Fill in any client name, terms, or Incoterms the user mentioned
+3. Respond with a brief summary, then output EXACTLY this block:
+
+\`\`\`offer-build
+{
+  "client_company": "…or null",
+  "client_contact": null,
+  "client_email": null,
+  "client_phone": null,
+  "payment_terms": "e.g. 30% advance, 70% BL copy or LC at sight",
+  "delivery": "e.g. 3-4 weeks from order",
+  "incoterms": "e.g. FOB Algiers or CIF Rotterdam",
+  "origin": "e.g. Turkey or Algeria",
+  "currency": "USD",
+  "notes": null,
+  "lines": [
+    {"grade":"S355","type":"Plate","thickness":10,"width":1500,"length":6000,"quantity":50,"unit":"ton","buy_price":620,"margin":15}
+  ]
+}
+\`\`\`
+
+The offer will be automatically loaded into the Offer Builder — ready to edit and export.
+
+CURRENT STOCK:
+${aiGetStockContext()}`;
+}
+
+function aiAddChatMsg(role,content,extra){
   const body=document.getElementById('aiChatBody');
+  const wrapper=document.createElement('div');
+  wrapper.style.cssText='display:flex;flex-direction:column;align-items:'+(role==='user'?'flex-end':'flex-start');
   const div=document.createElement('div');
   div.className=`ai-msg ${role}`;
-  div.innerHTML=content.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
-  body.appendChild(div);
-  div.scrollIntoView({behavior:'smooth',block:'end'});
-  return div;
+  div.innerHTML=aiFormatMsg(content);
+  wrapper.appendChild(div);
+  if(extra){wrapper.appendChild(extra);}
+  body.appendChild(wrapper);
+  wrapper.scrollIntoView({behavior:'smooth',block:'end'});
+  return {bubble:div,wrapper};
+}
+
+function aiFormatMsg(text){
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/`([^`]+)`/g,'<code style="background:rgba(0,0,0,.08);padding:1px 4px;border-radius:3px;font-family:monospace;font-size:11px">$1</code>')
+    .replace(/\n/g,'<br>');
 }
 
 function aiClearChat(){
   aiChatMessages=[];
-  document.getElementById('aiChatBody').innerHTML='<div class="ai-msg ai" style="font-size:11px;color:var(--text3)">Ask me anything about your imported stock — grades, quantities, conversions, pricing, or draft an offer email.</div>';
+  document.getElementById('aiChatBody').innerHTML='<div class="ai-msg ai" style="font-size:11px;color:var(--text3)">Ask me anything about your stock — or say "Make an offer for all S355 plates for ABC Trading, CIF Rotterdam" and I\'ll fill the Offer Builder automatically.</div>';
 }
 
 async function aiSendChat(){
@@ -2191,84 +2510,56 @@ async function aiSendChat(){
 
   // Typing indicator
   const body=document.getElementById('aiChatBody');
-  const typing=document.createElement('div');
-  typing.className='ai-msg ai';
-  typing.innerHTML='<div class="ai-typing"><span></span><span></span><span></span></div>';
-  body.appendChild(typing);
-  typing.scrollIntoView({behavior:'smooth',block:'end'});
+  const typingWrapper=document.createElement('div');
+  const typingDiv=document.createElement('div');
+  typingDiv.className='ai-msg ai';
+  typingDiv.innerHTML='<div class="ai-typing"><span></span><span></span><span></span></div>';
+  typingWrapper.appendChild(typingDiv);
+  body.appendChild(typingWrapper);
+  typingWrapper.scrollIntoView({behavior:'smooth',block:'end'});
 
-  const systemPrompt=`You are a steel trade expert assistant embedded in a stock management platform.
-You have access to the user's current stock. Help them with:
-- Answering questions about their stock (quantities, prices, grades)
-- Grade conversions between standards (EN/DIN ↔ ASTM ↔ JIS/KS ↔ GB/Chinese)
-- Unit conversions (tons ↔ kg, mm ↔ inches)
-- Drafting professional offer emails from their stock
-- Market insights and pricing context
-
-Format responses clearly. For grade conversion tables use a simple text table format.
-For offer emails, write professional, concise trade correspondence.
-Keep responses focused and practical — steel traders are busy.
-
-CURRENT STOCK DATA:
-${aiGetStockContext()}`;
+  const systemPrompt=aiBuildSystemPrompt();
+  let fullText='';
 
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key':AI_KEY,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
-      body:JSON.stringify({
-        model:AI_MODEL,
-        max_tokens:1200,
-        system:systemPrompt,
-        messages:aiChatMessages,
-        stream:true
-      })
+    // Replace typing with real bubble
+    typingWrapper.remove();
+    const {bubble,wrapper}=aiAddChatMsg('ai','');
+
+    fullText=await aiCall(systemPrompt,aiChatMessages,(chunk,full)=>{
+      // Strip offer-build block from display while streaming
+      const display=full.replace(/```offer-build[\s\S]*?```/g,'').trim();
+      bubble.innerHTML=aiFormatMsg(display||'…');
+      bubble.scrollIntoView({behavior:'smooth',block:'end'});
     });
 
-    if(!res.ok){
-      const err=await res.json().catch(()=>({error:{message:'HTTP '+res.status}}));
-      typing.remove();
-      aiAddChatMsg('ai','⚠️ Error: '+(err?.error?.message||'Unknown error'));
-      aiChatStreaming=false;
-      document.getElementById('aiChatSend').disabled=false;
-      return;
+    // Check for offer-build block
+    const offerMatch=fullText.match(/```offer-build\s*([\s\S]*?)```/);
+    if(offerMatch){
+      try{
+        const offerData=JSON.parse(offerMatch[1].trim());
+        aiPopulateOffer(offerData);
+        // Show open offer button
+        const openBtn=document.createElement('button');
+        openBtn.className='ai-offer-btn';
+        openBtn.innerHTML='📄 Open Offer Builder →';
+        openBtn.onclick=()=>showView('offer');
+        const note=document.createElement('span');
+        note.className='ai-offer-success';
+        note.textContent=`✓ Offer pre-filled with ${(offerData.lines||[]).length} line${(offerData.lines||[]).length!==1?'s':''} — click to review, edit & export`;
+        wrapper.appendChild(openBtn);
+        wrapper.appendChild(note);
+        // Clean display text
+        const cleanDisplay=fullText.replace(/```offer-build[\s\S]*?```/g,'').trim();
+        bubble.innerHTML=aiFormatMsg(cleanDisplay||'Offer built and ready in the Offer Builder.');
+      }catch(e){console.warn('Offer parse error',e);}
     }
 
-    const reader=res.body.getReader();
-    const decoder=new TextDecoder();
-    let full='';
-    typing.remove();
-    const bubble=aiAddChatMsg('ai','');
-
-    while(true){
-      const {done,value}=await reader.read();
-      if(done)break;
-      const chunk=decoder.decode(value,{stream:true});
-      for(const line of chunk.split('\n')){
-        if(!line.startsWith('data:'))continue;
-        const d=line.slice(5).trim();
-        if(d==='[DONE]')break;
-        try{
-          const j=JSON.parse(d);
-          if(j.type==='content_block_delta'&&j.delta?.type==='text_delta'){
-            full+=j.delta.text;
-            bubble.innerHTML=full.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
-            bubble.scrollIntoView({behavior:'smooth',block:'end'});
-          }
-        }catch(e){}
-      }
-    }
-
-    aiChatMessages.push({role:'assistant',content:full});
+    aiChatMessages.push({role:'assistant',content:fullText});
 
   }catch(e){
-    typing.remove();
-    aiAddChatMsg('ai','⚠️ Connection error: '+e.message);
+    typingWrapper.remove();
+    aiAddChatMsg('ai','⚠️ Error: '+e.message+'\n\nCheck your API key in ⚙ settings.');
   }
 
   aiChatStreaming=false;
