@@ -197,7 +197,66 @@ main{padding:12px;max-width:1100px;margin:0 auto;width:100%}
           <button class="price-edit-btn" id="priceEditBtn" onclick="openPriceModal()">✏ Update prices</button>
         </div>
 
-        <div class="news-toolbar" style="margin-top:10px">
+        <!-- Groq API Key + Settings Bar -->
+        <div id="groqSetupBar" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-top:10px;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <button class="hbtn" id="keyToggleBtn" onclick="toggleKeyPanel()" style="white-space:nowrap">🔑 API Key <span id="keyDot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--text4);margin-left:4px;vertical-align:middle"></span></button>
+            <button class="hbtn" id="regionBtn" onclick="togglePanel('regionPanel')" style="position:relative">🌍 Regions <span id="regionCount" style="background:var(--blue);color:#fff;border-radius:20px;padding:0 5px;font-size:10px;margin-left:3px">3</span></button>
+            <button class="hbtn" id="langBtn" onclick="togglePanel('langPanel')">🌐 Language</button>
+            <button class="hbtn" id="topicBtn" onclick="togglePanel('topicPanel')">📌 Topics</button>
+            <span id="groqStatus" style="font-size:11px;color:var(--text4)"></span>
+          </div>
+          <!-- Collapsible API key panel -->
+          <div id="keyPanel" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px">Groq API Key</div>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <input class="search-input" id="groqKey" type="password" placeholder="gsk_..." style="flex:1;min-width:200px;max-width:360px">
+              <button class="hbtn hbtn-icon" id="eyeBtn" onclick="toggleKeyVisibility()" title="Show/hide key" style="font-size:14px">👁</button>
+              <button class="hbtn" onclick="saveGroqKey()" style="background:var(--green-bg);color:var(--green-text);border-color:var(--green)">✅ Save</button>
+              <button class="hbtn" onclick="deleteGroqKey()" style="background:var(--red-bg);color:var(--red-text);border-color:var(--red)">🗑 Delete</button>
+            </div>
+            <div style="font-size:10px;color:var(--text4);margin-top:6px">Key is stored in your browser only. Get a free key at <a href="https://console.groq.com" target="_blank" style="color:var(--blue)">console.groq.com</a></div>
+          </div>
+
+          <!-- Region panel -->
+          <div id="regionPanel" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px">Select Regions</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap" id="regionBtns">
+              <button class="tab active" data-region="Global" onclick="toggleFilter(this,'region')">🌐 Global</button>
+              <button class="tab active" data-region="MENA" onclick="toggleFilter(this,'region')">🌍 MENA</button>
+              <button class="tab active" data-region="Europe" onclick="toggleFilter(this,'region')">🇪🇺 Europe</button>
+              <button class="tab" data-region="North America" onclick="toggleFilter(this,'region')">🇺🇸 North America</button>
+              <button class="tab" data-region="Asia Pacific" onclick="toggleFilter(this,'region')">🌏 Asia Pacific</button>
+              <button class="tab" data-region="Africa" onclick="toggleFilter(this,'region')">🌍 Africa</button>
+              <button class="tab" data-region="Latin America" onclick="toggleFilter(this,'region')">🌎 Latin America</button>
+            </div>
+          </div>
+
+          <!-- Language panel -->
+          <div id="langPanel" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px">Response Language</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap" id="langBtns">
+              <button class="tab active" data-lang="English" onclick="selectLang(this)">🇬🇧 English</button>
+              <button class="tab" data-lang="Arabic" onclick="selectLang(this)">🇩🇿 Arabic</button>
+              <button class="tab" data-lang="French" onclick="selectLang(this)">🇫🇷 French</button>
+              <button class="tab" data-lang="Turkish" onclick="selectLang(this)">🇹🇷 Turkish</button>
+            </div>
+          </div>
+
+          <!-- Topic panel -->
+          <div id="topicPanel" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px">Focus Topics</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap" id="topicBtns">
+              <button class="tab active" data-topic="Raw materials (iron ore, scrap, coal)" onclick="toggleFilter(this,'topic')">🪨 Raw Materials</button>
+              <button class="tab active" data-topic="Steel prices and market trends" onclick="toggleFilter(this,'topic')">📈 Steel Prices</button>
+              <button class="tab active" data-topic="Energy costs and supply" onclick="toggleFilter(this,'topic')">⚡ Energy</button>
+              <button class="tab active" data-topic="Trade policies and tariffs" onclick="toggleFilter(this,'topic')">🚢 Trade & Tariffs</button>
+              <button class="tab active" data-topic="Construction and infrastructure demand" onclick="toggleFilter(this,'topic')">🏗️ Construction</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="news-toolbar">
           <input class="search-input" id="newsSearch" placeholder="Search headlines, companies, topics..." onkeydown="if(event.key==='Enter')doSearch()">
           <button class="hbtn hbtn-blue" onclick="doSearch()">Search</button>
         </div>
@@ -277,110 +336,135 @@ const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 let sb = null;
 try { sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) {}
 
-// ── RSS Feeds ──
-const RSS2JSON = 'https://api.rss2json.com/v1/api.json?rss_url=';
+// ── Settings state ──
+let selectedRegions = ['Global','MENA','Europe'];
+let selectedLang    = 'English';
+let selectedTopics  = ['Raw materials (iron ore, scrap, coal)','Steel prices and market trends','Energy costs and supply','Trade policies and tariffs','Construction and infrastructure demand'];
 
-const FEEDS = [
-  // Steel industry
-  { url: 'https://www.steelorbis.com/steel-news/rss/latest-steel-news.rss', cat: 'steel', label: 'SteelOrbis' },
-  { url: 'https://www.worldsteel.org/rss/news.xml',                          cat: 'steel', label: 'World Steel' },
-  { url: 'https://rss.ft.com/rss/companies/metals',                          cat: 'steel', label: 'FT Metals' },
-  { url: 'https://www.steelmint.com/rss/category/steel',                     cat: 'steel', label: 'SteelMint' },
-  // MENA / regional
-  { url: 'https://feeds.reuters.com/reuters/AFRICANews',                     cat: 'politics', label: 'Reuters Africa' },
-  { url: 'https://www.arabnews.com/rss.xml',                                 cat: 'politics', label: 'Arab News' },
-  // Global business / politics
-  { url: 'https://feeds.bbci.co.uk/news/business/rss.xml',                  cat: 'politics', label: 'BBC Business' },
-  { url: 'https://feeds.reuters.com/reuters/businessNews',                   cat: 'politics', label: 'Reuters' },
-  { url: 'https://feeds.bbci.co.uk/news/politics/rss.xml',                  cat: 'politics', label: 'BBC Politics' },
-];
+function onGroqKeyInput() {
+  const key = document.getElementById('groqKey').value.trim();
+  if (key) localStorage.setItem('sp_groq_key', key);
+  document.getElementById('groqStatus').textContent = key ? '✅ Key saved' : '';
+}
 
-// Keywords for classification
-const TRADE_KEYWORDS = ['tariff','tariffs','trade war','sanction','import duty','export ban','wto','trade deal','anti-dumping','section 232','steel tariff','protectionism','customs','duty','embargo'];
-const STEEL_KEYWORDS = ['steel','iron ore','coil','rebar','billet','blast furnace','hrc','crc','galvanized','stainless','metallurgy','scrap metal','pig iron','wire rod','flat steel','long steel','hot rolled','cold rolled','tinplate','plate mill','electric arc'];
-const MENA_KEYWORDS  = ['algeria','algérie','algerian','algiers','morocco','maroc','tunisian','tunisia','libya','egypt','mena','north africa','maghreb','black sea','turkey','turkish steel','erdemir','tosyali','İskenderun','Mediterranean','cis steel','ukraine steel','middle east','gulf steel','iran steel','saudi'];
+function togglePanel(id) {
+  ['regionPanel','langPanel','topicPanel'].forEach(p => {
+    if (p !== id) document.getElementById(p).style.display = 'none';
+  });
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
 
+function toggleFilter(btn, type) {
+  btn.classList.toggle('active');
+  if (type === 'region') {
+    const r = btn.getAttribute('data-region');
+    if (selectedRegions.includes(r)) selectedRegions = selectedRegions.filter(x=>x!==r);
+    else selectedRegions.push(r);
+    document.getElementById('regionCount').textContent = selectedRegions.length;
+  } else if (type === 'topic') {
+    const t = btn.getAttribute('data-topic');
+    if (selectedTopics.includes(t)) selectedTopics = selectedTopics.filter(x=>x!==t);
+    else selectedTopics.push(t);
+  }
+}
+
+function selectLang(btn) {
+  document.querySelectorAll('#langBtns .tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedLang = btn.getAttribute('data-lang');
+}
+
+// ── Groq News Fetch ──
 let allArticles = [];
 let currentTab = 'all';
 let savedArticles = JSON.parse(localStorage.getItem('sp_news_saved') || '[]');
 
-// ── Classification ──
-function classifyArticle(title, desc) {
-  const txt = (title + ' ' + desc).toLowerCase();
-  const hasTrade = TRADE_KEYWORDS.some(k => txt.includes(k));
-  const hasSteel = STEEL_KEYWORDS.some(k => txt.includes(k));
-  const hasMena  = MENA_KEYWORDS.some(k => txt.includes(k));
-  if (hasMena && (hasSteel || hasTrade)) return 'mena';
-  if (hasTrade) return 'both';
-  if (hasSteel) return 'steel';
-  if (hasMena) return 'mena';
-  return 'politics';
-}
-
-function timeAgo(dateStr) {
-  const d = new Date(dateStr);
-  if (isNaN(d)) return '';
-  const diff = Math.floor((Date.now() - d) / 1000);
-  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
-  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
-  if (diff < 604800) return Math.floor(diff/86400) + 'd ago';
-  return d.toLocaleDateString('en-GB', {day:'2-digit', month:'short'});
-}
-
-// ── Fetch ──
-async function fetchFeed(feed) {
-  try {
-    const res = await fetch(RSS2JSON + encodeURIComponent(feed.url) + '&count=12', { mode: 'cors' });
-    if (!res.ok) return [];
-    const data = await res.json();
-    if (data.status !== 'ok' || !Array.isArray(data.items)) return [];
-    return data.items.map(item => ({
-      title: item.title || '',
-      summary: (item.description || item.content || '').replace(/<[^>]+>/g, '').slice(0, 220).trim() + '…',
-      source: feed.label,
-      date: timeAgo(item.pubDate),
-      url: item.link || '',
-      category: classifyArticle(item.title || '', item.description || ''),
-      pubDate: new Date(item.pubDate || 0),
-      id: btoa((item.title || '').slice(0, 40)).replace(/[^a-z0-9]/gi,'').slice(0,16),
-    }));
-  } catch(e) {
-    console.warn('Feed failed:', feed.label, e.message);
-    return [];
-  }
-}
-
 async function loadAllFeeds(searchQuery) {
-  document.getElementById('cardsList').innerHTML = '<div class="loading-state"><span class="spinner"></span>Fetching latest news…</div>';
-  document.getElementById('statusTxt').textContent = 'Fetching…';
+  const apiKey = document.getElementById('groqKey').value.trim() || localStorage.getItem('sp_groq_key') || '';
+  if (document.getElementById('groqKey').value === '' && apiKey) {
+    document.getElementById('groqKey').value = apiKey;
+  }
+
+  if (!apiKey) {
+    document.getElementById('cardsList').innerHTML = '<div class="empty-state">🔑 Please enter your Groq API key above to load news.</div>';
+    document.getElementById('statusTxt').textContent = 'API key required';
+    return;
+  }
+
+  document.getElementById('cardsList').innerHTML = '<div class="loading-state"><span class="spinner"></span>Asking Groq for the latest steel industry news…</div>';
+  document.getElementById('statusTxt').textContent = 'Fetching via Groq…';
   document.getElementById('refreshBtn').disabled = true;
 
-  const results = await Promise.all(FEEDS.map(fetchFeed));
-  let articles = results.flat();
+  const regions   = selectedRegions.length ? selectedRegions.join(', ') : 'Global';
+  const topics    = selectedTopics.length  ? selectedTopics.join(', ')  : 'steel industry';
+  const extra     = searchQuery ? ` Focus especially on: "${searchQuery}".` : '';
+  const today     = new Date().toISOString().slice(0,10);
 
-  // Deduplicate by title prefix
-  const seen = new Set();
-  articles = articles.filter(a => {
-    const key = a.title.slice(0, 50).toLowerCase().replace(/[^a-z0-9]/g,'');
-    if (seen.has(key)) return false;
-    seen.add(key); return true;
-  });
+  const prompt = `You are a news analyst for a steel export company based in Algeria.
+Today is ${today}. Your job is to generate the 5 most important and relevant recent news articles for a steel company.
 
-  if (searchQuery) {
-    const q = searchQuery.toLowerCase();
-    articles = articles.filter(a =>
-      a.title.toLowerCase().includes(q) || a.summary.toLowerCase().includes(q)
-    );
+Topics to cover: ${topics}
+Geographic focus: ${regions}
+${extra}
+
+Return ONLY a valid JSON array of exactly 5 objects. No markdown, no explanation, just the JSON.
+Each object must have these exact keys:
+- "title": string — a realistic, specific news headline (not generic)
+- "summary": string — 2-3 sentence summary in ${selectedLang}, explaining why it matters to a steel company
+- "source": string — a real credible news source name (Reuters, Bloomberg, SteelOrbis, Metal Bulletin, Financial Times, Arab News, etc.)
+- "url": string — a plausible but clearly illustrative URL (e.g. https://www.reuters.com/markets/commodities/...)
+- "category": one of: "steel", "both", "mena", "politics"
+- "date": string — a realistic recent date like "2h ago" or "1d ago" or "3d ago"
+
+Make the headlines specific, realistic, and genuinely useful for a steel trader. Cover a variety of the requested topics.`;
+
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 2000
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({error:{message:'Unknown error'}}));
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    let raw = data.choices?.[0]?.message?.content || '[]';
+    // Strip markdown code fences if present
+    raw = raw.replace(/```json|```/g,'').trim();
+
+    let articles = JSON.parse(raw);
+    if (!Array.isArray(articles)) throw new Error('Invalid response format');
+
+    // Assign IDs and pubDate for sorting
+    articles = articles.map((a, i) => ({
+      ...a,
+      id: 'groq_' + i + '_' + Date.now(),
+      pubDate: new Date(Date.now() - i * 60000),
+    }));
+
+    allArticles = articles;
+    renderCards();
+
+    document.getElementById('statusTxt').textContent = 'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + ' via Groq AI';
+    document.getElementById('groqStatus').textContent = '✅ Key saved';
+  } catch(e) {
+    console.error('Groq error:', e);
+    document.getElementById('cardsList').innerHTML = `<div class="empty-state">❌ Error: ${e.message}<br><br><small>Check your Groq API key or network connection.</small></div>`;
+    document.getElementById('statusTxt').textContent = 'Failed — see error above';
   }
 
-  articles.sort((a, b) => b.pubDate - a.pubDate);
-  allArticles = articles;
-  renderCards();
-
-  const count = articles.length;
-  document.getElementById('statusTxt').textContent = count > 0
-    ? 'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
-    : 'No articles loaded — check connection';
   document.getElementById('refreshBtn').disabled = false;
 }
 
@@ -561,10 +645,22 @@ async function checkAdmin() {
 
 // ── Init ──
 document.addEventListener('DOMContentLoaded', () => {
-  loadAllFeeds();
+  // Restore saved Groq key
+  const savedKey = localStorage.getItem('sp_groq_key');
+  if (savedKey) {
+    document.getElementById('groqKey').value = savedKey;
+    document.getElementById('groqStatus').textContent = '✅ Key saved';
+  }
   loadPrices();
   checkAdmin();
   updateSavedCount();
+  // Show prompt if no key, otherwise auto-load
+  if (savedKey) {
+    loadAllFeeds();
+  } else {
+    document.getElementById('cardsList').innerHTML = '<div class="empty-state">🔑 Enter your Groq API key above and click <strong>↻ Refresh</strong> to load news.</div>';
+    document.getElementById('statusTxt').textContent = 'Ready — enter Groq API key';
+  }
 });
 </script>
 </body>
