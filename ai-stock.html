@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>AI Stock Import — Steel Platform</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+(function(){
+  const urls=['https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.min.js','https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.min.js'];
+  function tryLoad(i){
+    if(i>=urls.length)return;
+    const s=document.createElement('script');s.src=urls[i];
+    s.onload=()=>{if(window.pdfjsLib){window.pdfjsLib.GlobalWorkerOptions.workerSrc=urls[i].replace('pdf.min.js','pdf.worker.min.js');console.log('PDF.js loaded from',urls[i]);}};
+    s.onerror=()=>tryLoad(i+1);document.head.appendChild(s);
+  }
+  tryLoad(0);
+})();
+</script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f0f0ee;--surface:#fff;--surface2:#ebebea;--border:#e0e0de;--border2:#cacac6;--text:#111110;--text2:#4a4a48;--text3:#888884;--text4:#bbbbb6;--blue:#185FA5;--blue-bg:#E6F1FB;--blue-light:#B5D4F4;--blue-mid:#7ab4e0;--green:#1D9E75;--green-bg:#E1F5EE;--green-text:#0F6E56;--red:#E24B4A;--red-bg:#FCEBEB;--red-text:#A32D2D;--amber:#EF9F27;--amber-bg:#FAEEDA;--amber-text:#854F0B;--sans:'IBM Plex Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',monospace;--sidebar-w:200px;}
+[data-theme="dark"]{--bg:#111110;--surface:#1c1c1a;--surface2:#252523;--border:#2e2e2c;--border2:#3a3a38;--text:#f0f0ee;--text2:#c0c0bc;--text3:#888;--text4:#555;--blue:#378ADD;--blue-bg:#0C2A45;--blue-light:#185FA5;--blue-mid:#185FA5;--green-bg:#0a2e22;--green-text:#5DCAA5;--red-bg:#2e0f0f;--red-text:#f09595;--amber-bg:#2e1f05;--amber-text:#FAC775;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;transition:background .2s,color .15s}
+.app{display:flex;min-height:100vh}
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:150;transition:transform .25s}
+.sidebar-logo{padding:14px;border-bottom:1px solid var(--border)}
+.sidebar-logo-text{font-size:14px;font-weight:700;color:var(--blue)}
+.sidebar-logo-sub{font-size:10px;color:var(--text4);margin-top:1px}
+.sidebar-nav{flex:1;overflow-y:auto;padding:6px 0}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 14px;font-size:12px;color:var(--text2);text-decoration:none;cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:var(--sans);transition:background .12s}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--blue-bg);color:var(--blue);font-weight:600}
+.nav-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.nav-section{font-size:9px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.6px;padding:10px 14px 3px}
+.sidebar-footer{padding:10px 14px;border-top:1px solid var(--border)}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:140}
+@media(max-width:768px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.sidebar-overlay.open{display:block}.main{margin-left:0!important}}
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;position:sticky;top:0;z-index:100;gap:8px}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.menu-btn{width:30px;height:30px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:15px;display:none;align-items:center;justify-content:center}
+@media(max-width:768px){.menu-btn{display:flex}}
+.topbar-title{font-size:14px;font-weight:600}
+.topbar-sub{font-size:11px;color:var(--text4)}
+.topbar-right{display:flex;align-items:center;gap:6px}
+.btn{height:30px;padding:0 10px;border:1px solid var(--border2);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);cursor:pointer;font-family:var(--sans);white-space:nowrap;transition:background .12s;text-decoration:none;display:inline-flex;align-items:center}
+.btn:hover{background:var(--surface2)}
+.btn-blue{background:var(--blue);color:#fff;border-color:var(--blue)}.btn-blue:hover{opacity:.88;background:var(--blue)}
+.btn-green{background:var(--green);color:#fff;border-color:var(--green)}.btn-green:hover{opacity:.88;background:var(--green)}
+.btn-danger{background:var(--red-bg);color:var(--red-text);border-color:var(--red-text)}
+.btn-sm{height:26px;padding:0 8px;font-size:11px}.btn-xs{height:22px;padding:0 7px;font-size:10px}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--text3)}.btn-ghost:hover{background:var(--surface2)}
+.inp{width:100%;height:34px;border:1px solid var(--border2);border-radius:7px;padding:0 10px;font-size:13px;background:var(--surface);color:var(--text);font-family:var(--sans);outline:none;transition:border-color .15s}.inp:focus{border-color:var(--blue)}
+.inp.mono{font-family:var(--mono);font-size:12px}
+.lbl{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px}
+.form-row{margin-bottom:10px}.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.content{flex:1;padding:14px;max-width:1200px;margin:0 auto;width:100%;display:flex;gap:14px}
+@media(max-width:900px){.content{flex-direction:column}}
+.left-panel{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px}
+.card-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px}
+.drop-zone{border:2px dashed var(--border2);border-radius:10px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .15s;background:var(--surface)}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--blue);background:var(--blue-bg)}
+.drop-zone-icon{font-size:28px;margin-bottom:8px}
+.drop-zone-title{font-size:14px;font-weight:600;margin-bottom:4px}
+.drop-zone-sub{font-size:11px;color:var(--text3);line-height:1.6;margin-bottom:10px}
+.file-types{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.file-type-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid var(--border2);color:var(--text3)}
+.key-banner{background:var(--amber-bg);border:1px solid var(--amber);border-radius:9px;padding:10px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.key-banner-text{font-size:12px;color:var(--amber-text);flex:1;min-width:160px}
+.key-banner-row{display:flex;gap:6px;flex:1;min-width:180px}
+.key-inp{height:32px;border:1px solid var(--amber);border-radius:6px;padding:0 10px;font-size:12px;font-family:var(--mono);background:var(--surface);color:var(--text);outline:none;flex:1}
+.key-inp:focus{border-color:var(--blue)}
+.key-save-btn{height:32px;padding:0 12px;border:none;border-radius:6px;font-size:12px;font-weight:700;background:var(--amber);color:#fff;cursor:pointer;white-space:nowrap}
+.results-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.results-tbl th{background:var(--surface2);color:var(--text3);font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.4px;padding:7px 9px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border);position:sticky;top:0}
+.results-tbl td{padding:6px 9px;border-bottom:1px solid var(--border);color:var(--text2);white-space:nowrap;font-family:var(--mono);font-size:11px}
+.results-tbl tr:last-child td{border-bottom:none}
+.results-tbl tr:hover td{background:var(--surface2)}
+.grade-cell{font-weight:700;color:var(--text);font-family:var(--mono)}
+.price-cell{font-weight:700;color:var(--green-text)}
+.ai-check{accent-color:var(--blue);width:13px;height:13px;cursor:pointer}
+.toggle{position:relative;display:inline-block;width:34px;height:18px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;cursor:pointer;inset:0;background:var(--border2);border-radius:18px;transition:.2s}
+.toggle-track:before{position:absolute;content:'';height:12px;width:12px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle input:checked+.toggle-track{background:var(--green)}
+.toggle input:checked+.toggle-track:before{transform:translateX(16px)}
+.right-panel{width:360px;flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column;max-height:calc(100vh - 80px);position:sticky;top:64px}
+@media(max-width:900px){.right-panel{width:100%;max-height:500px;position:static}}
+.chat-hdr{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.chat-hdr-title{font-size:12px;font-weight:700}.chat-hdr-sub{font-size:10px;color:var(--text4);margin-top:1px}
+.chat-body{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
+.chat-msg{font-size:12px;line-height:1.6;padding:8px 10px;border-radius:9px;max-width:100%;word-break:break-word}
+.chat-msg.user{background:var(--blue);color:#fff;align-self:flex-end;border-radius:9px 9px 2px 9px}
+.chat-msg.ai{background:var(--surface2);color:var(--text);border-radius:2px 9px 9px 9px;border:1px solid var(--border)}
+.chat-msg.ai strong{font-weight:700}
+.chat-quick{display:flex;gap:4px;flex-wrap:wrap;padding:6px 10px}
+.chat-quick-btn{height:22px;padding:0 9px;border:1px solid var(--border2);border-radius:20px;font-size:10px;background:var(--surface);color:var(--text3);cursor:pointer;white-space:nowrap;transition:all .15s}
+.chat-quick-btn:hover{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-mid)}
+.chat-input-row{padding:8px;border-top:1px solid var(--border);display:flex;gap:6px}
+.chat-inp{flex:1;height:32px;border:1px solid var(--border2);border-radius:6px;padding:0 10px;font-size:12px;background:var(--surface);color:var(--text);font-family:var(--sans);outline:none;transition:border-color .15s}
+.chat-inp:focus{border-color:var(--blue)}
+.chat-send{width:32px;height:32px;border:none;border-radius:6px;background:var(--blue);color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chat-send:disabled{opacity:.4;cursor:not-allowed}
+.offer-action-btn{display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 12px;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;background:var(--green);color:#fff;margin-top:6px;transition:opacity .15s;font-family:var(--sans)}
+.offer-action-btn:hover{opacity:.88}
+.offer-success-note{font-size:10px;color:var(--green-text);background:var(--green-bg);border:1px solid var(--green);border-radius:6px;padding:5px 8px;margin-top:5px;display:block}
+.warn-pill{display:inline-block;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:600}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:300;padding:16px}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border-radius:13px;border:1px solid var(--border);padding:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:15px;font-weight:700;margin-bottom:16px}
+.modal-acts{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.keys-list{display:flex;flex-direction:column;border:1px solid var(--border);border-radius:9px;overflow:hidden;margin-bottom:4px}
+.key-row{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);background:var(--surface)}
+.key-row:last-child{border-bottom:none}
+.key-row.active-prov{background:var(--blue-bg)}
+.key-icon{font-size:15px;flex-shrink:0;width:20px;text-align:center}
+.key-name{font-size:11px;font-weight:600;color:var(--text);flex-shrink:0;width:86px}
+.key-val{font-size:10px;color:var(--text3);font-family:var(--mono);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.key-actions{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.free-badge{font-size:9px;font-weight:700;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green);border-radius:20px;padding:1px 5px;flex-shrink:0}
+.key-expand{display:none;padding:8px 12px;background:var(--surface2);border-top:1px solid var(--border)}
+.key-expand.open{display:block}
+.key-expand-row{display:flex;gap:6px;align-items:center}
+.key-expand-inp{flex:1;height:30px;border:1px solid var(--border2);border-radius:6px;padding:0 8px;font-size:11px;font-family:var(--mono);background:var(--surface);color:var(--text);outline:none}
+.key-expand-inp:focus{border-color:var(--blue)}
+.free-note{font-size:10px;color:var(--green-text);margin-top:5px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+.typing span{width:6px;height:6px;border-radius:50%;background:var(--text4);display:inline-block;animation:bounce .9s infinite;margin-right:3px}
+.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><div class="sidebar-logo-text">⚙️ Steel Platform</div><div class="sidebar-logo-sub">Export Management Suite</div></div>
+    <div class="sidebar-nav">
+      <div class="nav-section">Pipeline</div>
+      <a class="nav-item" href="index.html"><span class="nav-icon">📊</span>Dashboard</a>
+      <a class="nav-item" href="index.html"><span class="nav-icon">📋</span>CRM / Leads</a>
+      <div class="nav-section">Inventory</div>
+      <a class="nav-item" href="stock.html"><span class="nav-icon">📦</span>Stock</a>
+      <a class="nav-item" href="procurement.html"><span class="nav-icon">🛒</span>Procurement</a>
+      <div class="nav-section">Operations</div>
+      <a class="nav-item" href="logistics.html"><span class="nav-icon">🚢</span>Logistics</a>
+      <a class="nav-item" href="documents.html"><span class="nav-icon">📄</span>Documents</a>
+      <div class="nav-section">Finance</div>
+      <a class="nav-item" href="bookkeeping.html"><span class="nav-icon">💰</span>Bookkeeping</a>
+      <div class="nav-section">Tools</div>
+      <a class="nav-item" href="converter.html"><span class="nav-icon">⚡</span>Grade Converter</a>
+      <a class="nav-item" href="news.html"><span class="nav-icon">📰</span>News</a>
+      <a class="nav-item active" href="ai-stock.html"><span class="nav-icon">🤖</span>AI Import</a>
+      <a class="nav-item" href="assistant.html"><span class="nav-icon">💬</span>AI Assistant</a>
+      <div class="nav-section">Team</div>
+      <a class="nav-item" href="cont.html"><span class="nav-icon">👥</span>Contacts</a>
+      <a class="nav-item" href="team.html"><span class="nav-icon">🧑‍💼</span>Team</a>
+    </div>
+    <div class="sidebar-footer"><button class="btn btn-ghost" id="darkBtn" onclick="toggleDark()" style="width:100%;font-size:12px">🌙 Dark mode</button></div>
+  </nav>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="menu-btn" onclick="openSidebar()">☰</button>
+        <div><div class="topbar-title">🤖 AI Stock Import</div><div class="topbar-sub" id="providerLabel">No provider selected</div></div>
+      </div>
+      <div class="topbar-right">
+        <span id="ctxLabel" style="font-size:11px;color:var(--text4)"></span>
+        <button class="btn btn-sm" onclick="openSettings()">⚙ Settings</button>
+        <a class="btn btn-sm btn-blue" href="stock.html">📦 Stock</a>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="left-panel">
+        <!-- Key banner -->
+        <div class="key-banner" id="keyBanner" style="display:none">
+          <span class="key-banner-text">🔑 No API key — <button onclick="openSettings()" style="background:none;border:none;color:var(--amber-text);font-weight:700;cursor:pointer;text-decoration:underline;font-size:12px;padding:0">open ⚙ Settings</button> to add one</span>
+          <div class="key-banner-row">
+            <input class="key-inp" id="quickKeyInp" type="password" placeholder="Or paste key here…" autocomplete="off">
+            <button class="key-save-btn" onclick="quickSaveKey()">Save</button>
+          </div>
+        </div>
+
+        <!-- Drop zone -->
+        <div class="drop-zone" id="dropZone"
+             onclick="document.getElementById('fileInp').click()"
+             ondragover="event.preventDefault();this.classList.add('drag')"
+             ondragleave="this.classList.remove('drag')"
+             ondrop="event.preventDefault();this.classList.remove('drag');handleFile(event.dataTransfer.files[0])">
+          <div class="drop-zone-icon">📂</div>
+          <div class="drop-zone-title">Drop your stock file here</div>
+          <div class="drop-zone-sub">AI reads any format and any language — Turkish, Croatian, English, German…</div>
+          <div class="file-types">
+            <span class="file-type-badge">📊 Excel</span>
+            <span class="file-type-badge">📄 CSV</span>
+            <span class="file-type-badge">📋 PDF</span>
+            <span class="file-type-badge">🖼 Photo / Screenshot</span>
+          </div>
+          <input type="file" id="fileInp" accept=".xlsx,.csv,.xls,.pdf,.jpg,.jpeg,.png,.webp,.gif,.bmp,.tiff" style="display:none" onchange="handleFile(this.files[0])">
+          <div id="fileStatus" style="font-size:12px;margin-top:10px;min-height:18px;font-weight:500;color:var(--blue)"></div>
+        </div>
+        <div id="imgPreview" style="display:none;text-align:center;padding:6px 0"></div>
+        <div id="fileWarn" style="display:none"></div>
+
+        <!-- Paste area -->
+        <div class="card" style="padding:10px 12px">
+          <div class="card-title">Or paste data directly</div>
+          <textarea id="pasteArea" style="width:100%;min-height:80px;border:1px solid var(--border2);border-radius:7px;padding:8px 10px;font-size:12px;font-family:var(--mono);background:var(--surface);color:var(--text);outline:none;resize:vertical" placeholder="Paste rows from Excel, a table, or any text with stock data…&#10;Example: S355 Plate 10x1500x6000 50ton 620 USD Turkey"></textarea>
+        </div>
+
+        <!-- Parse button -->
+        <button class="btn btn-blue" id="parseBtn" onclick="parseStock()" style="height:42px;font-size:14px;font-weight:700;border-radius:9px;justify-content:center">🤖 Parse with AI</button>
+
+        <!-- Results -->
+        <div id="resultsPanel" style="display:none">
+          <div class="card" style="padding:0;overflow:hidden">
+            <div style="padding:10px 14px;background:var(--green-bg);border-bottom:1px solid var(--green);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+              <div>
+                <div style="font-size:12px;font-weight:700;color:var(--green-text)" id="resultsTitle">✓ 0 items</div>
+                <div id="mappingInfo" style="font-size:10px;color:var(--green-text);margin-top:2px"></div>
+                <div id="resultsWarnings" style="margin-top:4px"></div>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <button class="btn btn-xs" onclick="selectAll()">☑ All</button>
+                <button class="btn btn-xs" style="border-color:var(--blue);color:var(--blue)" onclick="importSelected()">⬇ Import to Stock</button>
+                <button class="btn btn-xs btn-green" onclick="buildOffer()">📄 Build Offer</button>
+              </div>
+            </div>
+            <div style="max-height:360px;overflow:auto">
+              <table class="results-tbl">
+                <thead><tr>
+                  <th><input type="checkbox" class="ai-check" id="checkAll" onchange="toggleAll(this.checked)"></th>
+                  <th>Type</th><th>Grade</th><th>Thick</th><th>Width</th><th>Length</th>
+                  <th>Qty</th><th>Unit</th><th>Price</th><th>Cur</th><th>Supplier</th><th>Origin</th><th>Notes</th>
+                </tr></thead>
+                <tbody id="resultsBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat panel -->
+      <div class="right-panel">
+        <div class="chat-hdr">
+          <div><div class="chat-hdr-title">💬 Stock Chat</div><div class="chat-hdr-sub" id="chatCtxLabel">Import a file to start</div></div>
+          <button class="btn btn-xs btn-ghost" onclick="clearChat()">Clear</button>
+        </div>
+        <div class="chat-quick">
+          <button class="chat-quick-btn" onclick="chatQuick('What products are available and at what prices?')">Stock list</button>
+          <button class="chat-quick-btn" onclick="chatQuick('Convert all grades to ASTM equivalents. Show as a table.')">→ ASTM</button>
+          <button class="chat-quick-btn" onclick="chatQuick('Convert all grades to EN/DIN equivalents. Show as a table.')">→ EN/DIN</button>
+          <button class="chat-quick-btn" onclick="chatQuick('Summarise total stock by product type and tonnage.')">Summary</button>
+          <button class="chat-quick-btn" onclick="chatQuick('Draft a market offer email listing all available stock with prices in USD FOB.')">Draft email</button>
+          <button class="chat-quick-btn" onclick="chatQuick('Build a full offer for all available plates, FOB Algiers, LC at sight, origin Turkey.')">Build offer</button>
+        </div>
+        <div class="chat-body" id="chatBody">
+          <div class="chat-msg ai" style="font-size:11px;color:var(--text3)">Import a file then ask me anything — grades, conversions, pricing, or say "Build an offer for all S355 plates for ABC Trading, CIF Rotterdam" to auto-fill the Offer Builder.</div>
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-inp" id="chatInp" placeholder="Ask about your stock…" onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="chat-send" id="chatSendBtn" onclick="sendChat()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-bg" id="settingsModal">
+  <div class="modal">
+    <div class="modal-title">⚙ AI Settings</div>
+    <div class="g2" style="margin-bottom:12px">
+      <div class="form-row" style="margin-bottom:0"><label class="lbl">Active provider</label><select class="inp" id="providerSel" onchange="selectProvider(this.value)" style="font-size:12px"></select></div>
+      <div class="form-row" style="margin-bottom:0"><label class="lbl">Model</label><select class="inp" id="modelSel" onchange="saveModelSettings()" style="font-size:12px"></select></div>
+    </div>
+    <div class="form-row" id="customUrlRow" style="display:none;margin-bottom:8px"><label class="lbl">Base URL</label><input class="inp mono" id="customUrlInp" placeholder="https://…" oninput="saveModelSettings()"></div>
+    <div class="form-row" id="customModelRow" style="display:none;margin-bottom:12px"><label class="lbl">Model name</label><input class="inp mono" id="customModelInp" placeholder="e.g. llama-3-70b" oninput="saveModelSettings()"></div>
+    <div class="lbl" style="margin-bottom:8px">API Keys — saved per provider, switch anytime</div>
+    <div class="keys-list" id="keysList"></div>
+    <div class="modal-acts"><button class="btn btn-ghost btn-sm" onclick="closeSettings()">Done</button></div>
+  </div>
+</div>
+
+<script>
+// ── Dark mode
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sidebarOverlay').classList.add('open');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('open');}
+function toggleDark(){const h=document.documentElement,d=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',d?'light':'dark');document.getElementById('darkBtn').textContent=d?'🌙 Dark mode':'☀️ Light mode';localStorage.setItem('sp_theme',d?'light':'dark');}
+(function(){const t=localStorage.getItem('sp_theme');if(t){document.documentElement.setAttribute('data-theme',t);window.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('darkBtn');if(b)b.textContent=t==='dark'?'☀️ Light mode':'🌙 Dark mode';});}})();
+
+// ── Providers
+const PROVIDERS={
+  anthropic:{label:'Claude (Anthropic)',icon:'🟠',placeholder:'sk-ant-api03-…',models:[{id:'claude-sonnet-4-6',label:'Sonnet 4.6 — Recommended'},{id:'claude-haiku-4-5-20251001',label:'Haiku 4.5 — Fast'},{id:'claude-opus-4-6',label:'Opus 4.6'}]},
+  gemini:{label:'Google Gemini',icon:'🔵',placeholder:'AIza…',free:true,freeNote:'Get key at <a href="https://aistudio.google.com" target="_blank" style="color:var(--green-text)">aistudio.google.com</a>',models:[{id:'gemini-2.5-flash',label:'Gemini 2.5 Flash — FREE ✓'},{id:'gemini-2.5-flash-lite',label:'Gemini 2.5 Flash Lite — FREE ✓'},{id:'gemini-2.5-pro',label:'Gemini 2.5 Pro'}]},
+  groq:{label:'Groq',icon:'🟣',placeholder:'gsk_…',free:true,baseUrl:'https://api.groq.com/openai/v1',freeNote:'Get key at <a href="https://console.groq.com" target="_blank" style="color:var(--green-text)">console.groq.com</a>',models:[{id:'llama-3.3-70b-versatile',label:'Llama 3.3 70B — FREE ✓'},{id:'llama-3.1-8b-instant',label:'Llama 3.1 8B Fast — FREE ✓'},{id:'mixtral-8x7b-32768',label:'Mixtral 8x7B — FREE ✓'}]},
+  openai:{label:'OpenAI',icon:'⚫',placeholder:'sk-…',models:[{id:'gpt-4o-mini',label:'GPT-4o Mini'},{id:'gpt-4o',label:'GPT-4o'}]},
+  mistral:{label:'Mistral AI',icon:'🟡',placeholder:'…',baseUrl:'https://api.mistral.ai/v1',models:[{id:'mistral-small-latest',label:'Mistral Small'},{id:'mistral-medium-latest',label:'Mistral Medium'}]},
+  custom:{label:'Custom / Other',icon:'🔧',placeholder:'your-api-key',hasCustomUrl:true,hasCustomModel:true,freeNote:'Any OpenAI-compatible API — Ollama, Together AI, Hugging Face, etc.',models:[]}
+};
+
+// ── State
+let ai={provider:'anthropic',model:'claude-sonnet-4-6',keys:{},keyActive:{},customUrl:'',customModel:''};
+let parsedItems=[],chatMsgs=[],chatStreaming=false;
+let rawData='',visionPages=[],inputMode='text';
+
+// ── Settings persistence
+function loadSettings(){
+  try{const s=JSON.parse(localStorage.getItem('sp_ai_settings')||'{}');
+    if(s.provider&&PROVIDERS[s.provider])ai.provider=s.provider;
+    if(s.model)ai.model=s.model;
+    if(s.keys&&typeof s.keys==='object')ai.keys=s.keys;
+    if(s.keyActive&&typeof s.keyActive==='object')ai.keyActive=s.keyActive;
+    if(s.customUrl)ai.customUrl=s.customUrl;
+    if(s.customModel)ai.customModel=s.customModel;
+  }catch(e){}
+  const old=localStorage.getItem('sp_claude_key');
+  if(old&&!ai.keys.anthropic){ai.keys.anthropic=old;ai.keyActive.anthropic=true;saveSettings();}
+}
+function saveSettings(){localStorage.setItem('sp_ai_settings',JSON.stringify(ai));}
+function getKey(){const k=ai.keys[ai.provider]||'';if(!k||ai.keyActive[ai.provider]===false)return'';return k;}
+function hasKey(){if(!getKey()){openSettings();return false;}return true;}
+function updateBanner(){document.getElementById('keyBanner').style.display=getKey()?'none':'flex';}
+function updateLabel(){
+  const p=PROVIDERS[ai.provider],m=p?.models?.find(m=>m.id===ai.model);
+  let label=p?`${p.icon} ${m?m.label.split('—')[0].trim():ai.model}`:'No provider';
+  if(ai.keys[ai.provider]&&ai.keyActive[ai.provider]===false)label+=' ⏸';
+  document.getElementById('providerLabel').textContent=label;
+}
+function quickSaveKey(){
+  const v=(document.getElementById('quickKeyInp').value||'').trim();
+  if(!v){alert('Please paste an API key first.');return;}
+  ai.keys[ai.provider]=v;ai.keyActive[ai.provider]=true;
+  saveSettings();document.getElementById('quickKeyInp').value='';updateBanner();updateLabel();
+}
+
+// ── Settings modal
+function openSettings(){renderSettings();document.getElementById('settingsModal').classList.add('open');}
+function closeSettings(){document.getElementById('settingsModal').classList.remove('open');}
+function renderSettings(){
+  document.getElementById('providerSel').innerHTML=Object.entries(PROVIDERS).map(([id,p])=>
+    `<option value="${id}" ${ai.provider===id?'selected':''}>${p.icon} ${p.label}${p.free?' (FREE)':''}</option>`).join('');
+  renderModelDrop();renderKeysList();
+}
+function selectProvider(id){
+  ai.provider=id;const p=PROVIDERS[id];
+  if(p&&p.models&&p.models.length)ai.model=p.models[0].id;
+  saveSettings();renderModelDrop();renderKeysList();updateLabel();updateBanner();
+}
+function renderModelDrop(){
+  const p=PROVIDERS[ai.provider];if(!p)return;
+  const sel=document.getElementById('modelSel');
+  const uRow=document.getElementById('customUrlRow'),mRow=document.getElementById('customModelRow');
+  if(p.hasCustomModel){sel.innerHTML='<option value="custom">Custom model</option>';mRow.style.display='block';document.getElementById('customModelInp').value=ai.customModel||'';}
+  else{const ex=p.models.some(m=>m.id===ai.model);if(!ex&&p.models.length)ai.model=p.models[0].id;sel.innerHTML=p.models.map(m=>`<option value="${m.id}" ${ai.model===m.id?'selected':''}>${m.label}</option>`).join('');mRow.style.display='none';}
+  if(p.hasCustomUrl){uRow.style.display='block';document.getElementById('customUrlInp').value=ai.customUrl||'';}else uRow.style.display='none';
+}
+function saveModelSettings(){
+  ai.model=document.getElementById('modelSel')?.value||ai.model;
+  const p=PROVIDERS[ai.provider];
+  if(p?.hasCustomUrl)ai.customUrl=document.getElementById('customUrlInp')?.value?.trim()||'';
+  if(p?.hasCustomModel)ai.customModel=document.getElementById('customModelInp')?.value?.trim()||'';
+  saveSettings();updateLabel();
+}
+function renderKeysList(){
+  document.getElementById('keysList').innerHTML=Object.entries(PROVIDERS).map(([id,p])=>{
+    const key=ai.keys[id]||'',active=ai.keyActive[id]!==false,isCur=ai.provider===id;
+    const masked=key?key.slice(0,6)+'…'+key.slice(-3):'';
+    return`<div class="key-row ${isCur?'active-prov':''}">
+      <span class="key-icon">${p.icon}</span>
+      <span class="key-name">${p.label.split(' ')[0]}${p.free?'<span class="free-badge" style="margin-left:4px">FREE</span>':''}</span>
+      <span class="key-val">${key?masked:'<span style="color:var(--text4)">No key</span>'}</span>
+      <div class="key-actions">
+        ${key?`<label class="toggle"><input type="checkbox" ${active?'checked':''} onchange="toggleKey('${id}',this.checked)"><span class="toggle-track"></span></label>`:''}
+        <button class="btn btn-xs ${key?'':'btn-blue'}" onclick="expandKey('${id}')">${key?'✏':'+ Add'}</button>
+        ${key?`<button class="btn btn-xs btn-danger" onclick="deleteKey('${id}')">✕</button>`:''}
+      </div>
+    </div>
+    <div class="key-expand" id="kexp_${id}">
+      <div class="key-expand-row">
+        <input class="key-expand-inp" type="password" id="kinp_${id}" placeholder="${p.placeholder}" value="${key}" autocomplete="off">
+        <button class="btn btn-blue btn-sm" onclick="saveKey('${id}')">Save</button>
+        <button class="btn btn-ghost btn-sm" onclick="collapseKey('${id}')">Cancel</button>
+      </div>
+      ${p.freeNote?`<div class="free-note">${p.freeNote}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function expandKey(id){Object.keys(PROVIDERS).forEach(k=>{const e=document.getElementById('kexp_'+k);if(e)e.classList.remove('open');});const el=document.getElementById('kexp_'+id);if(el){el.classList.add('open');setTimeout(()=>document.getElementById('kinp_'+id)?.focus(),50);}}
+function collapseKey(id){const el=document.getElementById('kexp_'+id);if(el)el.classList.remove('open');}
+function saveKey(id){const v=(document.getElementById('kinp_'+id)?.value||'').trim();if(!v){alert('Please enter a key.');return;}ai.keys[id]=v;ai.keyActive[id]=true;saveSettings();collapseKey(id);renderKeysList();updateLabel();updateBanner();}
+function deleteKey(id){if(!confirm(`Delete key for ${PROVIDERS[id]?.label}?`))return;delete ai.keys[id];ai.keyActive[id]=false;saveSettings();renderKeysList();updateLabel();updateBanner();}
+function toggleKey(id,active){ai.keyActive[id]=active;saveSettings();renderKeysList();updateLabel();updateBanner();}
+
+// ── File handling
+function handleFile(file){
+  if(!file)return;
+  rawData='';visionPages=[];inputMode='text';
+  document.getElementById('imgPreview').style.display='none';
+  document.getElementById('fileWarn').innerHTML='';document.getElementById('fileWarn').style.display='none';
+  const ext=file.name.split('.').pop().toLowerCase();
+  const status=document.getElementById('fileStatus');
+  status.style.color='var(--blue)';
+
+  if(['jpg','jpeg','png','webp','gif','bmp','tiff'].includes(ext)){
+    inputMode='vision';
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const dataUrl=e.target.result;
+      visionPages=[{base64:dataUrl.split(',')[1],mimeType:file.type||'image/jpeg'}];
+      status.textContent=`🖼 ${file.name} ready`;
+      const prev=document.getElementById('imgPreview');
+      prev.innerHTML=`<img src="${dataUrl}" style="max-height:160px;max-width:100%;border-radius:8px;border:1px solid var(--border);object-fit:contain">`;
+      prev.style.display='block';
+      checkVisionProvider();
+    };
+    reader.readAsDataURL(file);
+  } else if(ext==='pdf'){
+    handlePDF(file);
+  } else if(ext==='csv'){
+    const reader=new FileReader();
+    reader.onload=e=>{rawData=e.target.result;const rows=rawData.split('\n').filter(l=>l.trim()).length;document.getElementById('pasteArea').value=rawData.split('\n').slice(0,5).join('\n')+(rows>5?'\n…':'');status.textContent=`📄 ${file.name} · ${rows-1} rows`;showSizeWarn(rows-1);};
+    reader.readAsText(file);
+  } else {
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{const wb=XLSX.read(e.target.result,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];rawData=XLSX.utils.sheet_to_csv(ws);const rows=rawData.split('\n').filter(l=>l.trim()).length;document.getElementById('pasteArea').value=rawData.split('\n').slice(0,5).join('\n')+(rows>5?'\n…':'');status.textContent=`📊 ${file.name} · ${rows-1} rows`;showSizeWarn(rows-1);}
+      catch(err){status.style.color='var(--red-text)';status.textContent='⚠ Could not read: '+err.message;}
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+async function handlePDF(file){
+  const status=document.getElementById('fileStatus');
+  status.textContent=`📋 Loading PDF…`;
+  let pdfLib=window.pdfjsLib;
+  if(!pdfLib){for(let i=0;i<40;i++){await new Promise(r=>setTimeout(r,100));if(window.pdfjsLib){pdfLib=window.pdfjsLib;break;}}}
+  if(!pdfLib){status.style.color='var(--red-text)';status.textContent='⚠ PDF library failed. Refresh and try again.';return;}
+  if(!pdfLib.GlobalWorkerOptions.workerSrc)pdfLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
+  try{
+    const buf=await file.arrayBuffer();
+    const pdf=await pdfLib.getDocument({data:buf}).promise;
+    const n=pdf.numPages;status.textContent=`📋 ${n} page(s) — checking type…`;
+    let allText='';
+    for(let p=1;p<=Math.min(n,8);p++){const page=await pdf.getPage(p);const tc=await page.getTextContent();allText+=tc.items.map(i=>i.str).join(' ')+'\n';}
+    if(allText.trim().length>100){
+      inputMode='text';rawData=allText;
+      const rows=allText.split('\n').filter(l=>l.trim()).length;
+      document.getElementById('pasteArea').value=allText.split('\n').slice(0,5).join('\n')+(rows>5?'\n…':'');
+      status.textContent=`📋 ${file.name} · text PDF · ~${rows} lines`;
+      showSizeWarn(rows);
+    } else {
+      inputMode='vision';visionPages=[];
+      const maxP=Math.min(n,6);
+      for(let p=1;p<=maxP;p++){
+        status.textContent=`📋 Rendering page ${p}/${maxP}…`;
+        const page=await pdf.getPage(p);const vp=page.getViewport({scale:2.0});
+        const cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;
+        await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+        visionPages.push({base64:cv.toDataURL('image/jpeg',0.85).split(',')[1],mimeType:'image/jpeg'});
+      }
+      document.getElementById('pasteArea').value=`[Scanned PDF: ${file.name} · ${visionPages.length} page(s) ready]`;
+      status.textContent=`📋 Scanned PDF · ${visionPages.length} page(s) ready`;
+      checkVisionProvider();
+    }
+  }catch(e){status.style.color='var(--red-text)';status.textContent='⚠ PDF error: '+e.message;}
+}
+
+function showSizeWarn(rows){
+  const w=document.getElementById('fileWarn');if(rows<100){w.style.display='none';return;}
+  const isGroq=ai.provider==='groq';
+  w.style.display='block';
+  w.innerHTML=`<div style="font-size:11px;padding:8px 10px;border-radius:7px;border:1px solid;${isGroq?'background:var(--amber-bg);color:var(--amber-text);border-color:var(--amber)':'background:var(--blue-bg);color:var(--blue);border-color:var(--blue-light)'}">${isGroq?`⚠ <strong>${rows} rows with Groq free tier</strong> — will batch-process (~${Math.ceil(rows/30/2)} min). For faster results use <strong>Gemini 2.5 Flash</strong> (also free).`:`ℹ <strong>${rows} rows</strong> — processing in ${Math.ceil(rows/100)} batches automatically.`}</div>`;
+}
+function checkVisionProvider(){
+  const noVision=['groq','mistral','custom'];const w=document.getElementById('fileWarn');
+  if(!noVision.includes(ai.provider)){w.style.display='none';return;}
+  w.style.display='block';
+  w.innerHTML=`<div style="font-size:11px;padding:8px 10px;border-radius:7px;background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-text)">⚠ <strong>${PROVIDERS[ai.provider]?.label}</strong> does not support vision/images. Switch to <strong>Claude</strong>, <strong>GPT-4o</strong>, or <strong>Gemini</strong> in ⚙ Settings.</div>`;
+}
+
+// ── API callers
+async function callOnce(sys,user){
+  const key=getKey(),p=PROVIDERS[ai.provider],model=ai.model;
+  if(ai.provider==='anthropic'){
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model,max_tokens:8192,system:sys,messages:[{role:'user',content:user}]})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+r.status);}
+    const d=await r.json();return d.content.map(b=>b.text||'').join('');
+  } else if(ai.provider==='gemini'){
+    const url=`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents:[{role:'user',parts:[{text:user}]}],generationConfig:{maxOutputTokens:8192}})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+r.status);}
+    const d=await r.json();return d.candidates?.[0]?.content?.parts?.[0]?.text||'';
+  } else {
+    const base=p?.baseUrl||ai.customUrl||'https://api.openai.com/v1',useModel=p?.hasCustomModel?ai.customModel:model;
+    const r=await fetch(`${base}/chat/completions`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:useModel,max_tokens:8192,messages:[{role:'system',content:sys},{role:'user',content:user}]})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+r.status);}
+    const d=await r.json();return d.choices?.[0]?.message?.content||'';
+  }
+}
+
+async function callVision(sys,user,base64,mimeType){
+  const key=getKey(),p=PROVIDERS[ai.provider],model=ai.model;
+  if(ai.provider==='anthropic'){
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model,max_tokens:16384,system:sys,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mimeType,data:base64}},{type:'text',text:user}]}]})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+r.status);}
+    const d=await r.json();return d.content.map(b=>b.text||'').join('');
+  } else if(ai.provider==='gemini'){
+    const url=`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents:[{role:'user',parts:[{inline_data:{mime_type:mimeType,data:base64}},{text:user}]}],generationConfig:{maxOutputTokens:16384}})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+r.status);}
+    const d=await r.json();return d.candidates?.[0]?.content?.parts?.[0]?.text||'';
+  } else if(ai.provider==='openai'||ai.provider==='custom'){
+    const base=p?.baseUrl||ai.customUrl||'https://api.openai.com/v1',useModel=p?.hasCustomModel?ai.customModel:model;
+    const r=await fetch(`${base}/chat/completions`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:useModel,max_tokens:8192,messages:[{role:'system',content:sys},{role:'user',content:[{type:'image_url',image_url:{url:`data:${mimeType};base64,${base64}`}},{type:'text',text:user}]}]})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+r.status);}
+    const d=await r.json();return d.choices?.[0]?.message?.content||'';
+  } else throw new Error((PROVIDERS[ai.provider]?.label||ai.provider)+' does not support vision. Use Claude, GPT-4o, or Gemini.');
+}
+
+async function callStream(sys,msgs,onChunk){
+  const key=getKey(),p=PROVIDERS[ai.provider],model=ai.model;let full='';
+  if(ai.provider==='anthropic'){
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model,max_tokens:4000,system:sys,messages,stream:true})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+r.status);}
+    const reader=r.body.getReader();const dec=new TextDecoder();
+    while(true){const{done,value}=await reader.read();if(done)break;
+      for(const line of dec.decode(value,{stream:true}).split('\n')){if(!line.startsWith('data:'))continue;const d=line.slice(5).trim();if(d==='[DONE]')break;
+        try{const j=JSON.parse(d);if(j.type==='content_block_delta'&&j.delta?.type==='text_delta'){full+=j.delta.text;onChunk(j.delta.text,full);}}catch(e){}}
+    }
+  } else if(ai.provider==='gemini'){
+    const url=`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?key=${key}&alt=sse`;
+    const contents=msgs.map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}));
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents,generationConfig:{maxOutputTokens:4000}})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+r.status);}
+    const reader=r.body.getReader();const dec=new TextDecoder();let buf='';
+    while(true){const{done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});
+      const lines=buf.split('\n');buf=lines.pop()||'';
+      for(const line of lines){if(!line.startsWith('data:'))continue;const d=line.slice(5).trim();if(!d)continue;
+        try{const j=JSON.parse(d);const txt=j.candidates?.[0]?.content?.parts?.[0]?.text||'';if(txt){full+=txt;onChunk(txt,full);}}catch(e){}}
+    }
+  } else {
+    const base=p?.baseUrl||ai.customUrl||'https://api.openai.com/v1',useModel=p?.hasCustomModel?ai.customModel:model;
+    const r=await fetch(`${base}/chat/completions`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:useModel,max_tokens:4000,stream:true,messages:[{role:'system',content:sys},...msgs]})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+r.status);}
+    const reader=r.body.getReader();const dec=new TextDecoder();
+    while(true){const{done,value}=await reader.read();if(done)break;
+      for(const line of dec.decode(value,{stream:true}).split('\n')){if(!line.startsWith('data:'))continue;const d=line.slice(5).trim();if(d==='[DONE]')break;
+        try{const j=JSON.parse(d);const txt=j.choices?.[0]?.delta?.content||'';if(txt){full+=txt;onChunk(txt,full);}}catch(e){}}
+    }
+  }
+  return full;
+}
+
+// ── Parse stock (text/CSV/Excel)
+const BATCH_DELAY={anthropic:0,openai:800,gemini:1500,groq:12000,mistral:1000,custom:1000};
+const BATCH_SIZE={anthropic:150,openai:100,gemini:80,groq:30,mistral:80,custom:80};
+
+function parseVisionCSV(text){
+  const lines=text.trim().split('\n').map(l=>l.trim()).filter(l=>l&&!l.startsWith('```'));
+  if(lines.length<2)return[];
+  const hIdx=lines.findIndex(l=>{const ll=l.toLowerCase();return(ll.includes('type')||ll.includes('grade'))&&(ll.includes('price')||ll.includes('thickness'));});
+  if(hIdx===-1)return[];
+  const cols=lines[hIdx].split(',').map(c=>c.trim().toLowerCase().replace(/[^a-z]/g,''));
+  const get=(row,name)=>{const i=cols.indexOf(name);return i>=0?(row[i]||'').trim():'';};
+  return lines.slice(hIdx+1).map(line=>{
+    const row=line.split(',');if(row.length<3)return null;
+    const price=parseFloat(get(row,'price'))||null,type=get(row,'type')||get(row,'producttype'),grade=get(row,'grade');
+    if(!type&&!grade&&!price)return null;
+    return{product_type:type||'—',grade:grade||'—',thickness:parseFloat(get(row,'thickness'))||null,width:parseFloat(get(row,'width'))||null,length:parseFloat(get(row,'length'))||null,quantity:parseFloat(get(row,'qty'))||null,unit:get(row,'unit')||'ton',buy_price:price,currency:get(row,'currency')||'TRY',supplier:get(row,'supplier')||null,location:null,origin:get(row,'origin')||'Turkey',heat_no:null,notes:get(row,'notes')||null};
+  }).filter(Boolean);
+}
+
+function extractJSON(text){
+  if(!text||!text.trim())throw new Error('Empty response from AI');
+  let clean=text.replace(/^[\s\S]*?```(?:json|JSON)?\s*/,'').replace(/```[\s\S]*$/,'').trim();
+  if(!clean)clean=text.trim();
+  try{return JSON.parse(clean);}catch(e){}
+  const objM=clean.match(/\{[\s\S]*\}/);if(objM){try{return JSON.parse(objM[0]);}catch(e){}}
+  // Truncation recovery
+  const start=clean.indexOf('"items"');
+  if(start!==-1){const partial=clean.slice(start);const items=[];let depth=0,inStr=false,esc=false,objStart=-1;
+    for(let i=0;i<partial.length;i++){const c=partial[i];if(esc){esc=false;continue;}if(c==='\\'&&inStr){esc=true;continue;}if(c==='"'&&!esc)inStr=!inStr;if(inStr)continue;
+      if(c==='{'){if(depth===0)objStart=i;depth++;}else if(c==='}'){depth--;if(depth===0&&objStart!==-1){try{const o=JSON.parse(partial.slice(objStart,i+1));if(o.product_type||o.grade)items.push(o);}catch(e){}objStart=-1;}}
+    }
+    if(items.length){const lm=clean.match(/"detected_language"\s*:\s*"([^"]+)"/);return{detected_language:lm?lm[1]:'Auto',column_mapping:{},items,warnings:[`Truncated — recovered ${items.length} items`]};}
+  }
+  throw new Error('AI returned invalid JSON — response may have been cut off');
+}
+
+async function parseStock(){
+  if(!hasKey())return;
+  const btn=document.getElementById('parseBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Parsing…';
+
+  if(inputMode==='vision'){await parseVision();btn.disabled=false;btn.innerHTML='🤖 Parse with AI';return;}
+
+  const data=(rawData||document.getElementById('pasteArea').value||'').trim();
+  if(!data){alert('Upload a file or paste data first.');btn.disabled=false;btn.innerHTML='🤖 Parse with AI';return;}
+
+  const allLines=data.split('\n').filter(l=>l.trim());
+  const header=allLines[0]||'',dataRows=allLines.slice(1);
+  const CHUNK=BATCH_SIZE[ai.provider]||50,DELAY=BATCH_DELAY[ai.provider]||1000;
+  const chunks=[];for(let i=0;i<dataRows.length;i+=CHUNK)chunks.push(dataRows.slice(i,i+CHUNK));
+
+  let allItems=[],language='Auto',mapping={},warnings=[],failed=0;
+  const SYS=`You are a steel stock data parser. Return ONLY valid JSON, no markdown fences, no explanation text.`;
+
+  for(let ci=0;ci<chunks.length;ci++){
+    const isFirst=ci===0;
+    btn.innerHTML=`<span class="spinner"></span> Batch ${ci+1}/${chunks.length}…`;
+    const csv=[header,...chunks[ci]].join('\n');
+    const prompt=isFirst
+      ?`Parse this steel stock data. Columns may be in English, Turkish, Croatian, German, French etc.
+Map each row to: product_type,grade,thickness(mm),width(mm),length(mm),quantity,unit(ton/kg/pcs/m),buy_price,currency(USD/EUR/GBP/TRY),supplier,location,origin,heat_no,notes.
+Turkish: Kalite=grade,Kalınlık=thickness,En=width,Boy=length,Miktar=qty,Fiyat=buy_price,Tedarikçi=supplier,Menşei=origin
+Croatian: Kvaliteta=grade,Debljina=thickness,Širina=width,Dužina=length,Količina=qty
+Return ONLY: {"detected_language":"…","column_mapping":{"orig":"field"},"items":[{"product_type":"Plate","grade":"S355","thickness":10,"width":1500,"length":6000,"quantity":50,"unit":"ton","buy_price":620,"currency":"USD","supplier":null,"location":null,"origin":"Turkey","heat_no":null,"notes":null}],"warnings":[]}
+Data:\n${csv}`
+      :`Parse using mapping ${JSON.stringify(mapping)}.
+Return ONLY: {"items":[{"product_type":…,"grade":…,"thickness":…,"width":…,"length":…,"quantity":…,"unit":…,"buy_price":…,"currency":…,"supplier":…,"location":…,"origin":…,"heat_no":…,"notes":…}]}
+Data:\n${csv}`;
+
+    try{
+      const text=await callOnce(SYS,prompt);
+      const parsed=extractJSON(text);
+      if(isFirst){language=parsed.detected_language||'Auto';mapping=parsed.column_mapping||{};if(parsed.warnings)warnings=[...warnings,...parsed.warnings];}
+      allItems=[...allItems,...(parsed.items||[])];
+    }catch(e){failed++;warnings.push(`Batch ${ci+1} failed: ${e.message}`);}
+
+    if(ci<chunks.length-1&&DELAY>0){
+      for(let t=DELAY;t>0;t-=500){btn.innerHTML=`<span class="spinner"></span> Batch ${ci+1} done · Next in ${Math.ceil(t/1000)}s…`;await new Promise(r=>setTimeout(r,Math.min(500,t)));}
+    }
+  }
+
+  if(!allItems.length&&failed===chunks.length){alert(`All batches failed.\n\nCheck your API key in ⚙ Settings.\n\n${warnings.join('\n')}`);}
+  else{
+    if(failed>0)warnings.unshift(`${failed}/${chunks.length} batches failed — ${allItems.length} rows recovered`);
+    parsedItems=allItems;
+    renderResults({detected_language:language,column_mapping:mapping,items:allItems,warnings});
+    updateCtx();
+  }
+  btn.disabled=false;btn.innerHTML='🤖 Parse with AI';
+}
+
+async function parseVision(){
+  if(!visionPages.length){alert('No image/scanned PDF loaded.');return;}
+  const btn=document.getElementById('parseBtn');
+  const SYS=`You are a steel stock data extractor with vision. Return ONLY raw CSV data. No markdown. No backticks. No explanation. First line must be the header.`;
+  const USER=`Extract ALL steel stock rows as CSV.
+
+Output this exact header on line 1:
+type,grade,thickness,width,length,qty,price,currency,supplier,notes
+
+RULES:
+- type = product prefix (PPG,GZR,GZR-P,GCR,GHR,GZRS,Plate,Coil etc)
+- grade = steel grade (DX51D,DX51D+Z,S355 etc)
+- thickness = mm number (0.40, 1.2, 10)
+- width = mm number (1000, 1200, 1500)
+- length = mm or empty if coil
+- qty = empty if not shown
+- price = the number shown next to the product code
+- currency = TRY for Turkish lists
+- supplier = the section header (TEZCAN, TAT, ATAKAS etc)
+- notes = RAL code or coating info
+
+CODE PARSING: "PPG-DX51D-GZ0-RAL3009-0.40X1000X0" → PPG,DX51D,0.40,1000,,,7510,TRY,TEZCAN,GZ0-RAL3009
+
+Output EVERY row. No limit. Start with the header line now:`;
+
+  let allItems=[],warnings=[],lastText='';
+  for(let i=0;i<visionPages.length;i++){
+    btn.innerHTML=`<span class="spinner"></span> Reading page ${i+1}/${visionPages.length}…`;
+    try{
+      const text=await callVision(SYS,USER,visionPages[i].base64,visionPages[i].mimeType);
+      lastText=text;console.log('Vision response p'+(i+1)+':',text.slice(0,200));
+      const items=parseVisionCSV(text);
+      if(items.length)allItems=[...allItems,...items];
+      else warnings.push(`Page ${i+1}: 0 rows parsed. Response: ${text.slice(0,80)}`);
+    }catch(e){warnings.push(`Page ${i+1}: ${e.message}`);console.error(e);}
+    if(i<visionPages.length-1)await new Promise(r=>setTimeout(r,1500));
+  }
+
+  if(allItems.length){parsedItems=allItems;renderResults({detected_language:'Vision (auto)',column_mapping:{},items:allItems,warnings});updateCtx();}
+  else{alert(`❌ Could not extract data.\n\n${warnings.map(w=>'• '+w).join('\n')}\n\nTips:\n• Groq/Mistral don't support images — switch to Claude or Gemini\n• Gemini 503 = high demand, retry in ~1 min\n• Try a clearer/higher-resolution image`);}
+}
+
+// ── Results
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function renderResults(parsed){
+  const items=parsed.items||[];if(!items.length)return;
+  document.getElementById('resultsTitle').textContent=`✓ ${items.length} item${items.length!==1?'s':''} detected · ${parsed.detected_language||''}`;
+  const mapping=parsed.column_mapping||{};
+  document.getElementById('mappingInfo').innerHTML=Object.entries(mapping).length?'Columns: '+Object.entries(mapping).map(([o,m])=>`<code style="background:rgba(0,0,0,.1);padding:0 4px;border-radius:3px;font-size:9px">${o}→${m}</code>`).join(' '):'';
+  document.getElementById('resultsWarnings').innerHTML=(parsed.warnings||[]).map(w=>`<span class="warn-pill">⚠ ${esc(w)}</span>`).join(' ');
+  document.getElementById('resultsBody').innerHTML=items.map((it,i)=>`
+    <tr><td><input type="checkbox" class="ai-check row-check" data-idx="${i}" checked></td>
+    <td>${esc(it.product_type||'—')}</td><td class="grade-cell">${esc(it.grade||'—')}</td>
+    <td>${it.thickness??'—'}</td><td>${it.width??'—'}</td><td>${it.length??'—'}</td>
+    <td>${it.quantity??'—'}</td><td>${esc(it.unit||'ton')}</td>
+    <td class="price-cell">${it.buy_price??'—'}</td><td>${esc(it.currency||'—')}</td>
+    <td>${esc(it.supplier||'—')}</td><td>${esc(it.origin||'—')}</td>
+    <td style="max-width:110px;overflow:hidden;text-overflow:ellipsis">${esc(it.notes||'')}</td></tr>`).join('');
+  document.getElementById('checkAll').checked=true;
+  document.getElementById('resultsPanel').style.display='block';
+  document.getElementById('resultsPanel').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function selectAll(){document.querySelectorAll('.row-check').forEach(c=>c.checked=true);document.getElementById('checkAll').checked=true;}
+function toggleAll(v){document.querySelectorAll('.row-check').forEach(c=>c.checked=v);}
+function getSelected(){const out=[];document.querySelectorAll('.row-check').forEach(c=>{if(c.checked&&parsedItems[+c.dataset.idx])out.push(parsedItems[+c.dataset.idx]);});return out;}
+
+function importSelected(){
+  const items=getSelected();if(!items.length){alert('Select at least one item.');return;}
+  const mapped=items.map(it=>({product_type:it.product_type||'',grade:it.grade||'',thickness:Number(it.thickness)||null,width:Number(it.width)||null,length:Number(it.length)||null,quantity:Number(it.quantity)||0,unit:it.unit||'ton',buy_price:Number(it.buy_price)||0,currency:it.currency||'USD',supplier:it.supplier||'',location:'',origin:it.origin||'',heat_number:it.heat_no||'',notes:it.notes||'',available:'yes'}));
+  localStorage.setItem('sp_ai_import_queue',JSON.stringify(mapped));
+  if(confirm(`${mapped.length} item(s) ready.\n\nClick OK to go to Stock page — they will be loaded into your active list automatically.`))window.location.href='stock.html?ai_import=1';
+}
+
+function buildOffer(){
+  const items=getSelected();if(!items.length){alert('Select at least one item.');return;}
+  localStorage.setItem('sp_ai_offer_queue',JSON.stringify(items));
+  if(confirm(`${items.length} item(s) selected for Offer Builder.\n\nClick OK to go to Stock page.`))window.location.href='stock.html?ai_offer=1';
+}
+
+// ── Chat
+function getStockCtx(){
+  if(!parsedItems.length)return'No stock imported yet on this page.';
+  return`Imported stock (${parsedItems.length} items total):\n`+parsedItems.slice(0,80).map(s=>`${s.product_type||'?'} | ${s.grade||'?'} | ${s.thickness??''}×${s.width??''}×${s.length??''} mm | ${s.quantity||''} ${s.unit||'ton'} | ${s.buy_price||''} ${s.currency||''} | Supplier: ${s.supplier||'?'} | Origin: ${s.origin||'?'}`).join('\n');
+}
+
+function buildSysPrompt(){
+  return`You are an expert steel trade assistant. Help with:
+- Answering questions about the imported stock (qty, prices, availability)
+- Grade conversions: EN/DIN ↔ ASTM ↔ JIS/KS ↔ GB — show as clear text tables
+- Unit conversions, Incoterms, freight estimates, LC payment clauses
+- Drafting professional offer emails in English, French, or Arabic
+- Market insights and pricing context
+
+BUILDING OFFERS — FOLLOW EXACTLY:
+When asked to BUILD/CREATE/MAKE/GENERATE an offer or quote, output this EXACT format after a brief summary:
+
+\`\`\`offer-build
+{"client_company":null,"client_contact":null,"client_email":null,"client_phone":null,"payment_terms":"LC at sight","delivery":"3-4 weeks from order","incoterms":"FOB Algiers","origin":"Turkey","currency":"USD","notes":null,"lines":[{"grade":"S355","type":"Plate","thickness":10,"width":1500,"length":6000,"quantity":50,"unit":"ton","buy_price":620,"margin":15}]}
+\`\`\`
+
+The block MUST start with exactly \`\`\`offer-build on its own line and end with \`\`\` on its own line.
+
+CURRENT STOCK:
+${getStockCtx()}`;
+}
+
+function addMsg(role,content,extra){
+  const body=document.getElementById('chatBody');
+  const wrap=document.createElement('div');
+  wrap.style.cssText='display:flex;flex-direction:column;align-items:'+(role==='user'?'flex-end':'flex-start');
+  const div=document.createElement('div');div.className='chat-msg '+role;div.innerHTML=fmtMsg(content);wrap.appendChild(div);
+  if(extra)wrap.appendChild(extra);body.appendChild(wrap);wrap.scrollIntoView({behavior:'smooth',block:'end'});
+  return{bubble:div,wrap};
+}
+function fmtMsg(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`([^`]+)`/g,'<code style="background:rgba(0,0,0,.1);padding:1px 4px;border-radius:3px;font-size:10px;font-family:var(--mono)">$1</code>').replace(/\n/g,'<br>');}
+function clearChat(){chatMsgs=[];document.getElementById('chatBody').innerHTML='<div class="chat-msg ai" style="font-size:11px;color:var(--text3)">Ask anything about your stock, or say "Build an offer for all S355 plates for ABC Trading, CIF Rotterdam" to auto-fill the Offer Builder.</div>';}
+function updateCtx(){const n=parsedItems.length;document.getElementById('chatCtxLabel').textContent=n?`${n} items loaded`:'No stock loaded';document.getElementById('ctxLabel').textContent=n?`${n} items`:'';}
+
+async function sendChat(){
+  if(chatStreaming)return;if(!getKey()){openSettings();return;}
+  const inp=document.getElementById('chatInp');const text=(inp.value||'').trim();if(!text)return;
+  inp.value='';document.getElementById('chatSendBtn').disabled=true;chatStreaming=true;
+
+  addMsg('user',text);chatMsgs.push({role:'user',content:text});
+
+  const body=document.getElementById('chatBody');
+  const typing=document.createElement('div');typing.className='chat-msg ai';
+  typing.innerHTML='<div class="typing"><span></span><span></span><span></span></div>';
+  body.appendChild(typing);typing.scrollIntoView({behavior:'smooth',block:'end'});
+
+  let fullText='';
+  try{
+    typing.remove();
+    const{bubble,wrap}=addMsg('ai','');
+    fullText=await callStream(buildSysPrompt(),chatMsgs,(chunk,full)=>{
+      const display=full.replace(/```offer-build[\s\S]*?```/g,'').trim();
+      bubble.innerHTML=fmtMsg(display||'…');bubble.scrollIntoView({behavior:'smooth',block:'end'});
+    });
+
+    // Detect offer-build block
+    const offerMatch=fullText.match(/```offer-build\s*([\s\S]*?)```/);
+    if(offerMatch){
+      try{
+        const offerData=JSON.parse(offerMatch[1].trim());
+        localStorage.setItem('sp_ai_offer_queue',JSON.stringify(offerData.lines||[]));
+        localStorage.setItem('sp_ai_offer_meta',JSON.stringify({client_company:offerData.client_company,client_contact:offerData.client_contact,client_email:offerData.client_email,payment_terms:offerData.payment_terms,delivery:offerData.delivery,incoterms:offerData.incoterms,origin:offerData.origin,currency:offerData.currency,notes:offerData.notes}));
+        const btn=document.createElement('button');btn.className='offer-action-btn';btn.innerHTML='📄 Open Offer Builder →';btn.onclick=()=>{window.location.href='stock.html?ai_offer=1';};
+        const note=document.createElement('span');note.className='offer-success-note';
+        const n=(offerData.lines||[]).length;note.textContent=`✓ Offer ready with ${n} line${n!==1?'s':''} — click to open in Stock`;
+        wrap.appendChild(btn);wrap.appendChild(note);
+        bubble.innerHTML=fmtMsg(fullText.replace(/```offer-build[\s\S]*?```/g,'').trim()||'Offer built successfully.');
+      }catch(e){console.warn('Offer parse error:',e);}
+    }
+    chatMsgs.push({role:'assistant',content:fullText});
+  }catch(e){
+    typing.remove();
+    addMsg('ai',`⚠ Error: ${e.message}\n\nCheck your API key in ⚙ Settings.`);
+  }
+
+  chatStreaming=false;document.getElementById('chatSendBtn').disabled=false;document.getElementById('chatInp').focus();
+}
+
+function chatQuick(text){document.getElementById('chatInp').value=text;sendChat();}
+
+// ── Init
+document.addEventListener('DOMContentLoaded',()=>{
+  loadSettings();updateLabel();updateBanner();updateCtx();
+});
+</script>
+</body>
+</html>
