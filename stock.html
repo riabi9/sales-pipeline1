@@ -6,7 +6,30 @@
 <title>Steel Platform — Stock & Offer</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+// Load PDF.js dynamically with fallback CDN URLs
+(function(){
+  const PDFJS_URLS=[
+    'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.min.js',
+    'https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js',
+  ];
+  function tryLoad(urls,i){
+    if(i>=urls.length){console.warn('PDF.js failed to load from all CDNs');return;}
+    const s=document.createElement('script');
+    s.src=urls[i];
+    s.onload=()=>{
+      if(window.pdfjsLib){
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc=urls[i].replace('pdf.min.js','pdf.worker.min.js');
+        console.log('PDF.js loaded from',urls[i]);
+      }
+    };
+    s.onerror=()=>tryLoad(urls,i+1);
+    document.head.appendChild(s);
+  }
+  tryLoad(PDFJS_URLS,0);
+})();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -642,10 +665,10 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 
       <!-- API Key Banner -->
       <div class="ai-key-banner" id="aiKeyBanner" style="display:none">
-        <span class="ai-key-text">🔑 Paste your Claude API key to activate AI import. Saved in your browser only.</span>
+        <span class="ai-key-text">🔑 Paste your API key to activate. Or open <button onclick="openAISettings()" style="background:none;border:none;color:var(--amber-text);font-weight:700;cursor:pointer;text-decoration:underline;font-size:12px;padding:0">⚙ Settings</button> to manage all keys.</span>
         <div class="ai-key-row">
-          <input class="ai-key-inp" id="aiKeyInput" type="password" placeholder="sk-ant-api03-…" autocomplete="off">
-          <button class="ai-key-btn" onclick="aiSaveKey()">Save</button>
+          <input class="ai-key-inp" id="aiKeyInput" type="password" placeholder="Paste API key here…" autocomplete="off">
+          <button class="ai-key-btn" onclick="aiSaveBannerKey()">Save</button>
         </div>
       </div>
 
@@ -1968,9 +1991,9 @@ const AI_PROVIDERS = {
   gemini: {
     label:'Google Gemini', icon:'🔵', keyLabel:'Google AI Studio Key', keyPlaceholder:'AIza…',
     models:[
-      {id:'gemini-2.0-flash-exp', label:'Gemini 2.0 Flash — FREE ✓'},
-      {id:'gemini-1.5-flash',     label:'Gemini 1.5 Flash — FREE ✓'},
-      {id:'gemini-1.5-pro',       label:'Gemini 1.5 Pro'},
+      {id:'gemini-2.5-flash',      label:'Gemini 2.5 Flash — FREE ✓ (Best)'},
+      {id:'gemini-2.5-flash-lite',  label:'Gemini 2.5 Flash Lite — FREE ✓ (fastest)'},
+      {id:'gemini-2.5-pro',         label:'Gemini 2.5 Pro — paid'},
     ], free:true, freeNote:'Free tier — get key at <a href="https://aistudio.google.com" target="_blank" style="color:var(--green-text)">aistudio.google.com</a>'
   },
   groq: {
@@ -2063,6 +2086,11 @@ function renderAISettingsModal(){
 
 function aiSelectProvider(id){
   aiState.provider=id;
+  // Always reset model to first valid model for the new provider
+  const prov=AI_PROVIDERS[id];
+  if(prov && prov.models && prov.models.length){
+    aiState.model=prov.models[0].id;
+  }
   aiSavePersist();
   renderAIModelDropdown();
   renderAIKeysList();
@@ -2080,6 +2108,9 @@ function renderAIModelDropdown(){
     customMod.style.display='block';
     document.getElementById('aiCustomModel').value=aiState.customModel||'';
   } else {
+    // Check if current model exists in this provider's list
+    const modelExists=prov.models.some(m=>m.id===aiState.model);
+    if(!modelExists && prov.models.length) aiState.model=prov.models[0].id;
     sel.innerHTML=prov.models.map(m=>`<option value="${m.id}" ${aiState.model===m.id?'selected':''}>${m.label}</option>`).join('');
     customMod.style.display='none';
   }
@@ -2148,6 +2179,8 @@ function aiSaveKey(id){
   aiCollapseKey(id);
   renderAIKeysList();
   aiUpdateProviderLabel();
+  // Hide banner if this is the active provider
+  if(id===aiState.provider) document.getElementById('aiKeyBanner').style.display='none';
 }
 function aiDeleteKey(id){
   if(!confirm(`Delete API key for ${AI_PROVIDERS[id]?.label}? This cannot be undone.`))return;
@@ -2220,7 +2253,7 @@ async function aiCall(systemPrompt, messages, onChunk){
     const res=await fetch(url,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({systemInstruction:{parts:[{text:systemPrompt}]},contents,generationConfig:{maxOutputTokens:2000}})
+      body:JSON.stringify({systemInstruction:{parts:[{text:systemPrompt}]},contents,generationConfig:{maxOutputTokens:4000}})
     });
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+res.status);}
     const reader=res.body.getReader();const decoder=new TextDecoder();let full='';let buf='';
@@ -2270,7 +2303,7 @@ async function aiCallOnce(systemPrompt, userMessage){
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model,max_tokens:4000,system:systemPrompt,messages:[{role:'user',content:userMessage}]})
+      body:JSON.stringify({model,max_tokens:8192,system:systemPrompt,messages:[{role:'user',content:userMessage}]})
     });
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+res.status);}
     const data=await res.json();
@@ -2282,7 +2315,7 @@ async function aiCallOnce(systemPrompt, userMessage){
     const res=await fetch(url,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({systemInstruction:{parts:[{text:systemPrompt}]},contents:[{role:'user',parts:[{text:userMessage}]}],generationConfig:{maxOutputTokens:4000}})
+      body:JSON.stringify({systemInstruction:{parts:[{text:systemPrompt}]},contents:[{role:'user',parts:[{text:userMessage}]}],generationConfig:{maxOutputTokens:8192}})
     });
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+res.status);}
     const data=await res.json();
@@ -2294,7 +2327,7 @@ async function aiCallOnce(systemPrompt, userMessage){
     const res=await fetch(`${baseUrl}/chat/completions`,{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body:JSON.stringify({model:useModel,max_tokens:4000,messages:[{role:'system',content:systemPrompt},{role:'user',content:userMessage}]})
+      body:JSON.stringify({model:useModel,max_tokens:8192,messages:[{role:'system',content:systemPrompt},{role:'user',content:userMessage}]})
     });
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+res.status);}
     const data=await res.json();
@@ -2314,11 +2347,15 @@ function aiInitView(){
   const n=list?list.items.length:0;
   document.getElementById('aiChatContext').textContent=`${list?list.name:'No list'} · ${n} item${n!==1?'s':''} loaded`;
 }
-function aiSaveKey(){
+// Banner quick-save (distinct from settings modal aiSaveKey(id))
+function aiSaveBannerKey(){
   const v=(document.getElementById('aiKeyInput').value||'').trim();
   if(!v){alert('Please paste an API key first.');return;}
   aiState.keys[aiState.provider]=v;
+  aiState.keyActive[aiState.provider]=true;
   aiSavePersist();
+  aiUpdateProviderLabel();
+  document.getElementById('aiKeyInput').value='';
   document.getElementById('aiKeyBanner').style.display='none';
 }
 function aiCheckKey(){
@@ -2402,10 +2439,23 @@ function aiHandleImageFile(file){
 async function aiHandlePDFFile(file){
   const status=document.getElementById('aiFileStatus');
   status.textContent=`📄 Loading ${file.name}…`;
+  // Wait up to 3s for PDF.js to load dynamically
   let pdfLib=window.pdfjsLib;
-  if(!pdfLib&&typeof pdfjsLib!=='undefined') pdfLib=window.pdfjsLib=pdfjsLib;
-  if(!pdfLib){status.style.color='var(--red-text)';status.textContent='⚠ PDF library not loaded. Refresh and try again.';return;}
-  pdfLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  if(!pdfLib){
+    for(let i=0;i<30;i++){
+      await new Promise(r=>setTimeout(r,100));
+      if(window.pdfjsLib){pdfLib=window.pdfjsLib;break;}
+    }
+  }
+  if(!pdfLib){
+    status.style.color='var(--red-text)';
+    status.textContent='⚠ PDF library failed to load. Try refreshing the page or use a different browser.';
+    return;
+  }
+  // Worker is already set by dynamic loader, but set fallback just in case
+  if(!pdfLib.GlobalWorkerOptions.workerSrc){
+    pdfLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
+  }
   try{
     const arrayBuffer=await file.arrayBuffer();
     const pdf=await pdfLib.getDocument({data:arrayBuffer}).promise;
@@ -2478,7 +2528,7 @@ async function aiCallOnceVision(systemPrompt, userMsg, base64, mimeType){
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:aiState.model,max_tokens:4000,system:systemPrompt,
+      body:JSON.stringify({model:aiState.model,max_tokens:8192,system:systemPrompt,
         messages:[{role:'user',content:[
           {type:'image',source:{type:'base64',media_type:mimeType,data:base64}},
           {type:'text',text:userMsg}
@@ -2496,7 +2546,7 @@ async function aiCallOnceVision(systemPrompt, userMsg, base64, mimeType){
       body:JSON.stringify({
         systemInstruction:{parts:[{text:systemPrompt}]},
         contents:[{role:'user',parts:[{inline_data:{mime_type:mimeType,data:base64}},{text:userMsg}]}],
-        generationConfig:{maxOutputTokens:4000}
+        generationConfig:{maxOutputTokens:16384}
       })
     });
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+res.status);}
@@ -2509,7 +2559,7 @@ async function aiCallOnceVision(systemPrompt, userMsg, base64, mimeType){
     const res=await fetch(`${baseUrl}/chat/completions`,{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body:JSON.stringify({model,max_tokens:4000,messages:[
+      body:JSON.stringify({model,max_tokens:8192,messages:[
         {role:'system',content:systemPrompt},
         {role:'user',content:[
           {type:'image_url',image_url:{url:`data:${mimeType};base64,${base64}`}},
@@ -2526,43 +2576,77 @@ async function aiCallOnceVision(systemPrompt, userMsg, base64, mimeType){
   }
 }
 
+// Parse CSV returned by vision AI into stock items
+function aiParseVisionCSV(text){
+  const lines=text.trim().split('\n').map(l=>l.trim()).filter(l=>l);
+  if(lines.length<2) return [];
+  // Find header line
+  const headerIdx=lines.findIndex(l=>l.toLowerCase().includes('type')&&l.toLowerCase().includes('grade'));
+  if(headerIdx===-1) return [];
+  const cols=lines[headerIdx].split(',').map(c=>c.trim().toLowerCase());
+  const items=[];
+  for(let i=headerIdx+1;i<lines.length;i++){
+    const row=lines[i].split(',');
+    if(row.length<3) continue;
+    const get=(name)=>{
+      const idx=cols.indexOf(name);
+      return idx>=0?(row[idx]||'').trim():'';
+    };
+    const price=parseFloat(get('price'))||null;
+    const thickness=parseFloat(get('thickness'))||null;
+    const width=parseFloat(get('width'))||null;
+    const length=parseFloat(get('length'))||null;
+    const type=get('type')||get('product_type');
+    const grade=get('grade');
+    if(!type&&!grade&&!price) continue; // skip empty rows
+    items.push({
+      product_type:type||'—',
+      grade:grade||'—',
+      thickness,width,length,
+      quantity:parseFloat(get('qty'))||null,
+      unit:'ton',
+      buy_price:price,
+      currency:get('currency')||'TRY',
+      supplier:get('supplier')||null,
+      location:null,
+      origin:'Turkey',
+      heat_no:null,
+      notes:get('notes')||null
+    });
+  }
+  return items;
+}
+
 async function aiParseWithVision(){
   if(!aiVisionPages.length){alert('No image data loaded.');return;}
   const btn=document.getElementById('aiParseBtn');
   btn.disabled=true;
 
-  const sysPrompt=`You are an expert steel stock data extractor with vision. You must return ONLY a valid JSON object. No markdown. No explanation. No text before or after the JSON.`;
+  // CSV-based extraction — 3x more compact than JSON, handles 100+ rows
+  const sysPrompt=`You are a steel stock data extractor with vision. Return ONLY raw CSV. No markdown. No backticks. No explanation. First line must be the header exactly as given.`;
 
-  const userMsg=`This image shows a steel products price list or stock list. It may have multiple supplier sections or columns side by side.
+  const userMsg=`Extract ALL steel stock rows from this image as CSV.
 
-TASK: Extract every single row of stock data from this image.
+Output this header on line 1, then one row per product:
+type,grade,thickness,width,length,qty,price,currency,supplier,notes
 
-PRODUCT CODE PATTERNS you may see:
-- Turkish format: "PPG-DX51D-GZ0-RAL3009-0.40X1000X0" → type=PPG, grade=DX51D, thickness=0.40, width=1000
-- "GZR-P-DX51D+Z-0.38-1000-0-Z050" → type=GZR-P, grade=DX51D+Z, thickness=0.38, width=1000
-- "GHR DX51D+Z 2,01X1004" → type=GHR, grade=DX51D+Z, thickness=2.01, width=1004
-- The number after X is width in mm, the last number is length (0 or blank = coil)
-- Supplier names appear as section headers (TEZCAN, TAT, ATAKAS, etc.)
+RULES:
+- type = product prefix (PPG,GZR,GZR-P,GCR,GHR,GZRS,Plate,Coil etc)
+- grade = steel grade (DX51D,DX51D+Z,S355,A36 etc)
+- thickness = mm number (0.40, 1.2, 10)
+- width = mm number (1000, 1200, 1500)
+- length = mm or empty if coil
+- qty = empty if not shown
+- price = the number shown next to the product
+- currency = TRY for Turkish lists, USD otherwise
+- supplier = section header this row belongs to (TEZCAN,TAT,ATAKAS etc)
+- notes = RAL code or coating info if present
 
-MAP each row to this schema:
-- product_type: the prefix code (PPG, GZR, GZR-P, GCR, GHR, GZRS, etc.)
-- grade: steel grade (DX51D, DX51D+Z, S250GD, etc.)
-- thickness: number in mm (e.g. 0.40, 0.50, 1.2)
-- width: number in mm (e.g. 1000, 1200, 1250)
-- length: number in mm or null if coil (0 = null)
-- quantity: null (not shown)
-- unit: "ton"
-- buy_price: the number shown next to the product code
-- currency: "TRY" (if Turkish list) or detect from context
-- supplier: the section header this row belongs to (e.g. "TEZCAN", "TAT", "ATAKAS")
-- origin: "Turkey"
-- heat_no: null
-- notes: any RAL color code or coating spec from the product code
+CODE PARSING: "PPG-DX51D-GZ0-RAL3009-0.40X1000X0" → PPG,DX51D,0.40,1000,,, 7510,TRY,TEZCAN,GZ0-RAL3009
 
-Return ONLY this JSON:
-{"detected_language":"Turkish","column_mapping":{"product_code":"product_type+grade+dimensions","price":"buy_price"},"items":[{"product_type":"PPG","grade":"DX51D","thickness":0.40,"width":1000,"length":null,"quantity":null,"unit":"ton","buy_price":7510,"currency":"TRY","supplier":"TEZCAN","location":null,"origin":"Turkey","heat_no":null,"notes":"GZ0-RAL3009"}],"warnings":[]}`;
+Output EVERY row. No row limit. Start with the header line now:`;
 
-  let allItems=[],detectedLanguage='Turkish',columnMapping={},warnings=[];
+  let allItems=[],detectedLanguage='Auto',columnMapping={type:'product_type',grade:'grade',price:'buy_price'},warnings=[];
   let lastRawText='';
 
   for(let i=0;i<aiVisionPages.length;i++){
@@ -2570,14 +2654,11 @@ Return ONLY this JSON:
     try{
       const text=await aiCallOnceVision(sysPrompt,userMsg,aiVisionPages[i].base64,aiVisionPages[i].mimeType);
       lastRawText=text;
-      console.log('Vision AI raw response (page '+(i+1)+'):', text.slice(0,500));
-      const parsed=aiExtractJSON(text);
-      if(i===0){
-        detectedLanguage=parsed.detected_language||'Turkish';
-        columnMapping=parsed.column_mapping||{};
-        if(parsed.warnings) warnings=[...warnings,...parsed.warnings];
-      }
-      allItems=[...allItems,...(parsed.items||[])];
+      console.log('Vision CSV response (page '+(i+1)+'):', text.slice(0,300));
+      // Parse CSV response
+      const csvItems=aiParseVisionCSV(text);
+      if(csvItems.length) allItems=[...allItems,...csvItems];
+      else warnings.push('Page '+(i+1)+': no rows extracted from CSV');
     }catch(e){
       console.error('Vision page '+(i+1)+' error:',e);
       warnings.push(`Error on page ${i+1}: ${e.message}`);
@@ -2613,16 +2694,65 @@ Return ONLY this JSON:
 // Robustly extract JSON even if AI adds extra text around it
 function aiExtractJSON(text){
   if(!text||!text.trim()) throw new Error('Empty response — check your API key and provider in ⚙ settings');
-  let clean=text.replace(/```json\n?|```\n?/g,'').trim();
-  // Direct parse
+
+  // Step 1: Aggressively strip ALL markdown code fences (Gemini often adds these)
+  // Handles: ```json, ```JSON, ``` json, ``` alone, with/without newlines/spaces
+  let clean=text
+    .replace(/^[\s\S]*?```(?:json|JSON)?\s*/,'')  // strip everything before and including opening fence
+    .replace(/```[\s\S]*$/,'')                      // strip closing fence and everything after
+    .trim();
+
+  // Step 2: If no fences found, use original text
+  if(!clean) clean=text.trim();
+
+  // Step 3: Try direct parse
   try{return JSON.parse(clean);}catch(e){}
-  // Find largest JSON object
+
+  // Step 4: Find outermost JSON object (handles extra text before/after)
   const objM=clean.match(/\{[\s\S]*\}/);
   if(objM){try{return JSON.parse(objM[0]);}catch(e){}}
-  // Find JSON array → wrap as items
+
+  // Step 5: Handle TRUNCATED JSON — AI hits token limits mid-response
+  // Try to recover all complete JSON objects from the items array
+  const itemsStart=clean.indexOf('"items"');
+  if(itemsStart!==-1){
+    const partial=clean.slice(itemsStart);
+    const completeItems=[];
+    let depth=0, inStr=false, esc=false, objStart=-1;
+    for(let i=0;i<partial.length;i++){
+      const c=partial[i];
+      if(esc){esc=false;continue;}
+      if(c==='\\' && inStr){esc=true;continue;}
+      if(c==='"' && !esc) inStr=!inStr;
+      if(inStr) continue;
+      if(c==='{'){if(depth===0 && partial[i-1]!==':') objStart=i; depth++;}
+      else if(c==='}'){
+        depth--;
+        if(depth===0 && objStart!==-1){
+          try{
+            const obj=JSON.parse(partial.slice(objStart,i+1));
+            if(obj.product_type||obj.grade) completeItems.push(obj);
+          }catch(e){}
+          objStart=-1;
+        }
+      }
+    }
+    if(completeItems.length>0){
+      const langM=clean.match(/"detected_language"\s*:\s*"([^"]+)"/);
+      return{
+        detected_language:langM?langM[1]:'Unknown',
+        column_mapping:{},
+        items:completeItems,
+        warnings:[`Response truncated — recovered ${completeItems.length} items. If you expected more, try splitting the image into sections.`]
+      };
+    }
+  }
+
+  // Step 6: Find JSON array
   const arrM=clean.match(/\[[\s\S]*\]/);
   if(arrM){try{return{items:JSON.parse(arrM[0])};}catch(e){}}
-  throw new Error('AI returned invalid JSON. File may be too complex — try a smaller sample first.');
+
+  throw new Error('AI returned invalid JSON. Response may have been cut off.');
 }
 
 // Delay between batches (ms) per provider to respect rate limits
@@ -2850,7 +2980,7 @@ BUILDING OFFERS — CRITICAL INSTRUCTION:
 When the user asks to BUILD, CREATE, MAKE, PREPARE, or GENERATE an offer/quote/proposal, you MUST:
 1. Find matching items from the stock data below
 2. Fill in any client name, terms, or Incoterms the user mentioned
-3. Respond with a brief summary, then output EXACTLY this block:
+3. Respond with a brief summary, then output EXACTLY this block (use exactly these backticks):
 
 \`\`\`offer-build
 {
@@ -2870,6 +3000,7 @@ When the user asks to BUILD, CREATE, MAKE, PREPARE, or GENERATE an offer/quote/p
 }
 \`\`\`
 
+IMPORTANT: The block must start with exactly \`\`\`offer-build on its own line and end with \`\`\` on its own line.
 The offer will be automatically loaded into the Offer Builder — ready to edit and export.
 
 CURRENT STOCK:
@@ -2942,8 +3073,10 @@ async function aiSendChat(){
       bubble.scrollIntoView({behavior:'smooth',block:'end'});
     });
 
-    // Check for offer-build block
-    const offerMatch=fullText.match(/```offer-build\s*([\s\S]*?)```/);
+    // Check for offer-build block — try multiple patterns for different AI formatting styles
+    const offerMatch=fullText.match(/```offer-build\s*([\s\S]*?)```/) ||
+                     fullText.match(/```offer.build\s*([\s\S]*?)```/) ||
+                     fullText.match(/OFFER_BUILD_START\s*([\s\S]*?)OFFER_BUILD_END/);
     if(offerMatch){
       try{
         const offerData=JSON.parse(offerMatch[1].trim());
