@@ -241,6 +241,68 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .alb-count{font-size:11px;color:var(--text3)}
 .lists-toggle-btn{display:none;height:30px;padding:0 10px;border:1px solid var(--border2);border-radius:7px;font-size:11px;background:var(--surface);color:var(--text);cursor:pointer;font-family:var(--sans);gap:4px;align-items:center;white-space:nowrap}
 @media(max-width:900px){.lists-toggle-btn{display:inline-flex}}
+
+/* ── AI IMPORT PANEL ── */
+.ai-wrap{display:flex;gap:14px;padding:14px;max-width:1400px;margin:0 auto;min-height:calc(100vh - 52px)}
+@media(max-width:900px){.ai-wrap{flex-direction:column}}
+.ai-left{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
+.ai-right{width:360px;flex-shrink:0;display:flex;flex-direction:column;gap:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+@media(max-width:900px){.ai-right{width:100%;min-height:420px}}
+.ai-key-banner{background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ai-key-text{font-size:12px;color:var(--amber-text);flex:1;min-width:160px}
+.ai-key-row{display:flex;gap:6px;flex:1;min-width:180px}
+.ai-key-inp{height:32px;border:1px solid var(--amber);border-radius:7px;padding:0 10px;font-size:12px;background:var(--surface);color:var(--text);outline:none;font-family:var(--mono);flex:1}
+.ai-key-inp:focus{border-color:var(--blue)}
+.ai-key-btn{height:32px;padding:0 12px;border:none;border-radius:7px;font-size:12px;font-weight:700;background:var(--amber);color:#fff;cursor:pointer;font-family:var(--sans);white-space:nowrap}
+.ai-drop{background:var(--surface);border:2px dashed var(--border2);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+.ai-drop:hover,.ai-drop.drag{border-color:var(--blue);background:var(--blue-bg)}
+.ai-drop-icon{font-size:26px;margin-bottom:6px}
+.ai-drop-ttl{font-size:14px;font-weight:600;margin-bottom:4px}
+.ai-drop-sub{font-size:11px;color:var(--text3);line-height:1.6;margin-bottom:10px}
+.ai-paste-area{width:100%;min-height:90px;border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-size:12px;font-family:var(--mono);background:var(--surface);color:var(--text);outline:none;resize:vertical;transition:border-color .15s}
+.ai-paste-area:focus{border-color:var(--blue)}
+.ai-parse-btn{width:100%;height:40px;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--sans);background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
+.ai-parse-btn:hover{opacity:.88}
+.ai-parse-btn:disabled{opacity:.45;cursor:not-allowed}
+.ai-result-card{background:var(--surface);border:1px solid var(--green);border-radius:12px;overflow:hidden}
+.ai-result-hdr{background:var(--green-bg);border-bottom:1px solid var(--green);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.ai-result-title{font-size:12px;font-weight:700;color:var(--green-text)}
+.ai-result-actions{display:flex;gap:6px;flex-wrap:wrap}
+.ai-mapping-info{padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:11px;color:var(--text3);line-height:1.6}
+.ai-mapping-tag{display:inline-block;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-mid);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;font-family:var(--mono);margin:1px}
+.ai-result-tbl-wrap{overflow-x:auto;max-height:340px;overflow-y:auto}
+.ai-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.ai-tbl th{background:var(--surface2);color:var(--text3);font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.4px;padding:7px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border);position:sticky;top:0}
+.ai-tbl td{padding:6px 10px;border-bottom:1px solid var(--border);color:var(--text2);white-space:nowrap;font-family:var(--mono)}
+.ai-tbl tr:last-child td{border-bottom:none}
+.ai-tbl tr:hover td{background:var(--surface2)}
+.ai-tbl td.grade-c{font-weight:700;color:var(--text)}
+.ai-check{accent-color:var(--blue);width:14px;height:14px;cursor:pointer}
+.ai-warn-pill{display:inline-block;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:600;margin-top:6px}
+/* Chat panel */
+.ai-chat-hdr{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.ai-chat-hdr-title{font-size:12px;font-weight:700;color:var(--text)}
+.ai-chat-hdr-sub{font-size:10px;color:var(--text4)}
+.ai-chat-body{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:200px}
+.ai-msg{font-size:12px;line-height:1.6;padding:9px 11px;border-radius:9px;max-width:100%;word-break:break-word}
+.ai-msg.user{background:var(--blue);color:#fff;align-self:flex-end;border-radius:9px 9px 2px 9px}
+.ai-msg.ai{background:var(--surface2);color:var(--text);border-radius:2px 9px 9px 9px;border:1px solid var(--border)}
+.ai-msg.ai strong{font-weight:700}
+.ai-chat-input-row{padding:10px;border-top:1px solid var(--border);display:flex;gap:6px}
+.ai-chat-inp{flex:1;height:34px;border:1px solid var(--border2);border-radius:7px;padding:0 10px;font-size:12px;background:var(--surface);color:var(--text);font-family:var(--sans);outline:none;transition:border-color .15s}
+.ai-chat-inp:focus{border-color:var(--blue)}
+.ai-chat-send{width:34px;height:34px;border:none;border-radius:7px;background:var(--blue);color:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ai-chat-send:disabled{opacity:.4;cursor:not-allowed}
+.ai-quick-prompts{display:flex;gap:5px;flex-wrap:wrap;padding:0 10px 8px}
+.ai-qp-btn{height:24px;padding:0 10px;border:1px solid var(--border2);border-radius:20px;font-size:10px;background:var(--surface);color:var(--text3);cursor:pointer;font-family:var(--sans);white-space:nowrap;transition:all .15s}
+.ai-qp-btn:hover{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-mid)}
+@keyframes ai-spin{to{transform:rotate(360deg)}}
+.ai-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:ai-spin .7s linear infinite;vertical-align:middle}
+.ai-typing{display:flex;gap:3px;align-items:center;padding:4px 0}
+.ai-typing span{width:6px;height:6px;border-radius:50%;background:var(--text4);animation:ai-bounce .9s infinite}
+.ai-typing span:nth-child(2){animation-delay:.15s}
+.ai-typing span:nth-child(3){animation-delay:.3s}
+@keyframes ai-bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
 </style>
 </head>
 <body>
@@ -271,6 +333,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
       <a href="index.html" class="nav-item"><span class="nav-icon">📋</span>CRM / Leads</a>
       <div class="nav-sec">Inventory</div>
       <button class="nav-item active" id="nav-stock" onclick="showView('stock')"><span class="nav-icon">📦</span>Stock</button>
+      <button class="nav-item" id="nav-ai" onclick="showView('ai')"><span class="nav-icon">🤖</span>AI Import</button>
       <a href="procurement.html" class="nav-item"><span class="nav-icon">🛒</span>Procurement</a>
       <div class="nav-sec">Operations</div>
       <a href="logistics.html" class="nav-item"><span class="nav-icon">🚢</span>Logistics</a>
@@ -319,6 +382,18 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
         <button class="btn" onclick="togglePreview()">👁 Preview</button>
         <button class="btn btn-green" onclick="window.print()">🖨 Print PDF</button>
         <button class="btn btn-outline-blue" onclick="exportExcel()">📊 Excel</button>
+      </div>
+    </header>
+
+    <!-- AI IMPORT HEADER -->
+    <header id="hdrAI" style="display:none">
+      <div class="h-left">
+        <button class="menu-btn" onclick="openSidebar()">☰</button>
+        <span class="h-title">🤖 AI Stock Import</span>
+      </div>
+      <div class="h-right">
+        <span id="aiModelLabel" style="font-size:11px;color:var(--text4)">Claude Sonnet 4.6</span>
+        <button class="btn btn-outline-blue" onclick="showView('stock')">← Back to Stock</button>
       </div>
     </header>
 
@@ -526,6 +601,118 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- AI IMPORT VIEW -->
+<div id="viewAI" style="display:none">
+  <div class="ai-wrap">
+
+    <!-- LEFT: Import Panel -->
+    <div class="ai-left">
+
+      <!-- API Key Banner -->
+      <div class="ai-key-banner" id="aiKeyBanner" style="display:none">
+        <span class="ai-key-text">🔑 Paste your Claude API key to activate AI import. Saved in your browser only.</span>
+        <div class="ai-key-row">
+          <input class="ai-key-inp" id="aiKeyInput" type="password" placeholder="sk-ant-api03-…" autocomplete="off">
+          <button class="ai-key-btn" onclick="aiSaveKey()">Save</button>
+        </div>
+      </div>
+
+      <!-- File Drop Zone -->
+      <div class="ai-drop" id="aiDropZone"
+           onclick="document.getElementById('aiFileInput').click()"
+           ondragover="event.preventDefault();this.classList.add('drag')"
+           ondragleave="this.classList.remove('drag')"
+           ondrop="event.preventDefault();this.classList.remove('drag');aiHandleFile(event.dataTransfer.files[0])">
+        <div class="ai-drop-icon">📂</div>
+        <div class="ai-drop-ttl">Drop your stock file here</div>
+        <div class="ai-drop-sub">Excel (.xlsx) or CSV · Any language · Any column structure<br>Turkish, English, Croatian — AI detects automatically</div>
+        <div style="display:flex;justify-content:center;gap:8px;margin-top:4px">
+          <button class="btn btn-blue btn-sm" onclick="event.stopPropagation();document.getElementById('aiFileInput').click()">Choose file</button>
+        </div>
+        <input type="file" id="aiFileInput" accept=".xlsx,.csv,.xls" style="display:none" onchange="aiHandleFile(this.files[0])">
+        <div id="aiFileStatus" style="font-size:12px;margin-top:8px;min-height:16px;font-weight:500"></div>
+      </div>
+
+      <!-- OR paste text -->
+      <div class="card" style="margin-bottom:0">
+        <div class="card-hd" style="margin-bottom:8px">Or paste data directly</div>
+        <textarea class="ai-paste-area" id="aiPasteArea" placeholder="Paste rows from Excel, a table, or any text with stock data…&#10;Example: S355 Plate 10x1500x6000 50ton 620 USD Turkey"></textarea>
+      </div>
+
+      <!-- Parse Button -->
+      <button class="ai-parse-btn" id="aiParseBtn" onclick="aiParseStock()">
+        <span>🤖 Parse with AI</span>
+      </button>
+
+      <!-- Results Panel -->
+      <div id="aiResultPanel" style="display:none">
+        <div class="ai-result-card">
+          <div class="ai-result-hdr">
+            <div>
+              <span class="ai-result-title" id="aiResultTitle">✓ AI Parsed 0 items</span>
+              <div id="aiWarnings"></div>
+            </div>
+            <div class="ai-result-actions">
+              <button class="btn btn-sm" onclick="aiSelectAll()">☑ All</button>
+              <button class="btn btn-sm btn-outline-blue" onclick="aiImportSelected()">⬇ Import selected</button>
+              <button class="btn btn-sm btn-green" onclick="aiBuildOffer()">📄 Build Offer</button>
+            </div>
+          </div>
+          <div class="ai-mapping-info" id="aiMappingInfo"></div>
+          <div class="ai-result-tbl-wrap">
+            <table class="ai-tbl">
+              <thead>
+                <tr>
+                  <th><input type="checkbox" class="ai-check" id="aiCheckAll" onchange="aiToggleAll(this.checked)"></th>
+                  <th>Type</th><th>Grade</th><th>Thick</th><th>Width</th><th>Length</th>
+                  <th>Qty</th><th>Unit</th><th>Price</th><th>Cur</th><th>Supplier</th><th>Origin</th><th>Notes</th>
+                </tr>
+              </thead>
+              <tbody id="aiResultBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grade Converter Output -->
+      <div id="aiConvertPanel" style="display:none" class="card">
+        <div class="card-hd">🔄 Grade Conversions</div>
+        <div id="aiConvertBody" style="font-size:12px;color:var(--text2);line-height:1.8"></div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Chat Panel -->
+    <div class="ai-right">
+      <div class="ai-chat-hdr">
+        <div>
+          <div class="ai-chat-hdr-title">💬 Ask about your stock</div>
+          <div class="ai-chat-hdr-sub" id="aiChatContext">Loading stock context…</div>
+        </div>
+        <button class="btn btn-xs btn-ghost" onclick="aiClearChat()">Clear</button>
+      </div>
+      <div class="ai-quick-prompts">
+        <button class="ai-qp-btn" onclick="aiQuick('What plates do we have available and at what price?')">Available plates</button>
+        <button class="ai-qp-btn" onclick="aiQuick('Convert all grades to ASTM equivalents')">→ ASTM</button>
+        <button class="ai-qp-btn" onclick="aiQuick('Convert all grades to EN/DIN equivalents')">→ EN/DIN</button>
+        <button class="ai-qp-btn" onclick="aiQuick('What is our cheapest stock item right now?')">Cheapest item</button>
+        <button class="ai-qp-btn" onclick="aiQuick('Summarise our total stock by product type and total tonnage')">Stock summary</button>
+        <button class="ai-qp-btn" onclick="aiQuick('Draft a market offer email listing all available HRC and plate stock with prices in USD FOB')">Draft offer email</button>
+      </div>
+      <div class="ai-chat-body" id="aiChatBody">
+        <div class="ai-msg ai" style="font-size:11px;color:var(--text3)">Ask me anything about your imported stock — grades, quantities, conversions, pricing, or draft an offer email.</div>
+      </div>
+      <div class="ai-chat-input-row">
+        <input class="ai-chat-inp" id="aiChatInput" placeholder="Ask about your stock…" onkeydown="if(event.key==='Enter')aiSendChat()">
+        <button class="ai-chat-send" id="aiChatSend" onclick="aiSendChat()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1365,12 +1552,16 @@ function exportStockCSV(){
 function showView(v){
   document.getElementById('viewStock').style.display=v==='stock'?'flex':'none';
   document.getElementById('viewOffer').style.display=v==='offer'?'block':'none';
+  document.getElementById('viewAI').style.display=v==='ai'?'block':'none';
   document.getElementById('hdrStock').style.display=v==='stock'?'flex':'none';
   document.getElementById('hdrOffer').style.display=v==='offer'?'flex':'none';
-  document.getElementById('nav-stock').classList.toggle('active',v==='stock');
-  document.getElementById('nav-offer').classList.toggle('active',v==='offer');
+  document.getElementById('hdrAI').style.display=v==='ai'?'flex':'none';
+  document.getElementById('nav-stock').classList.toggle('active',v==='stock'||v==='offer');
+  document.getElementById('nav-ai').classList.toggle('active',v==='ai');
+  const navOffer=document.getElementById('nav-offer');if(navOffer)navOffer.classList.toggle('active',v==='offer');
   closeSidebar();
   if(v==='offer'){updateListSelect();renderSSPSaved();}
+  if(v==='ai'){aiInitView();}
 }
 
 // ══════════════════════════════════
@@ -1684,6 +1875,411 @@ function copySQLSetup(){
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fmtNum(n){ const v=Number(n)||0; return v>=1000?v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2}):v.toFixed(2); }
 function fmtShort(n){ const v=Number(n)||0; if(!v)return'—'; return v>=1000?v.toLocaleString('en-US',{maximumFractionDigits:0}):v.toFixed(2); }
+
+// ══════════════════════════════════
+// AI IMPORT — STATE
+// ══════════════════════════════════
+let AI_KEY = localStorage.getItem('sp_claude_key')||'';
+let aiParsedItems = [];
+let aiChatMessages = [];
+let aiChatStreaming = false;
+const AI_MODEL = 'claude-sonnet-4-6';
+
+// ── Key management
+function aiSaveKey(){
+  const v=(document.getElementById('aiKeyInput').value||'').trim();
+  if(!v.startsWith('sk-ant-')){alert('Invalid key — must start with sk-ant-');return;}
+  AI_KEY=v; localStorage.setItem('sp_claude_key',v);
+  document.getElementById('aiKeyBanner').style.display='none';
+}
+function aiCheckKey(){
+  if(!AI_KEY){document.getElementById('aiKeyBanner').style.display='flex';return false;}
+  document.getElementById('aiKeyBanner').style.display='none'; return true;
+}
+
+// ── Init view
+function aiInitView(){
+  if(!AI_KEY) document.getElementById('aiKeyBanner').style.display='flex';
+  else document.getElementById('aiKeyBanner').style.display='none';
+  // Update chat context label
+  const list=activeList();
+  const n=list?list.items.length:0;
+  document.getElementById('aiChatContext').textContent=`${list?list.name:'No list'} · ${n} item${n!==1?'s':''} loaded`;
+}
+
+// ══════════════════════════════════
+// AI IMPORT — FILE HANDLING
+// ══════════════════════════════════
+function aiHandleFile(file){
+  if(!file)return;
+  const status=document.getElementById('aiFileStatus');
+  status.style.color='var(--blue)';
+  status.textContent='📂 '+file.name+' loaded — click "Parse with AI" to continue';
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(ext==='csv'){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      document.getElementById('aiPasteArea').value=e.target.result.slice(0,8000);
+    };
+    reader.readAsText(file);
+  }else{
+    // xlsx — use SheetJS
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const wb=XLSX.read(e.target.result,{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const csv=XLSX.utils.sheet_to_csv(ws);
+        document.getElementById('aiPasteArea').value=csv.slice(0,8000);
+      }catch(err){
+        status.style.color='var(--red-text)';
+        status.textContent='⚠ Could not read file: '+err.message;
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+// ══════════════════════════════════
+// AI IMPORT — PARSE WITH CLAUDE
+// ══════════════════════════════════
+async function aiParseStock(){
+  if(!aiCheckKey())return;
+  const raw=(document.getElementById('aiPasteArea').value||'').trim();
+  if(!raw){alert('Please upload a file or paste some data first.');return;}
+
+  const btn=document.getElementById('aiParseBtn');
+  btn.disabled=true;
+  btn.innerHTML='<span class="ai-spinner"></span> AI is reading your stock…';
+
+  const prompt=`You are a steel stock data parser for an international steel trading company.
+
+The user has provided raw stock data. The columns and values may be in English, Turkish, Croatian, German, French, or any other language. Column names and formats vary.
+
+Your task:
+1. Detect the language and column meanings
+2. Map every row to this EXACT schema:
+   - product_type: string (e.g. "Plate","Coil","Pipe","Rebar","Billet","HRC","CRC","Wire Rod","Angle","Beam","Sheet")
+   - grade: string (steel grade, e.g. "S235","S355","A36","Q235","St52","DX51","DC01")
+   - thickness: number in mm or null
+   - width: number in mm or null
+   - length: number in mm or null
+   - quantity: number or null
+   - unit: "ton" or "kg" or "pcs" or "m" (default "ton")
+   - buy_price: number (price per unit) or null
+   - currency: "USD" or "EUR" or "GBP" or "TRY" (default "USD")
+   - supplier: string or null
+   - location: string or null
+   - origin: country of origin as string or null
+   - heat_no: heat/certificate number as string or null
+   - notes: any extra info as string or null
+
+LANGUAGE HINTS:
+Turkish: Ürün/Ürün Tipi=product_type, Kalite/Çelik Kalitesi=grade, Kalınlık/Et=thickness, En/Genişlik=width, Boy/Uzunluk=length, Miktar/Adet=quantity, Birim=unit, Fiyat/Satış Fiyatı=buy_price, Tedarikçi=supplier, Konum/Depo=location, Menşei/Köken=origin
+Croatian: Vrsta=product_type, Kvaliteta=grade, Debljina=thickness, Širina=width, Dužina=length, Količina=quantity, Dobavljač=supplier, Podrijetlo=origin
+
+IMPORTANT RULES:
+- Dimensions might be combined like "10x1500x6000" → thickness=10, width=1500, length=6000
+- Quantities might include units like "50 ton", "1000 kg" — parse them
+- Prices might include currency symbols — strip them
+- Skip header rows
+- Return max 200 rows
+
+Return ONLY valid JSON, no markdown, no explanation:
+{
+  "detected_language": "English",
+  "column_mapping": {"OriginalCol": "mapped_field"},
+  "items": [
+    {"product_type":"Plate","grade":"S355","thickness":10,"width":1500,"length":6000,"quantity":50,"unit":"ton","buy_price":620,"currency":"USD","supplier":null,"location":null,"origin":"Turkey","heat_no":null,"notes":null}
+  ],
+  "warnings": []
+}
+
+Raw data:
+${raw.slice(0,6000)}`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':AI_KEY,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:AI_MODEL,
+        max_tokens:4000,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+
+    if(!res.ok){
+      const err=await res.json().catch(()=>({error:{message:'HTTP '+res.status}}));
+      throw new Error(err?.error?.message||'API error '+res.status);
+    }
+
+    const data=await res.json();
+    const text=data.content.map(b=>b.text||'').join('');
+    const clean=text.replace(/```json|```/g,'').trim();
+    const parsed=JSON.parse(clean);
+
+    aiParsedItems=parsed.items||[];
+    renderAIResults(parsed);
+
+  }catch(e){
+    alert('AI parse error: '+e.message+'\n\nMake sure your API key is correct.');
+  }
+
+  btn.disabled=false;
+  btn.innerHTML='<span>🤖 Parse with AI</span>';
+}
+
+function renderAIResults(parsed){
+  const items=parsed.items||[];
+  const panel=document.getElementById('aiResultPanel');
+  if(!items.length){alert('No items found in the data. Try pasting the data in a different format.');return;}
+  panel.style.display='block';
+
+  // Title
+  document.getElementById('aiResultTitle').textContent=`✓ AI found ${items.length} item${items.length!==1?'s':''} · Language: ${parsed.detected_language||'Unknown'}`;
+
+  // Column mapping
+  const mapping=parsed.column_mapping||{};
+  const mapHtml=Object.entries(mapping).map(([orig,mapped])=>`<span class="ai-mapping-tag">${esc(orig)}</span> → ${esc(mapped)}`).join('  ');
+  document.getElementById('aiMappingInfo').innerHTML=`<strong>Column mapping detected:</strong> ${mapHtml||'(auto-detected)'}`;
+
+  // Warnings
+  const warns=parsed.warnings||[];
+  document.getElementById('aiWarnings').innerHTML=warns.map(w=>`<span class="ai-warn-pill">⚠ ${esc(w)}</span>`).join('');
+
+  // Table
+  document.getElementById('aiResultBody').innerHTML=items.map((item,i)=>`
+    <tr>
+      <td><input type="checkbox" class="ai-check ai-row-check" data-idx="${i}" checked></td>
+      <td>${esc(item.product_type||'—')}</td>
+      <td class="grade-c">${esc(item.grade||'—')}</td>
+      <td>${item.thickness??'—'}</td>
+      <td>${item.width??'—'}</td>
+      <td>${item.length??'—'}</td>
+      <td>${item.quantity??'—'}</td>
+      <td>${esc(item.unit||'ton')}</td>
+      <td style="color:var(--green-text);font-weight:700">${item.buy_price??'—'}</td>
+      <td>${esc(item.currency||'USD')}</td>
+      <td>${esc(item.supplier||'—')}</td>
+      <td>${esc(item.origin||'—')}</td>
+      <td style="max-width:100px;overflow:hidden;text-overflow:ellipsis">${esc(item.notes||'')}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('aiCheckAll').checked=true;
+  panel.scrollIntoView({behavior:'smooth',block:'start'});
+
+  // Auto-suggest grade conversions in chat
+  const grades=[...new Set(items.map(i=>i.grade).filter(Boolean))].slice(0,8);
+  if(grades.length){
+    setTimeout(()=>aiQuick(`What are the ASTM and EN/DIN equivalents for these grades: ${grades.join(', ')}? Show a conversion table.`),600);
+  }
+}
+
+// ── Select all / toggle
+function aiSelectAll(){ document.querySelectorAll('.ai-row-check').forEach(c=>c.checked=true); document.getElementById('aiCheckAll').checked=true; }
+function aiToggleAll(checked){ document.querySelectorAll('.ai-row-check').forEach(c=>c.checked=checked); }
+
+function aiGetSelected(){
+  const selected=[];
+  document.querySelectorAll('.ai-row-check').forEach(c=>{
+    if(c.checked){ const i=parseInt(c.dataset.idx); if(aiParsedItems[i]) selected.push(aiParsedItems[i]); }
+  });
+  return selected;
+}
+
+// ══════════════════════════════════
+// AI IMPORT — IMPORT TO STOCK LIST
+// ══════════════════════════════════
+async function aiImportSelected(){
+  const items=aiGetSelected();
+  if(!items.length){alert('Select at least one item to import.');return;}
+  const list=activeList();
+  if(!list){alert('No active stock list.');return;}
+
+  // Map AI schema → stock schema
+  previewData=items.map(item=>({
+    product_type: item.product_type||'',
+    grade:        item.grade||'',
+    thickness:    Number(item.thickness)||null,
+    width:        Number(item.width)||null,
+    length:       Number(item.length)||null,
+    quantity:     Number(item.quantity)||0,
+    unit:         item.unit||'ton',
+    buy_price:    Number(item.buy_price)||0,
+    currency:     item.currency||'USD',
+    supplier:     item.supplier||'',
+    location:     item.location||'',
+    origin:       item.origin||'',
+    heat_number:  item.heat_no||'',
+    notes:        item.notes||'',
+    available:    'yes'
+  }));
+
+  await confirmUpload();
+  showView('stock');
+}
+
+// ══════════════════════════════════
+// AI IMPORT — BUILD OFFER
+// ══════════════════════════════════
+function aiBuildOffer(){
+  const items=aiGetSelected();
+  if(!items.length){alert('Select at least one item to add to the offer.');return;}
+  showView('offer');
+  items.forEach(item=>{
+    addOfferLine({
+      grade:     item.grade||'',
+      type:      item.product_type||'',
+      thick:     item.thickness||'',
+      width:     item.width||'',
+      length:    item.length||'',
+      unit:      item.unit||'ton',
+      buy_price: Number(item.buy_price)||0
+    });
+  });
+}
+
+// ══════════════════════════════════
+// AI CHAT — STOCK ASSISTANT
+// ══════════════════════════════════
+function aiGetStockContext(){
+  const list=activeList();
+  if(!list||!list.items.length){
+    // Use AI parsed items if available
+    if(aiParsedItems.length) return 'Imported stock (not yet saved):\n'+JSON.stringify(aiParsedItems.slice(0,60),null,1);
+    return 'No stock loaded yet.';
+  }
+  const items=list.items.slice(0,80);
+  return `Stock list: ${list.name} (${list.items.length} items total, showing first 80)\n`+
+    items.map(s=>`${s.product_type||'?'} | ${s.grade||'?'} | ${s.thickness??''}x${s.width??''}x${s.length??''} | ${s.quantity??0} ${s.unit||'ton'} | $${s.buy_price??0}/t | Origin: ${s.origin||'?'} | Supplier: ${s.supplier||'?'}`).join('\n');
+}
+
+function aiAddChatMsg(role,content){
+  const body=document.getElementById('aiChatBody');
+  const div=document.createElement('div');
+  div.className=`ai-msg ${role}`;
+  div.innerHTML=content.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+  body.appendChild(div);
+  div.scrollIntoView({behavior:'smooth',block:'end'});
+  return div;
+}
+
+function aiClearChat(){
+  aiChatMessages=[];
+  document.getElementById('aiChatBody').innerHTML='<div class="ai-msg ai" style="font-size:11px;color:var(--text3)">Ask me anything about your imported stock — grades, quantities, conversions, pricing, or draft an offer email.</div>';
+}
+
+async function aiSendChat(){
+  if(aiChatStreaming)return;
+  if(!aiCheckKey())return;
+  const input=document.getElementById('aiChatInput');
+  const text=(input.value||'').trim();
+  if(!text)return;
+  input.value='';
+  document.getElementById('aiChatSend').disabled=true;
+  aiChatStreaming=true;
+
+  aiAddChatMsg('user',text);
+  aiChatMessages.push({role:'user',content:text});
+
+  // Typing indicator
+  const body=document.getElementById('aiChatBody');
+  const typing=document.createElement('div');
+  typing.className='ai-msg ai';
+  typing.innerHTML='<div class="ai-typing"><span></span><span></span><span></span></div>';
+  body.appendChild(typing);
+  typing.scrollIntoView({behavior:'smooth',block:'end'});
+
+  const systemPrompt=`You are a steel trade expert assistant embedded in a stock management platform.
+You have access to the user's current stock. Help them with:
+- Answering questions about their stock (quantities, prices, grades)
+- Grade conversions between standards (EN/DIN ↔ ASTM ↔ JIS/KS ↔ GB/Chinese)
+- Unit conversions (tons ↔ kg, mm ↔ inches)
+- Drafting professional offer emails from their stock
+- Market insights and pricing context
+
+Format responses clearly. For grade conversion tables use a simple text table format.
+For offer emails, write professional, concise trade correspondence.
+Keep responses focused and practical — steel traders are busy.
+
+CURRENT STOCK DATA:
+${aiGetStockContext()}`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':AI_KEY,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:AI_MODEL,
+        max_tokens:1200,
+        system:systemPrompt,
+        messages:aiChatMessages,
+        stream:true
+      })
+    });
+
+    if(!res.ok){
+      const err=await res.json().catch(()=>({error:{message:'HTTP '+res.status}}));
+      typing.remove();
+      aiAddChatMsg('ai','⚠️ Error: '+(err?.error?.message||'Unknown error'));
+      aiChatStreaming=false;
+      document.getElementById('aiChatSend').disabled=false;
+      return;
+    }
+
+    const reader=res.body.getReader();
+    const decoder=new TextDecoder();
+    let full='';
+    typing.remove();
+    const bubble=aiAddChatMsg('ai','');
+
+    while(true){
+      const {done,value}=await reader.read();
+      if(done)break;
+      const chunk=decoder.decode(value,{stream:true});
+      for(const line of chunk.split('\n')){
+        if(!line.startsWith('data:'))continue;
+        const d=line.slice(5).trim();
+        if(d==='[DONE]')break;
+        try{
+          const j=JSON.parse(d);
+          if(j.type==='content_block_delta'&&j.delta?.type==='text_delta'){
+            full+=j.delta.text;
+            bubble.innerHTML=full.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+            bubble.scrollIntoView({behavior:'smooth',block:'end'});
+          }
+        }catch(e){}
+      }
+    }
+
+    aiChatMessages.push({role:'assistant',content:full});
+
+  }catch(e){
+    typing.remove();
+    aiAddChatMsg('ai','⚠️ Connection error: '+e.message);
+  }
+
+  aiChatStreaming=false;
+  document.getElementById('aiChatSend').disabled=false;
+  document.getElementById('aiChatInput').focus();
+}
+
+function aiQuick(text){
+  document.getElementById('aiChatInput').value=text;
+  aiSendChat();
+}
 
 // ── Country flag helper
 function countryFlag(origin){
