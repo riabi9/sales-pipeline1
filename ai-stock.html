@@ -174,6 +174,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
       </div>
       <div class="topbar-right">
         <span id="ctxLabel" style="font-size:11px;color:var(--text4)"></span>
+        <button class="btn btn-sm btn-ghost" onclick="refreshStock()" title="Reload stock from account">↻ Refresh</button>
         <button class="btn btn-sm" onclick="openSettings()">⚙ Settings</button>
         <a class="btn btn-sm btn-blue" href="stock.html">📦 Stock</a>
       </div>
@@ -314,6 +315,13 @@ const PROVIDERS={
 let ai={provider:'anthropic',model:'claude-sonnet-4-6',keys:{},keyActive:{},customUrl:'',customModel:''};
 let parsedItems=[],chatMsgs=[],chatStreaming=false;
 let rawData='',visionPages=[],inputMode='text';
+
+// ── Supabase + saved stock
+const SUPABASE_URL='https://fmmfofjkebdsrnkchrfo.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtbWZvZmprZWJkc3Jua2NocmZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDAxNDIsImV4cCI6MjA5MjA3NjE0Mn0.bQQJt06mucLCQCrY1NgN-ed2ngDeRLmITmOfQCAM7ZU';
+let sb=null;try{sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);}catch(e){}
+let savedStock=[];   // all items from Supabase + local lists
+let savedStockMeta=''; // summary label for topbar
 
 // ── Settings persistence
 function loadSettings(){
@@ -723,6 +731,12 @@ function selectAll(){document.querySelectorAll('.row-check').forEach(c=>c.checke
 function toggleAll(v){document.querySelectorAll('.row-check').forEach(c=>c.checked=v);}
 function getSelected(){const out=[];document.querySelectorAll('.row-check').forEach(c=>{if(c.checked&&parsedItems[+c.dataset.idx])out.push(parsedItems[+c.dataset.idx]);});return out;}
 
+async function refreshStock(){
+  document.getElementById('chatCtxLabel').textContent='Refreshing…';
+  await loadSavedStock();
+  updateCtx();
+}
+
 function importSelected(){
   const items=getSelected();if(!items.length){alert('Select at least one item.');return;}
   const mapped=items.map(it=>({product_type:it.product_type||'',grade:it.grade||'',thickness:Number(it.thickness)||null,width:Number(it.width)||null,length:Number(it.length)||null,quantity:Number(it.quantity)||0,unit:it.unit||'ton',buy_price:Number(it.buy_price)||0,currency:it.currency||'USD',supplier:it.supplier||'',location:'',origin:it.origin||'',heat_number:it.heat_no||'',notes:it.notes||'',available:'yes'}));
@@ -738,8 +752,18 @@ function buildOffer(){
 
 // ── Chat
 function getStockCtx(){
-  if(!parsedItems.length)return'No stock imported yet on this page.';
-  return`Imported stock (${parsedItems.length} items total):\n`+parsedItems.slice(0,80).map(s=>`${s.product_type||'?'} | ${s.grade||'?'} | ${s.thickness??''}×${s.width??''}×${s.length??''} mm | ${s.quantity||''} ${s.unit||'ton'} | ${s.buy_price||''} ${s.currency||''} | Supplier: ${s.supplier||'?'} | Origin: ${s.origin||'?'}`).join('\n');
+  const parts=[];
+  if(savedStock.length){
+    parts.push(`SAVED STOCK from your account (${savedStock.length} items):\n`+
+      savedStock.slice(0,120).map(s=>`${s.product_type||s.type||'?'} | ${s.grade||'?'} | ${s.thickness??''}×${s.width??''}×${s.length??''} mm | qty:${s.quantity||''} ${s.unit||'ton'} | price:${s.buy_price||''} ${s.currency||''} | Supplier:${s.supplier||'?'} | Origin:${s.origin||'?'}`).join('\n'));
+    if(savedStock.length>120)parts.push(`…and ${savedStock.length-120} more items`);
+  }
+  if(parsedItems.length){
+    parts.push(`\nJUST IMPORTED THIS SESSION (${parsedItems.length} items):\n`+
+      parsedItems.slice(0,60).map(s=>`${s.product_type||'?'} | ${s.grade||'?'} | ${s.thickness??''}×${s.width??''}×${s.length??''} mm | qty:${s.quantity||''} ${s.unit||'ton'} | price:${s.buy_price||''} ${s.currency||''} | Supplier:${s.supplier||'?'}`).join('\n'));
+  }
+  if(!parts.length)return'No stock loaded. Import a file above, or sign in to load your saved stock.';
+  return parts.join('\n');
 }
 
 function buildSysPrompt(){
@@ -773,7 +797,15 @@ function addMsg(role,content,extra){
 }
 function fmtMsg(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`([^`]+)`/g,'<code style="background:rgba(0,0,0,.1);padding:1px 4px;border-radius:3px;font-size:10px;font-family:var(--mono)">$1</code>').replace(/\n/g,'<br>');}
 function clearChat(){chatMsgs=[];document.getElementById('chatBody').innerHTML='<div class="chat-msg ai" style="font-size:11px;color:var(--text3)">Ask anything about your stock, or say "Build an offer for all S355 plates for ABC Trading, CIF Rotterdam" to auto-fill the Offer Builder.</div>';}
-function updateCtx(){const n=parsedItems.length;document.getElementById('chatCtxLabel').textContent=n?`${n} items loaded`:'No stock loaded';document.getElementById('ctxLabel').textContent=n?`${n} items`:'';}
+function updateCtx(){
+  const total=savedStock.length+parsedItems.length;
+  const parts=[];
+  if(savedStock.length)parts.push(`${savedStock.length} saved`);
+  if(parsedItems.length)parts.push(`${parsedItems.length} imported`);
+  const label=total?parts.join(' + ')+' items':'No stock';
+  document.getElementById('chatCtxLabel').textContent=label;
+  document.getElementById('ctxLabel').textContent=total?`${total} items`:'';
+}
 
 async function sendChat(){
   if(chatStreaming)return;if(!getKey()){openSettings();return;}
@@ -821,9 +853,54 @@ async function sendChat(){
 
 function chatQuick(text){document.getElementById('chatInp').value=text;sendChat();}
 
+// ── Load saved stock from Supabase + localStorage
+async function loadSavedStock(){
+  savedStock=[];
+  // 1. Load local lists from localStorage
+  try{
+    const localLists=JSON.parse(localStorage.getItem('sp_local_lists')||'[]');
+    localLists.forEach(list=>{
+      if(list.items&&list.items.length)savedStock=[...savedStock,...list.items];
+    });
+  }catch(e){}
+
+  // 2. Load cloud stock from Supabase (if signed in)
+  if(!sb)return;
+  try{
+    const{data:{session}}=await sb.auth.getSession();
+    if(!session)return;
+    // Load main cloud stock (list_id is null)
+    let page=0;const size=1000;
+    while(true){
+      const from=page*size,to=from+size-1;
+      const{data,error}=await sb.from('stock').select('*').is('list_id',null).order('grade').range(from,to);
+      if(error||!data||!data.length)break;
+      savedStock=[...savedStock,...data];
+      if(data.length<size)break;page++;
+    }
+    // Load additional named lists
+    const{data:lists}=await sb.from('stock_lists').select('*').order('created_at');
+    if(lists&&lists.length){
+      for(const list of lists){
+        const{data:items}=await sb.from('stock').select('*').eq('list_id',list.id).order('grade');
+        if(items&&items.length)savedStock=[...savedStock,...items];
+      }
+    }
+  }catch(e){console.log('Stock load error (not signed in?):', e.message);}
+}
+
 // ── Init
-document.addEventListener('DOMContentLoaded',()=>{
-  loadSettings();updateLabel();updateBanner();updateCtx();
+document.addEventListener('DOMContentLoaded',async()=>{
+  loadSettings();updateLabel();updateBanner();
+  // Show loading state
+  document.getElementById('chatCtxLabel').textContent='Loading stock…';
+  await loadSavedStock();
+  updateCtx();
+  if(savedStock.length){
+    // Add a welcome message showing what was loaded
+    const body=document.getElementById('chatBody');
+    body.innerHTML=`<div class="chat-msg ai" style="font-size:11px">✅ Loaded <strong>${savedStock.length} items</strong> from your stock. You can also import new files above. Ask me anything!</div>`;
+  }
 });
 </script>
 </body>
