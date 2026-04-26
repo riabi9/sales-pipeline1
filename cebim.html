@@ -6,6 +6,8 @@
 <title>Cebim · Gebze Finance</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
@@ -408,6 +410,47 @@ input,select,textarea,button{font-family:var(--font);}
 
 @media(min-width:480px){.cg{grid-template-columns:repeat(5,1fr);}}
 
+/* ══ ALL-TIME CARD ══ */
+.alltime{
+  background:linear-gradient(135deg,var(--s1) 0%,var(--s2) 100%);
+  border:1px solid var(--b2);border-radius:var(--R);
+  padding:14px;margin-bottom:10px;position:relative;overflow:hidden;
+}
+.alltime::before{
+  content:'ALL TIME';position:absolute;top:10px;right:12px;
+  font-size:.6rem;font-weight:800;letter-spacing:.12em;color:var(--muted);
+}
+.alltime-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
+.at-item{text-align:center;}
+.at-label{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;}
+.at-val{font-family:var(--mono);font-size:1rem;font-weight:500;line-height:1.1;}
+.at-val.g{color:var(--green);}
+.at-val.r{color:var(--red);}
+.at-val.a{color:var(--amber);}
+.at-sub{font-size:.65rem;color:var(--muted);margin-top:2px;}
+.at-bar-row{display:flex;align-items:center;gap:8px;}
+.at-bar-bg{flex:1;background:var(--s3);border-radius:20px;height:5px;overflow:hidden;}
+.at-bar-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--green),var(--amber));transition:width .5s;}
+.at-bar-label{font-size:.68rem;color:var(--muted);white-space:nowrap;font-family:var(--mono);}
+
+/* ══ FIREBASE SYNC STATUS ══ */
+.sync-bar{
+  display:flex;align-items:center;gap:7px;
+  padding:7px 12px;border-radius:var(--Rx);margin-bottom:10px;
+  font-size:.72rem;font-weight:600;border:1px solid var(--b1);background:var(--s1);
+}
+.sync-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .3s;}
+.sync-dot.ok{background:var(--green);box-shadow:0 0 6px var(--green);}
+.sync-dot.syncing{background:var(--amber);animation:pulse 1s infinite;}
+.sync-dot.off{background:var(--muted);}
+.sync-dot.err{background:var(--red);}
+.sync-label{flex:1;color:var(--muted2);}
+.sync-setup-btn{
+  padding:4px 10px;background:var(--bd);border:1px solid var(--blue);
+  border-radius:var(--Rx);color:var(--blue);font-size:.7rem;font-weight:700;cursor:pointer;
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
 /* ══ THEME PAGE ══ */
 .theme-preview{
   border-radius:var(--R);border:1px solid var(--b2);overflow:hidden;
@@ -499,6 +542,26 @@ input,select,textarea,button{font-family:var(--font);}
     </div>
   </div>
   <div class="sw">
+    <!-- Sync status bar -->
+    <div class="sync-bar" id="sync-bar">
+      <div class="sync-dot off" id="sync-dot"></div>
+      <div class="sync-label" id="sync-label">Firebase not connected — data saved locally only</div>
+      <button class="sync-setup-btn" onclick="goTab(document.querySelector('[data-p=\'ai\']'));setTimeout(()=>document.getElementById('fb-setup').scrollIntoView({behavior:'smooth'}),200)">Setup sync</button>
+    </div>
+
+    <!-- All-time summary -->
+    <div class="alltime" id="alltime-card">
+      <div class="alltime-row">
+        <div class="at-item"><div class="at-label">Total Earned</div><div class="at-val g" id="at-inc">₺0</div><div class="at-sub" id="at-inc-c">0 entries</div></div>
+        <div class="at-item"><div class="at-label">Total Spent</div><div class="at-val r" id="at-sp">₺0</div><div class="at-sub" id="at-sp-c">0 items</div></div>
+        <div class="at-item"><div class="at-label">Net Saved</div><div class="at-val a" id="at-sv">₺0</div><div class="at-sub" id="at-sv-c">0%</div></div>
+      </div>
+      <div class="at-bar-row">
+        <div class="at-bar-bg"><div class="at-bar-fill" id="at-bar" style="width:0%"></div></div>
+        <div class="at-bar-label" id="at-bar-label">0% saved</div>
+      </div>
+    </div>
+
     <!-- FX strip -->
     <div class="fxr" id="fx-row">
       <div class="fxc"><div class="fp">EUR/TRY</div><div class="fv" id="fx-eur">38.20</div></div>
@@ -659,6 +722,32 @@ input,select,textarea,button{font-family:var(--font);}
     <div class="ph-left"><h1>AI Advisor 🤖</h1><div class="sub">9 providers · Gebze context</div></div>
   </div>
   <div class="sw">
+    <!-- Firebase Sync Setup -->
+    <div class="ai-setup" id="fb-setup">
+      <div class="ai-setup-lbl">☁️ Firebase sync — phone + desktop</div>
+      <div style="font-size:.75rem;color:var(--muted2);line-height:1.5;margin-bottom:10px;">
+        Connect Firebase so your data syncs across all devices in real-time. Free forever on Firebase Spark plan.<br>
+        <strong style="color:var(--amber);">Setup takes ~3 minutes:</strong>
+      </div>
+      <div style="font-size:.75rem;color:var(--muted2);line-height:1.7;margin-bottom:10px;background:var(--s2);padding:10px;border-radius:var(--Rx);">
+        1. Go to <strong style="color:var(--text);">console.firebase.google.com</strong><br>
+        2. Create project → name it "cebim"<br>
+        3. Build → Realtime Database → Create database → Start in test mode<br>
+        4. Project Settings ⚙️ → Your apps → Web app (&lt;/&gt;) → Register<br>
+        5. Copy the config values below ↓
+      </div>
+      <div class="f"><label>API Key</label><input id="fb-apikey" type="text" placeholder="AIzaSy…"/></div>
+      <div class="f"><label>Auth Domain</label><input id="fb-auth" type="text" placeholder="your-project.firebaseapp.com"/></div>
+      <div class="f"><label>Database URL</label><input id="fb-db" type="text" placeholder="https://your-project-default-rtdb.firebaseio.com"/></div>
+      <div class="f"><label>Project ID</label><input id="fb-pid" type="text" placeholder="your-project-id"/></div>
+      <div class="f"><label>Your user ID (anything — e.g. your name, used to separate your data)</label><input id="fb-uid" type="text" placeholder="e.g. riabi"/></div>
+      <div class="sa">
+        <button class="cancel" onclick="clearFirebase()">Disconnect</button>
+        <button class="confirm" onclick="connectFirebase()">Connect & Sync</button>
+      </div>
+      <div class="ai-stat no" id="fb-stat" style="margin-top:8px;"><div class="ai-dot"></div><span>Not connected</span></div>
+    </div>
+
     <!-- Provider -->
     <div class="ai-setup">
       <div class="ai-setup-lbl">Choose AI provider</div>
@@ -1035,6 +1124,7 @@ function logTx(){
   const amtTRY=toTRY(amount,cur);
   txs.push({id:Date.now(),type:logType,amount,amtTRY,cur,cat,note,date});
   localStorage.setItem('cem3_tx',JSON.stringify(txs));
+  saveAndSync();
   document.getElementById('log-amount').value='';
   document.getElementById('log-note').value='';
   render();
@@ -1060,6 +1150,7 @@ function render(){
   document.getElementById('s-sv').className='sc-v '+(sv>=0?'a':'r');
   document.getElementById('s-sv-c').textContent=rate+'% rate';
   document.getElementById('tx-count').textContent=t.length+' transactions';
+  renderAllTime();
   renderDailyBudget(t);
   renderTxList(t);
   renderGoals();
@@ -1176,7 +1267,7 @@ function renderTxList(t){
     </div>`;
   }).join('');
 }
-function delTx(id){txs=txs.filter(t=>t.id!==id);localStorage.setItem('cem3_tx',JSON.stringify(txs));render();}
+function delTx(id){txs=txs.filter(t=>t.id!==id);localStorage.setItem('cem3_tx',JSON.stringify(txs));saveAndSync();render();}
 
 // ══ GOALS ══
 function openGoalSheet(){document.getElementById('ov-goal').classList.add('on');}
@@ -1190,6 +1281,7 @@ function saveGoal(){
   if(!name||!target){alert('Name and target are required.');return;}
   goals.push({id:Date.now(),name,target,monthly,emoji,saved:0});
   localStorage.setItem('cem3_goals',JSON.stringify(goals));
+  saveAndSync();
   closeOv('ov-goal');renderGoals();
   document.getElementById('g-name').value='';document.getElementById('g-target').value='';document.getElementById('g-monthly').value='';
 }
@@ -1226,12 +1318,12 @@ function confirmContrib(){
   const a=parseFloat(document.getElementById('contrib-amt').value);
   if(!a||a<=0)return;
   const g=goals.find(x=>x.id===contribId);
-  if(g){g.saved+=a;localStorage.setItem('cem3_goals',JSON.stringify(goals));}
+  if(g){g.saved+=a;localStorage.setItem('cem3_goals',JSON.stringify(goals));saveAndSync();}
   closeOv('ov-contrib');renderGoals();
 }
 function delGoal(id){
   if(!confirm('Delete this goal?'))return;
-  goals=goals.filter(g=>g.id!==id);localStorage.setItem('cem3_goals',JSON.stringify(goals));renderGoals();
+  goals=goals.filter(g=>g.id!==id);localStorage.setItem('cem3_goals',JSON.stringify(goals));saveAndSync();renderGoals();
 }
 
 // ══ GROCERY ══
@@ -1241,23 +1333,24 @@ function addGrocItem(){
   if(!txt)return;
   grocItems.push({id:Date.now(),name:txt+(qty?' ('+qty+')':''),done:false,price:0});
   localStorage.setItem('cem3_groc',JSON.stringify(grocItems));
+  saveAndSync();
   document.getElementById('groc-inp').value='';document.getElementById('groc-qty').value='';
   renderGrocList();
 }
 function toggleGroc(id){
   const i=grocItems.find(x=>x.id===id);if(i)i.done=!i.done;
-  localStorage.setItem('cem3_groc',JSON.stringify(grocItems));renderGrocList();
+  localStorage.setItem('cem3_groc',JSON.stringify(grocItems));saveAndSync();renderGrocList();
 }
 function setGrocPrice(id,val){
   const i=grocItems.find(x=>x.id===id);if(i)i.price=parseFloat(val)||0;
-  localStorage.setItem('cem3_groc',JSON.stringify(grocItems));renderGrocTotal();
+  localStorage.setItem('cem3_groc',JSON.stringify(grocItems));saveAndSync();renderGrocTotal();
 }
 function delGrocItem(id){
-  grocItems=grocItems.filter(x=>x.id!==id);localStorage.setItem('cem3_groc',JSON.stringify(grocItems));renderGrocList();
+  grocItems=grocItems.filter(x=>x.id!==id);localStorage.setItem('cem3_groc',JSON.stringify(grocItems));saveAndSync();renderGrocList();
 }
 function setGrocBudget(){
   const v=parseFloat(document.getElementById('groc-budget-inp').value);
-  if(v>0){grocBudget=v;localStorage.setItem('cem3_grocBudget',v);}
+  if(v>0){grocBudget=v;localStorage.setItem('cem3_grocBudget',v);saveAndSync();}
   renderGrocBudget(mTxs());
 }
 function renderGrocBudget(t){
@@ -1480,6 +1573,145 @@ async function suggestGroceries(){
   btn.textContent='🤖 AI: Suggest weekly grocery list for Gebze (budget-friendly)';btn.disabled=false;
 }
 
+// ══ FIREBASE SYNC ══
+let fbApp=null, fbDb=null, fbUid=null, fbRef=null;
+
+function loadFbConfig(){
+  const cfg=JSON.parse(localStorage.getItem('cem3_fb')||'null');
+  if(cfg){
+    document.getElementById('fb-apikey').value=cfg.apiKey||'';
+    document.getElementById('fb-auth').value=cfg.authDomain||'';
+    document.getElementById('fb-db').value=cfg.databaseURL||'';
+    document.getElementById('fb-pid').value=cfg.projectId||'';
+    document.getElementById('fb-uid').value=cfg.uid||'';
+  }
+  return cfg;
+}
+
+function connectFirebase(cfg){
+  cfg=cfg||{
+    apiKey:document.getElementById('fb-apikey').value.trim(),
+    authDomain:document.getElementById('fb-auth').value.trim(),
+    databaseURL:document.getElementById('fb-db').value.trim(),
+    projectId:document.getElementById('fb-pid').value.trim(),
+    uid:document.getElementById('fb-uid').value.trim(),
+  };
+  if(!cfg.apiKey||!cfg.databaseURL||!cfg.uid){
+    alert('Please fill in API Key, Database URL and User ID.');return;
+  }
+  try{
+    // Avoid double-init
+    if(!fbApp){
+      fbApp=firebase.initializeApp({
+        apiKey:cfg.apiKey,authDomain:cfg.authDomain,
+        databaseURL:cfg.databaseURL,projectId:cfg.projectId,
+        storageBucket:cfg.projectId+'.appspot.com',
+        messagingSenderId:'',appId:''
+      });
+    }
+    fbDb=firebase.database();
+    fbUid=cfg.uid;
+    fbRef=fbDb.ref('users/'+fbUid);
+    localStorage.setItem('cem3_fb',JSON.stringify(cfg));
+    setSyncStatus('syncing','Connecting…');
+    // Listen for remote changes — single source of truth
+    fbRef.on('value',snap=>{
+      const data=snap.val()||{};
+      if(data.txs){txs=Object.values(data.txs);}
+      if(data.goals){goals=Object.values(data.goals);}
+      if(data.grocItems){grocItems=Object.values(data.grocItems);}
+      if(data.grocBudget!=null){grocBudget=data.grocBudget;}
+      if(data.monthlyIncome!=null){monthlyIncome=data.monthlyIncome;if(document.getElementById('monthly-income-inp'))document.getElementById('monthly-income-inp').value=monthlyIncome||'';}
+      if(data.fixedCosts!=null){fixedCosts=data.fixedCosts;if(document.getElementById('fixed-costs'))document.getElementById('fixed-costs').value=fixedCosts||'';}
+      // Sync locally too
+      localStorage.setItem('cem3_tx',JSON.stringify(txs));
+      localStorage.setItem('cem3_goals',JSON.stringify(goals));
+      localStorage.setItem('cem3_groc',JSON.stringify(grocItems));
+      setSyncStatus('ok','Synced · '+new Date().toLocaleTimeString());
+      render();renderGoals();renderGrocList();
+    },err=>{
+      setSyncStatus('err','Sync error: '+err.message);
+    });
+    updateFbStat(true);
+  }catch(e){
+    setSyncStatus('err','Error: '+e.message);
+    updateFbStat(false);
+  }
+}
+
+function pushToFirebase(){
+  if(!fbRef)return;
+  setSyncStatus('syncing','Saving…');
+  const payload={
+    txs:txs.reduce((o,t)=>{o[t.id]=t;return o;},{}),
+    goals:goals.reduce((o,g)=>{o[g.id]=g;return o;},{}),
+    grocItems:grocItems.reduce((o,i)=>{o[i.id]=i;return o;},{}),
+    grocBudget,monthlyIncome,fixedCosts,
+    lastUpdated:Date.now()
+  };
+  fbRef.set(payload)
+    .then(()=>setSyncStatus('ok','Synced · '+new Date().toLocaleTimeString()))
+    .catch(e=>setSyncStatus('err','Save failed: '+e.message));
+}
+
+function clearFirebase(){
+  if(fbRef)fbRef.off();
+  fbApp=null;fbDb=null;fbUid=null;fbRef=null;
+  localStorage.removeItem('cem3_fb');
+  setSyncStatus('off','Disconnected — data saved locally only');
+  updateFbStat(false);
+}
+
+function setSyncStatus(state,msg){
+  const dot=document.getElementById('sync-dot');
+  const lbl=document.getElementById('sync-label');
+  if(!dot||!lbl)return;
+  dot.className='sync-dot '+state;
+  lbl.textContent=msg;
+  // Hide setup button if connected
+  const btn=document.querySelector('.sync-setup-btn');
+  if(btn)btn.style.display=state==='ok'||state==='syncing'?'none':'';
+}
+
+function updateFbStat(ok){
+  const el=document.getElementById('fb-stat');
+  if(!el)return;
+  el.className='ai-stat '+(ok?'ok':'no');
+  el.innerHTML='<div class="ai-dot"></div><span>'+(ok?'Connected to Firebase · syncing across devices':'Not connected')+'</span>';
+}
+
+// Override save functions to also push to Firebase
+const _origLogTx=window.logTx;
+function saveAndSync(){
+  localStorage.setItem('cem3_tx',JSON.stringify(txs));
+  localStorage.setItem('cem3_goals',JSON.stringify(goals));
+  localStorage.setItem('cem3_groc',JSON.stringify(grocItems));
+  pushToFirebase();
+}
+
+// ══ ALL-TIME SUMMARY ══
+function renderAllTime(){
+  const allInc=txs.filter(x=>x.type==='income').reduce((s,x)=>s+(x.amtTRY||0),0);
+  const allSp=txs.filter(x=>x.type==='expense').reduce((s,x)=>s+(x.amtTRY||0),0);
+  const allSv=allInc-allSp;
+  const rate=allInc>0?Math.min(100,Math.round((allSv/allInc)*100)):0;
+  const incCount=txs.filter(x=>x.type==='income').length;
+  const spCount=txs.filter(x=>x.type==='expense').length;
+  const el=id=>document.getElementById(id);
+  el('at-inc').textContent=fmt(allInc);
+  el('at-inc-c').textContent=incCount+' entr'+(incCount!==1?'ies':'y');
+  el('at-sp').textContent=fmt(allSp);
+  el('at-sp-c').textContent=spCount+' item'+(spCount!==1?'s':'');
+  el('at-sv').textContent=fmt(allSv);
+  el('at-sv').className='at-val '+(allSv>=0?'a':'r');
+  el('at-sv-c').textContent=(allInc>0?rate+'% of income':'—');
+  el('at-bar').style.width=Math.max(0,rate)+'%';
+  el('at-bar-label').textContent=rate+'% saved';
+  // Count active months
+  const months=new Set(txs.map(t=>t.date?t.date.slice(0,7):'')).size;
+  if(months>0)el('at-inc-c').textContent+=` · ${months} month${months!==1?'s':''}`;
+}
+
 // ══ THEME ENGINE ══
 const DARK_BASE={bg:'#080a0f',s1:'#0f1218',s2:'#161b24',s3:'#1d2330',s4:'#252d3d',text:'#eceef3',muted:'#5a6478',muted2:'#8a93a8'};
 const LIGHT_BASE={bg:'#f4f5f7',s1:'#ffffff',s2:'#eaecf0',s3:'#dde0e6',s4:'#cdd0d8',text:'#111318',muted:'#8a93a8',muted2:'#5a6478'};
@@ -1602,6 +1834,11 @@ const fc=document.querySelector('#cat-exp .cb');if(fc){fc.classList.add('sel');s
 const fe=document.querySelector('.em');if(fe){fe.classList.add('on');selEmEl=fe;}
 updateAIStat();
 applyTheme();
+// Auto-reconnect Firebase if previously configured
+const _fbCfg=loadFbConfig();
+if(_fbCfg&&_fbCfg.apiKey&&_fbCfg.databaseURL&&_fbCfg.uid){
+  connectFirebase(_fbCfg);
+}
 render();
 renderGoals();
 renderGrocList();
