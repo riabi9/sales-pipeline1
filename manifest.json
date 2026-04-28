@@ -1,0 +1,21 @@
+{
+  "name": "Cebim – Gebze Finance",
+  "short_name": "Cebim",
+  "start_url": "./mifin.html",
+  "display": "standalone",
+  "background_color": "#080a0f",
+  "theme_color": "#f0a030",
+  "description": "Multi-currency finance tracker for Gebze",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2331/2331970.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2331/2331970.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
