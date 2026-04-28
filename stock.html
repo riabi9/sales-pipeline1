@@ -6,30 +6,6 @@
 <title>Steel Platform — Stock & Offer</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script>
-// Load PDF.js dynamically with fallback CDN URLs
-(function(){
-  const PDFJS_URLS=[
-    'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.min.js',
-    'https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js',
-  ];
-  function tryLoad(urls,i){
-    if(i>=urls.length){console.warn('PDF.js failed to load from all CDNs');return;}
-    const s=document.createElement('script');
-    s.src=urls[i];
-    s.onload=()=>{
-      if(window.pdfjsLib){
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc=urls[i].replace('pdf.min.js','pdf.worker.min.js');
-        console.log('PDF.js loaded from',urls[i]);
-      }
-    };
-    s.onerror=()=>tryLoad(urls,i+1);
-    document.head.appendChild(s);
-  }
-  tryLoad(PDFJS_URLS,0);
-})();
-</script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -265,95 +241,6 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .alb-count{font-size:11px;color:var(--text3)}
 .lists-toggle-btn{display:none;height:30px;padding:0 10px;border:1px solid var(--border2);border-radius:7px;font-size:11px;background:var(--surface);color:var(--text);cursor:pointer;font-family:var(--sans);gap:4px;align-items:center;white-space:nowrap}
 @media(max-width:900px){.lists-toggle-btn{display:inline-flex}}
-
-/* ── AI IMPORT PANEL ── */
-.ai-wrap{display:flex;gap:14px;padding:14px;max-width:1400px;margin:0 auto;min-height:calc(100vh - 52px)}
-@media(max-width:900px){.ai-wrap{flex-direction:column}}
-.ai-left{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
-.ai-right{width:360px;flex-shrink:0;display:flex;flex-direction:column;gap:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
-@media(max-width:900px){.ai-right{width:100%;min-height:420px}}
-.ai-key-banner{background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.ai-key-text{font-size:12px;color:var(--amber-text);flex:1;min-width:160px}
-.ai-key-row{display:flex;gap:6px;flex:1;min-width:180px}
-.ai-key-inp{height:32px;border:1px solid var(--amber);border-radius:7px;padding:0 10px;font-size:12px;background:var(--surface);color:var(--text);outline:none;font-family:var(--mono);flex:1}
-.ai-key-inp:focus{border-color:var(--blue)}
-.ai-key-btn{height:32px;padding:0 12px;border:none;border-radius:7px;font-size:12px;font-weight:700;background:var(--amber);color:#fff;cursor:pointer;font-family:var(--sans);white-space:nowrap}
-.ai-drop{background:var(--surface);border:2px dashed var(--border2);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
-.ai-drop:hover,.ai-drop.drag{border-color:var(--blue);background:var(--blue-bg)}
-.ai-drop-icon{font-size:26px;margin-bottom:6px}
-.ai-drop-ttl{font-size:14px;font-weight:600;margin-bottom:4px}
-.ai-drop-sub{font-size:11px;color:var(--text3);line-height:1.6;margin-bottom:10px}
-.ai-paste-area{width:100%;min-height:90px;border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-size:12px;font-family:var(--mono);background:var(--surface);color:var(--text);outline:none;resize:vertical;transition:border-color .15s}
-.ai-paste-area:focus{border-color:var(--blue)}
-.ai-parse-btn{width:100%;height:40px;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--sans);background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
-.ai-parse-btn:hover{opacity:.88}
-.ai-parse-btn:disabled{opacity:.45;cursor:not-allowed}
-.ai-result-card{background:var(--surface);border:1px solid var(--green);border-radius:12px;overflow:hidden}
-.ai-result-hdr{background:var(--green-bg);border-bottom:1px solid var(--green);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.ai-result-title{font-size:12px;font-weight:700;color:var(--green-text)}
-.ai-result-actions{display:flex;gap:6px;flex-wrap:wrap}
-.ai-mapping-info{padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:11px;color:var(--text3);line-height:1.6}
-.ai-mapping-tag{display:inline-block;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-mid);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;font-family:var(--mono);margin:1px}
-.ai-result-tbl-wrap{overflow-x:auto;max-height:340px;overflow-y:auto}
-.ai-tbl{width:100%;border-collapse:collapse;font-size:11px}
-.ai-tbl th{background:var(--surface2);color:var(--text3);font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.4px;padding:7px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border);position:sticky;top:0}
-.ai-tbl td{padding:6px 10px;border-bottom:1px solid var(--border);color:var(--text2);white-space:nowrap;font-family:var(--mono)}
-.ai-tbl tr:last-child td{border-bottom:none}
-.ai-tbl tr:hover td{background:var(--surface2)}
-.ai-tbl td.grade-c{font-weight:700;color:var(--text)}
-.ai-check{accent-color:var(--blue);width:14px;height:14px;cursor:pointer}
-.ai-warn-pill{display:inline-block;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:600;margin-top:6px}
-/* Chat panel */
-.ai-chat-hdr{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
-.ai-chat-hdr-title{font-size:12px;font-weight:700;color:var(--text)}
-.ai-chat-hdr-sub{font-size:10px;color:var(--text4)}
-.ai-chat-body{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:200px}
-.ai-msg{font-size:12px;line-height:1.6;padding:9px 11px;border-radius:9px;max-width:100%;word-break:break-word}
-.ai-msg.user{background:var(--blue);color:#fff;align-self:flex-end;border-radius:9px 9px 2px 9px}
-.ai-msg.ai{background:var(--surface2);color:var(--text);border-radius:2px 9px 9px 9px;border:1px solid var(--border)}
-.ai-msg.ai strong{font-weight:700}
-.ai-chat-input-row{padding:10px;border-top:1px solid var(--border);display:flex;gap:6px}
-.ai-chat-inp{flex:1;height:34px;border:1px solid var(--border2);border-radius:7px;padding:0 10px;font-size:12px;background:var(--surface);color:var(--text);font-family:var(--sans);outline:none;transition:border-color .15s}
-.ai-chat-inp:focus{border-color:var(--blue)}
-.ai-chat-send{width:34px;height:34px;border:none;border-radius:7px;background:var(--blue);color:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.ai-chat-send:disabled{opacity:.4;cursor:not-allowed}
-.ai-quick-prompts{display:flex;gap:5px;flex-wrap:wrap;padding:0 10px 8px}
-.ai-qp-btn{height:24px;padding:0 10px;border:1px solid var(--border2);border-radius:20px;font-size:10px;background:var(--surface);color:var(--text3);cursor:pointer;font-family:var(--sans);white-space:nowrap;transition:all .15s}
-.ai-qp-btn:hover{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-mid)}
-@keyframes ai-spin{to{transform:rotate(360deg)}}
-.ai-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:ai-spin .7s linear infinite;vertical-align:middle}
-.ai-typing{display:flex;gap:3px;align-items:center;padding:4px 0}
-.ai-typing span{width:6px;height:6px;border-radius:50%;background:var(--text4);animation:ai-bounce .9s infinite}
-.ai-typing span:nth-child(2){animation-delay:.15s}
-.ai-typing span:nth-child(3){animation-delay:.3s}
-@keyframes ai-bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
-/* AI Settings modal */
-.ai-keys-list{display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px}
-.ai-key-row{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);background:var(--surface);transition:background .12s}
-.ai-key-row:last-child{border-bottom:none}
-.ai-key-row.active-provider{background:var(--blue-bg)}
-.ai-key-icon{font-size:16px;flex-shrink:0;width:22px;text-align:center}
-.ai-key-name{font-size:12px;font-weight:600;color:var(--text);flex-shrink:0;width:90px}
-.ai-key-val{font-size:11px;color:var(--text3);font-family:var(--mono);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ai-key-actions{display:flex;align-items:center;gap:5px;flex-shrink:0}
-.ai-free-badge{font-size:9px;font-weight:700;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green);border-radius:20px;padding:1px 5px;flex-shrink:0}
-/* Toggle switch */
-.ai-toggle{position:relative;display:inline-block;width:34px;height:18px;flex-shrink:0}
-.ai-toggle input{opacity:0;width:0;height:0;position:absolute}
-.ai-toggle-track{position:absolute;cursor:pointer;inset:0;background:var(--border2);border-radius:18px;transition:.2s}
-.ai-toggle-track:before{position:absolute;content:'';height:12px;width:12px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
-.ai-toggle input:checked+.ai-toggle-track{background:var(--green)}
-.ai-toggle input:checked+.ai-toggle-track:before{transform:translateX(16px)}
-.ai-toggle input:disabled+.ai-toggle-track{opacity:.4;cursor:not-allowed}
-/* Key expand area */
-.ai-key-expand{display:none;padding:10px 12px;background:var(--surface2);border-top:1px solid var(--border)}
-.ai-key-expand.open{display:block}
-.ai-prov-icon{font-size:18px;flex-shrink:0}
-.ai-prov-name{font-size:13px;font-weight:600;color:var(--text)}
-.ai-prov-sub{font-size:10px;color:var(--text3);margin-top:1px}
-.ai-offer-btn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans);background:var(--green);color:#fff;margin-top:8px;transition:opacity .15s}
-.ai-offer-btn:hover{opacity:.88}
-.ai-offer-success{font-size:11px;color:var(--green-text);background:var(--green-bg);border:1px solid var(--green);border-radius:6px;padding:6px 10px;margin-top:6px;display:block}
 </style>
 </head>
 <body>
@@ -435,41 +322,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
       </div>
     </header>
 
-    <!-- OFFER HEADER -->
-    <header id="hdrOffer" style="display:none">
-      <div class="h-left">
-        <button class="menu-btn" onclick="openSidebar()">☰</button>
-        <span class="h-title">📄 Offer Builder</span>
-      </div>
-      <div class="h-right">
-        <button class="btn" onclick="newOffer()">New</button>
-        <button class="btn" onclick="togglePreview()">👁 Preview</button>
-        <button class="btn btn-green" onclick="window.print()">🖨 Print PDF</button>
-        <button class="btn btn-outline-blue" onclick="exportExcel()">📊 Excel</button>
-      </div>
-    </header>
-
-    <!-- AI IMPORT HEADER -->
-    <header id="hdrAI" style="display:none">
-      <div class="h-left">
-        <button class="menu-btn" onclick="openSidebar()">☰</button>
-        <span class="h-title">🤖 AI Stock Assistant</span>
-      </div>
-      <div class="h-right">
-        <span id="aiProviderLabel" style="font-size:11px;color:var(--text4);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-        <button class="btn btn-sm" onclick="openAISettings()" title="AI Settings" style="font-size:15px;padding:0 8px">⚙</button>
-        <button class="btn btn-outline-blue btn-sm" onclick="showView('stock')">← Stock</button>
-      </div>
-    </header>
-
     <!-- STOCK VIEW -->
-    <!-- AI Offer Banner (shown when landing from ai-stock.html with offer data) -->
-    <div id="aiOfferBanner" style="display:none;background:var(--green-bg);border-bottom:1px solid var(--green);padding:10px 16px;font-size:12px;color:var(--green-text);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <span id="aiOfferBannerText" style="flex:1;font-weight:600"></span>
-      <button class="btn btn-green btn-sm" onclick="openAIOfferBuilder()">📄 Open Offer Builder →</button>
-      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('aiOfferBanner').style.display='none'">✕</button>
-    </div>
-
     <div id="viewStock" class="stock-view-wrap">
       <div class="lists-rail" id="listsRail">
         <div class="lr-hdr">
@@ -608,10 +461,11 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
         <div class="stock-search-panel">
           <div class="ssp-title">🔍 Search All Stock Lists &amp; Add to Offer</div>
           <div class="search-row">
-            <div class="sf sf-name"><label class="lbl">Name / Grade / Type</label><input id="ospName" placeholder="e.g. S235, Plate…" oninput="runOfferSearch()"></div>
-            <div class="sf sf-dim"><label class="lbl">Thick (mm)</label><input id="ospThick" type="number" placeholder="12" oninput="runOfferSearch()"></div>
-            <div class="sf sf-dim"><label class="lbl">Width (mm)</label><input id="ospWidth" type="number" placeholder="1500" oninput="runOfferSearch()"></div>
-            <div class="sf sf-dim"><label class="lbl">Length (mm)</label><input id="ospLength" type="number" placeholder="6000" oninput="runOfferSearch()"></div>
+            <div class="sf sf-name"><label class="lbl">Name / Grade / Type</label><input id="ospName" placeholder="e.g. S235, Plate, API 5L…" oninput="runOfferSearch()"></div>
+            <div class="sf"><label class="lbl">Category</label><select id="ospCategory" onchange="updateOfferSearchDims();runOfferSearch()" style="height:34px;border:1px solid var(--border2);border-radius:7px;padding:0 10px;font-size:12px;font-family:var(--mono);background:var(--surface);color:var(--text);outline:none"><option value="">All</option><option value="flat">Flat</option><option value="pipe">Pipe</option><option value="profile">Profile</option><option value="bar">Bar/Rod</option><option value="other">Other</option></select></div>
+            <div class="sf sf-dim" id="osp_dim1_wrap"><label class="lbl" id="osp_dim1_lbl">Thick (mm)</label><input id="ospThick" type="number" placeholder="12" oninput="runOfferSearch()"></div>
+            <div class="sf sf-dim" id="osp_dim2_wrap"><label class="lbl" id="osp_dim2_lbl">Width (mm)</label><input id="ospWidth" type="number" placeholder="1500" oninput="runOfferSearch()"></div>
+            <div class="sf sf-dim" id="osp_dim3_wrap"><label class="lbl" id="osp_dim3_lbl">Length (mm)</label><input id="ospLength" type="number" placeholder="6000" oninput="runOfferSearch()"></div>
             <div class="sf sf-dim"><label class="lbl">List</label><select id="ospList" onchange="runOfferSearch()"><option value="">All lists</option></select></div>
             <div class="sf-actions">
               <button class="btn btn-ghost btn-sm" onclick="clearOfferSearch()">Clear</button>
@@ -630,8 +484,8 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
           <div class="offer-lines-wrap">
             <table class="otbl">
               <thead><tr>
-                <th style="width:28px">#</th><th style="min-width:100px">Grade</th><th style="min-width:80px">Type</th>
-                <th style="width:68px">Thick</th><th style="width:68px">Width</th><th style="width:68px">Length</th>
+                <th style="width:28px">#</th><th style="min-width:100px">Grade</th><th style="min-width:80px">Type / Section</th>
+                <th style="width:82px" id="oh_dim1">Dim 1</th><th style="width:82px" id="oh_dim2">Dim 2</th><th style="width:82px" id="oh_dim3">Dim 3</th>
                 <th style="width:60px">Qty</th><th style="width:52px">Unit</th>
                 <th style="width:86px">Buy $/unit</th>
                 <th style="width:76px">+Cost</th>
@@ -676,12 +530,115 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   </div>
 </div>
 
+<!-- MODALS -->
+<!-- Stock item modal -->
+<div class="modal-bg" id="stockModal">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <p class="modal-ttl" id="stockModalTitle">Add Stock Item</p>
+    <div class="msec">Product</div>
+    <div class="g2">
+      <div class="form-row">
+        <label class="lbl">Product category</label>
+        <select class="inp" id="mCategory" onchange="onCategoryChange()">
+          <option value="flat">Flat (Plate / Sheet / Coil)</option>
+          <option value="pipe">Pipe / Tube</option>
+          <option value="profile">Profile (H / I / U / L beam)</option>
+          <option value="bar">Bar / Rod / Wire</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-row"><label class="lbl">Product type</label><input class="inp" id="mType" placeholder="Plate, Coil, Pipe…"></div>
+    </div>
+    <div class="form-row"><label class="lbl">Grade</label><input class="inp" id="mGrade" placeholder="S235, A36, API 5L X52…"></div>
+    <div class="msec">Dimensions</div>
+    <!-- FLAT: Thickness / Width / Length -->
+    <div class="g3" id="dimFlat">
+      <div class="form-row"><label class="lbl">Thickness (mm)</label><input class="inp mono" type="number" id="mThick" placeholder="e.g. 10"></div>
+      <div class="form-row"><label class="lbl">Width (mm)</label><input class="inp mono" type="number" id="mWidth" placeholder="e.g. 1500"></div>
+      <div class="form-row"><label class="lbl">Length (mm)</label><input class="inp mono" type="number" id="mLength" placeholder="e.g. 6000"></div>
+    </div>
+    <!-- PIPE: OD / Wall Thickness / Length -->
+    <div class="g3" id="dimPipe" style="display:none">
+      <div class="form-row"><label class="lbl">OD — Outer Diameter (mm)</label><input class="inp mono" type="number" id="mOD" placeholder="e.g. 219.1"></div>
+      <div class="form-row"><label class="lbl">Wall Thickness (mm)</label><input class="inp mono" type="number" id="mWT" placeholder="e.g. 8"></div>
+      <div class="form-row"><label class="lbl">Length (mm)</label><input class="inp mono" type="number" id="mPipeLen" placeholder="e.g. 6000"></div>
+    </div>
+    <!-- PROFILE: Section / Height / Weight per metre -->
+    <div class="g3" id="dimProfile" style="display:none">
+      <div class="form-row"><label class="lbl">Section (e.g. HEA 200)</label><input class="inp mono" id="mSection" placeholder="e.g. HEA 200"></div>
+      <div class="form-row"><label class="lbl">Height H (mm)</label><input class="inp mono" type="number" id="mPHeight" placeholder="e.g. 190"></div>
+      <div class="form-row"><label class="lbl">Length (mm)</label><input class="inp mono" type="number" id="mProfLen" placeholder="e.g. 12000"></div>
+    </div>
+    <!-- BAR: Diameter / Length -->
+    <div class="g3" id="dimBar" style="display:none">
+      <div class="form-row"><label class="lbl">Diameter (mm)</label><input class="inp mono" type="number" id="mDiam" placeholder="e.g. 32"></div>
+      <div class="form-row"><label class="lbl">Length (mm)</label><input class="inp mono" type="number" id="mBarLen" placeholder="e.g. 6000"></div>
+      <div class="form-row"><label class="lbl">Side / Width (mm) <span style="color:var(--text4);font-weight:400">optional</span></label><input class="inp mono" type="number" id="mBarWidth" placeholder="flat bar width"></div>
+    </div>
+    <!-- OTHER: free text dimensions -->
+    <div id="dimOther" style="display:none">
+      <div class="form-row"><label class="lbl">Dimensions (free text)</label><input class="inp" id="mDimFree" placeholder="e.g. 50×50×5, DN100 PN16…"></div>
+    </div>
+    <div class="msec">Stock &amp; Pricing</div>
+    <div class="g2">
+      <div class="form-row"><label class="lbl">Available Qty</label><input class="inp mono" type="number" id="mQty"></div>
+      <div class="form-row"><label class="lbl">Unit</label><select class="inp" id="mUnit"><option>ton</option><option>kg</option><option>pcs</option><option>m</option></select></div>
+    </div>
+    <div class="g2">
+      <div class="form-row"><label class="lbl">Price Ex-Works</label><input class="inp mono" type="number" id="mPrice"></div>
+      <div class="form-row"><label class="lbl">Currency</label><select class="inp" id="mCurrency"><option>USD</option><option>EUR</option><option>GBP</option><option>TRY</option></select></div>
+    </div>
+    <div class="msec">Sourcing</div>
+    <div class="g2">
+      <div class="form-row"><label class="lbl">Supplier</label><input class="inp" id="mSupplier"></div>
+      <div class="form-row"><label class="lbl">Location</label><input class="inp" id="mLocation"></div>
+    </div>
+    <div class="g2">
+      <div class="form-row"><label class="lbl">Origin</label><input class="inp" id="mOrigin"></div>
+      <div class="form-row"><label class="lbl">Heat #</label><input class="inp mono" id="mHeat"></div>
+    </div>
+    <div class="g2">
+      <div class="form-row"><label class="lbl">Weight (kg)</label><input class="inp mono" type="number" id="mWeight"></div>
+      <div class="form-row" id="mAvailRow" style="display:none"><label class="lbl">Availability</label><select class="inp" id="mAvail"><option value="yes">Available</option><option value="no">Sold/Reserved</option></select></div>
+    </div>
+    <div class="form-row"><label class="lbl">Alt. grades (/ separated)</label><input class="inp" id="mAlts" placeholder="S275JR / A36 / Q235"></div>
+    <div class="form-row"><label class="lbl">Notes</label><textarea class="inp" id="mNotes" style="height:52px"></textarea></div>
+    <div class="msec">Reservation (CRM link)</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:500">
+        <input type="checkbox" id="mReserved" onchange="toggleReservedBy()" style="accent-color:var(--amber);width:15px;height:15px">
+        Mark as Reserved
+      </label>
+    </div>
+    <div id="mReservedByRow" style="display:none" class="form-row">
+      <label class="lbl">Reserved for (Lead / Deal name)</label>
+      <input class="inp" id="mReservedBy" placeholder="e.g. ABC Corp — S355 Offer">
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-danger btn-sm" id="mDeleteBtn" style="display:none;margin-right:auto" onclick="deleteStockItem()">Delete</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeStockModal()">Cancel</button>
+      <button class="btn btn-blue btn-sm" onclick="saveStockItem()">Save</button>
+    </div>
+  </div>
+</div>
 
+<!-- New / Rename list modal -->
 <div class="modal-bg" id="listNameModal">
   <div class="modal" style="max-width:380px">
     <div class="modal-drag"></div>
     <p class="modal-ttl" id="listNameTitle">New Stock List</p>
     <div class="form-row"><label class="lbl">List name</label><input class="inp" id="listNameInput" placeholder="e.g. Supplier A — Q1 2025" onkeydown="if(event.key==='Enter')confirmListName()"></div>
+    <div class="form-row" id="listCategoryRow" style="margin-bottom:4px">
+      <label class="lbl">Product category <span style="color:var(--text4);font-weight:400">(sets default column layout)</span></label>
+      <select class="inp" id="listCategoryInput">
+        <option value="flat">🔲 Flat — Plate / Sheet / Coil</option>
+        <option value="pipe">⭕ Pipe / Tube</option>
+        <option value="profile">🔷 Profile — H / I / U / L beam</option>
+        <option value="bar">🔵 Bar / Rod / Wire</option>
+        <option value="mixed">📦 Mixed / General</option>
+      </select>
+    </div>
     <div id="listTypeRow" style="margin-bottom:12px">
       <label class="lbl" style="margin-bottom:6px;display:block">Storage type</label>
       <div style="display:flex;gap:8px">
@@ -738,26 +695,6 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 </div>
 
 <!-- SQL Setup modal -->
-<!-- AI Settings Modal -->
-
-<!-- AI Import: pick which list to add to -->
-<div class="modal-bg" id="aiImportModal">
-  <div class="modal" style="max-width:420px">
-    <div class="modal-drag"></div>
-    <p class="modal-ttl">🤖 AI Import — Choose List</p>
-    <div id="aiImportSummary" style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.7"></div>
-    <div class="form-row">
-      <label class="lbl">Add items to this stock list</label>
-      <select class="inp" id="aiImportListSel" style="font-size:13px"></select>
-    </div>
-    <p style="font-size:11px;color:var(--text3);margin-top:-6px;margin-bottom:14px">Duplicates will be skipped automatically.</p>
-    <div class="modal-acts">
-      <button class="btn btn-ghost btn-sm" onclick="closeAIImportModal()">Cancel</button>
-      <button class="btn btn-blue btn-sm" id="aiImportConfirmBtn" onclick="confirmAIImport()">✓ Import items</button>
-    </div>
-  </div>
-</div>
-
 <div class="modal-bg" id="sqlSetupModal">
   <div class="modal" style="max-width:580px">
     <div class="modal-drag"></div>
@@ -788,7 +725,11 @@ CREATE INDEX IF NOT EXISTS stock_list_id_idx ON stock (list_id);
 -- Step 4: Add profile fields for offer builder
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS full_name text;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS company_name text;
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS company_subtitle text;</pre>
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS company_subtitle text;
+
+-- Step 5: Add multi-product category support
+ALTER TABLE stock ADD COLUMN IF NOT EXISTS product_category text DEFAULT 'flat';
+ALTER TABLE stock ADD COLUMN IF NOT EXISTS section text;</pre>
     <div class="modal-acts" style="gap:8px">
       <button class="btn btn-ghost btn-sm" onclick="closeSQLSetupModal()">Close</button>
       <button class="btn btn-sm" style="background:var(--surface2);border-color:var(--border2)" onclick="copySQLSetup()">📋 Copy SQL</button>
@@ -849,6 +790,19 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   ALTER TABLE stock ADD COLUMN IF NOT EXISTS list_id text;
   CREATE INDEX IF NOT EXISTS stock_list_id_idx ON stock (list_id);
 */
+
+// ══════════════════════════════════
+// PRODUCT CATEGORY DIMENSION CONFIG
+// ══════════════════════════════════
+const DIM_CONFIG = {
+  flat:    { label:'Flat / Sheet / Coil',  dims:['Thick (mm)','Width (mm)','Length (mm)'],   placeholders:['10','1500','6000'],   units:['ton','kg','pcs','m'],    fields:['thickness','width','length'] },
+  pipe:    { label:'Pipe / Tube',           dims:['OD (mm)','Wall Thick (mm)','Length (mm)'],placeholders:['219.1','8','6000'],   units:['ton','kg','pcs','m'],    fields:['thickness','width','length'] },
+  profile: { label:'Profile / Section',     dims:['Section','Height H (mm)','Length (mm)'],  placeholders:['HEA200','190','12000'],units:['ton','kg','pcs','m'],   fields:['thickness','width','length'] },
+  bar:     { label:'Bar / Rod / Wire',      dims:['Diameter (mm)','Length (mm)','Width (mm)'],placeholders:['32','6000',''],       units:['ton','kg','pcs','m'],    fields:['thickness','length','width'] },
+  other:   { label:'Other',                 dims:['Dim 1','Dim 2','Dim 3'],                   placeholders:['','',''],             units:['ton','kg','pcs','m','set'],fields:['thickness','width','length'] },
+  mixed:   { label:'Mixed / General',       dims:['Dim 1 (mm)','Dim 2 (mm)','Dim 3 (mm)'],  placeholders:['','',''],             units:['ton','kg','pcs','m','set'],fields:['thickness','width','length'] },
+};
+function getCatConfig(cat){ return DIM_CONFIG[cat]||DIM_CONFIG['flat']; }
 
 // ══════════════════════════════════
 // STATE
@@ -946,160 +900,6 @@ async function initLists(){
   activeListId = stockLists.find(l=>l.id===saved) ? saved : 'cloud';
   await loadCloudStock();
   renderAll();
-  // Check for AI queue AFTER lists are loaded so we have the full list of targets
-  checkAIQueue();
-}
-
-// ══════════════════════════════════
-// AI IMPORT / OFFER BRIDGE
-// ══════════════════════════════════
-let aiImportQueue = [];
-let aiOfferQueue  = [];
-let aiOfferMeta   = {};
-
-function checkAIQueue(){
-  const params = new URLSearchParams(window.location.search);
-
-  // ── AI Import
-  if(params.has('ai_import')){
-    try{
-      const raw = localStorage.getItem('sp_ai_import_queue');
-      if(raw){
-        aiImportQueue = JSON.parse(raw);
-        localStorage.removeItem('sp_ai_import_queue');
-        // Clean URL without reload
-        window.history.replaceState({}, '', window.location.pathname);
-        if(aiImportQueue.length) openAIImportModal();
-      }
-    }catch(e){ console.warn('AI import queue error:', e); }
-  }
-
-  // ── AI Offer
-  if(params.has('ai_offer')){
-    try{
-      const rawLines = localStorage.getItem('sp_ai_offer_queue');
-      const rawMeta  = localStorage.getItem('sp_ai_offer_meta');
-      if(rawLines){
-        aiOfferQueue = JSON.parse(rawLines);
-        aiOfferMeta  = rawMeta ? JSON.parse(rawMeta) : {};
-        localStorage.removeItem('sp_ai_offer_queue');
-        localStorage.removeItem('sp_ai_offer_meta');
-        window.history.replaceState({}, '', window.location.pathname);
-        if(aiOfferQueue.length) showAIOfferBanner();
-      }
-    }catch(e){ console.warn('AI offer queue error:', e); }
-  }
-}
-
-// ── Import modal
-function openAIImportModal(){
-  const n = aiImportQueue.length;
-  document.getElementById('aiImportSummary').innerHTML =
-    `<strong>${n} item${n!==1?'s':''}</strong> parsed by AI are ready to import.<br>` +
-    `Choose which stock list to add them to:`;
-
-  // Populate list selector
-  const sel = document.getElementById('aiImportListSel');
-  sel.innerHTML = stockLists.map(l =>
-    `<option value="${l.id}" ${l.id===activeListId?'selected':''}>${l.name} (${l.items.length} items)</option>`
-  ).join('');
-
-  document.getElementById('aiImportModal').classList.add('open');
-}
-
-function closeAIImportModal(){
-  document.getElementById('aiImportModal').classList.remove('open');
-  aiImportQueue = [];
-}
-
-async function confirmAIImport(){
-  const selId = document.getElementById('aiImportListSel').value;
-  if(!selId){ alert('Please select a list.'); return; }
-
-  // Switch active list to the selected one
-  activeListId = selId;
-  localStorage.setItem('sp_active_list', selId);
-  await loadCloudStock();
-  renderAll();
-
-  // Map AI schema → stock schema and load into previewData
-  previewData = aiImportQueue.map(it => ({
-    product_type: it.product_type||'',
-    grade:        it.grade||'',
-    thickness:    Number(it.thickness)||null,
-    width:        Number(it.width)||null,
-    length:       Number(it.length)||null,
-    supplier:     it.supplier||'',
-    location:     it.location||'',
-    quantity:     Number(it.quantity)||0,
-    unit:         it.unit||'ton',
-    buy_price:    Number(it.buy_price)||0,
-    currency:     it.currency||'USD',
-    origin:       it.origin||'',
-    heat_number:  it.heat_no||'',
-    available:    'yes',
-    notes:        it.notes||''
-  }));
-
-  closeAIImportModal();
-
-  // Run the existing confirmUpload — handles dedup, cloud vs local, banners etc.
-  await confirmUpload();
-}
-
-// ── Offer banner
-function showAIOfferBanner(){
-  const n = aiOfferQueue.length;
-  document.getElementById('aiOfferBannerText').textContent =
-    `✓ AI built an offer with ${n} line${n!==1?'s':''} — ready to review and export`;
-  document.getElementById('aiOfferBanner').style.display = 'flex';
-}
-
-function openAIOfferBuilder(){
-  document.getElementById('aiOfferBanner').style.display = 'none';
-  showView('offer');
-
-  // Pre-fill offer meta if available
-  const meta = aiOfferMeta;
-  const setVal = (id, val) => { const el=document.getElementById(id); if(el&&val) el.value=val; };
-  setVal('clientCompany',   meta.client_company);
-  setVal('clientContact',   meta.client_contact);
-  setVal('clientEmail',     meta.client_email);
-  setVal('clientPhone',     meta.client_phone);
-  setVal('termPayment',     meta.payment_terms);
-  setVal('termDelivery',    meta.delivery);
-  setVal('termIncoterms',   meta.incoterms);
-  setVal('termOrigin',      meta.origin);
-  setVal('termNotes',       meta.notes);
-  setVal('offerCurrency',   meta.currency);
-
-  // Add offer lines
-  aiOfferQueue.forEach(line => {
-    addOfferLine({
-      grade:     line.grade||'',
-      type:      line.type||line.product_type||'',
-      thick:     line.thickness||'',
-      width:     line.width||'',
-      length:    line.length||'',
-      unit:      line.unit||'ton',
-      buy_price: Number(line.buy_price)||0
-    });
-    // Set quantity on the last added line
-    const last = offerLines[offerLines.length-1];
-    if(last && line.quantity){
-      setTimeout(()=>{
-        const qEl = document.getElementById(`ol_q_${last.id}`);
-        if(qEl){ qEl.value = line.quantity; recalcOffer(); }
-        if(line.margin){
-          const mEl = document.getElementById(`ol_m_${last.id}`);
-          if(mEl){ mEl.value = line.margin; recalcOffer(); }
-        }
-      }, 80);
-    }
-  });
-
-  aiOfferQueue = [];
-  aiOfferMeta  = {};
 }
 
 async function loadCloudStock(){
@@ -1135,6 +935,7 @@ function renderListsRail(){
       <div class="lc-name">${esc(l.name)}</div>
       <div class="lc-meta">
         <span class="lc-badge ${l.type}">${l.type==='cloud'?'☁ Cloud':'📋 Local'}</span>
+        ${l.product_category&&l.product_category!=='mixed'?`<span class="lc-badge" style="background:var(--green-bg);color:var(--green-text)">${{flat:'📐 Flat',pipe:'⭕ Pipe',profile:'🔷 Profile',bar:'🔵 Bar'}[l.product_category]||l.product_category}</span>`:''}
         <span>${l.items.length.toLocaleString()} item${l.items.length!==1?'s':''}</span>
       </div>
       <div class="lc-actions">
@@ -1190,6 +991,8 @@ function openNewListModal(){
   document.getElementById('listNameConfirmBtn').textContent='Create';
   document.getElementById('listNameInput').value='';
   document.getElementById('listTypeRow').style.display='block';
+  const catRow=document.getElementById('listCategoryRow');if(catRow)catRow.style.display='block';
+  const catSel=document.getElementById('listCategoryInput');if(catSel)catSel.value='flat';
   const localRadio=document.getElementById('typeLocal');
   if(localRadio){localRadio.checked=true; updateListTypeUI();}
   document.getElementById('listNameModal').classList.add('open');
@@ -1210,21 +1013,21 @@ function openRenameListById(id){
 function closeListNameModal(){ document.getElementById('listNameModal').classList.remove('open'); }
 async function confirmListName(){
   const name=(document.getElementById('listNameInput').value||'').trim(); if(!name)return;
+  const listCat=document.getElementById('listCategoryInput')?.value||'mixed';
   if(listNameMode==='new'){
     const wantCloud=document.getElementById('typeCloud')?.checked;
     if(wantCloud){
-      // Create cloud list in Supabase
       const btn=document.getElementById('listNameConfirmBtn');
       btn.disabled=true; btn.textContent='Creating…';
       const {data,error}=await sb.from('stock_lists').insert({name}).select().single();
       btn.disabled=false; btn.textContent='Create';
       if(error){showSQLSetupModal(error.message);btn.disabled=false;btn.textContent='Create';return;}
-      const newList={id:'clist_'+data.id,supabase_id:data.id,name,type:'cloud',items:[]};
+      const newList={id:'clist_'+data.id,supabase_id:data.id,name,type:'cloud',product_category:listCat,items:[]};
       stockLists.push(newList);
       closeListNameModal();
       selectList(newList.id);
     } else {
-      const newList={id:uid(),name,type:'local',items:[]};
+      const newList={id:uid(),name,type:'local',product_category:listCat,items:[]};
       stockLists.push(newList);
       saveLocalLists();
       closeListNameModal();
@@ -1266,6 +1069,15 @@ async function confirmDeleteList(){
   closeDelListModal();
   renderAll();
   updateListSelect();
+}
+
+// ── Infer category from product_type string
+function inferCategory(type){
+  const t=(type||'').toLowerCase();
+  if(['pipe','tube','casing','tubing','erw','saw','smls','hollow section','rhs','chs','shs'].some(k=>t.includes(k)))return'pipe';
+  if(['hea','heb','hem','ipe','ipn','inp','upe','upn','channel','angle','l-','h-','i-','u-','profile','beam','section','joist','purlin'].some(k=>t.includes(k)))return'profile';
+  if(['bar','rod','wire','rebar','re-bar','deformed','round bar','flat bar','square bar','hex'].some(k=>t.includes(k)))return'bar';
+  return'flat';
 }
 
 // ══════════════════════════════════
@@ -1356,9 +1168,11 @@ function renderStockTable(data){
   tbody.innerHTML=sorted.map(s=>{
     const isLow=thresholds[(s.product_type||'').trim()]&&(Number(s.quantity)||0)<thresholds[(s.product_type||'').trim()];
     return`<tr class="${s.available==='no'?'dim':''}" style="${isLow?'background:var(--amber-bg)':''}${isAdmin?';cursor:pointer':''}" onclick="${isAdmin?`openEditStockItem('${isCloud?s.id:s._lid}',${isCloud})`:''}">
-      <td><span class="type-badge">${esc(s.product_type||'—')}</span></td>
+      <td><span class="type-badge">${esc(s.product_type||'—')}</span>${s.product_category&&s.product_category!=='flat'?`<span style="font-size:9px;margin-left:3px;color:var(--text4)">${{pipe:'⭕',profile:'🔷',bar:'🔵',other:'📦'}[s.product_category]||''}</span>`:''}</td>
       <td><span class="grade-c">${esc(s.grade||'—')}</span>${s.alternatives?`<br><small style="color:var(--text4);font-size:10px">${esc(s.alternatives)}</small>`:''}</td>
-      <td class="dim-c">${s.thickness??'—'}</td><td class="dim-c">${s.width??'—'}</td><td class="dim-c">${s.length??'—'}</td>
+      <td class="dim-c">${s.product_category==='profile'&&s.section?esc(s.section):(s.thickness??'—')}</td>
+      <td class="dim-c">${s.width??'—'}</td>
+      <td class="dim-c">${s.length??'—'}</td>
       <td>${esc(s.supplier||'—')}</td><td>${esc(s.location||'—')}</td>
       <td><span class="price-c">${s.quantity??'—'}</span>${isLow?` <span style="color:var(--red-text);font-size:10px">⚠</span>`:''} <small style="color:var(--text3)">${s.unit||'ton'}</small></td>
       <td><span class="price-c">${s.buy_price?fmtNum(s.buy_price):'—'}</span>${s.currency&&s.currency!=='USD'?` <small>${s.currency}</small>`:''}</td>
@@ -1412,9 +1226,10 @@ function addFilteredToOffer(){
   filtered.forEach(s=>addOfferLine({
     grade: s.grade||'',
     type:  s.product_type||'',
-    thick: s.thickness||'',
-    width: s.width||'',
-    length:s.length||'',
+    category: s.product_category||inferCategory(s.product_type||''),
+    dim1: s.thickness||'',
+    dim2: s.width||'',
+    dim3: s.length||'',
     unit:  s.unit||'ton',
     buy_price: Number(s.buy_price)||0
   }));
@@ -1424,9 +1239,11 @@ function addFilteredToOffer(){
 // STOCK ITEM ADD/EDIT
 // ══════════════════════════════════
 function clearForm(){
-  ['mType','mGrade','mOrigin','mSupplier','mLocation','mHeat','mNotes','mAlts'].forEach(id=>document.getElementById(id).value='');
-  ['mThick','mWidth','mLength','mQty','mWeight','mPrice'].forEach(id=>document.getElementById(id).value='');
+  ['mType','mGrade','mOrigin','mSupplier','mLocation','mHeat','mNotes','mAlts','mSection','mDimFree'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['mThick','mWidth','mLength','mQty','mWeight','mPrice','mOD','mWT','mPipeLen','mPHeight','mProfLen','mDiam','mBarLen','mBarWidth'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   document.getElementById('mUnit').value='ton'; document.getElementById('mCurrency').value='USD';
+  const mc=document.getElementById('mCategory'); if(mc)mc.value='flat';
+  onCategoryChange();
 }
 function openAddStock(){
   editingItemId=null;
@@ -1446,11 +1263,25 @@ function openEditStockItem(id,isCloud){
   if(!item)return;
   editingItemId=id;
   document.getElementById('stockModalTitle').textContent='Edit Item';
+  // Detect category from stored field or infer from product_type
+  const cat=item.product_category||inferCategory(item.product_type||'');
+  const mc=document.getElementById('mCategory'); if(mc){mc.value=cat; onCategoryChange();}
   document.getElementById('mType').value=item.product_type||'';
   document.getElementById('mGrade').value=item.grade||'';
-  document.getElementById('mThick').value=item.thickness||'';
-  document.getElementById('mWidth').value=item.width||'';
-  document.getElementById('mLength').value=item.length||'';
+  // Dimensions — map stored fields back to category-specific inputs
+  const thickEl=document.getElementById('mThick'),widthEl=document.getElementById('mWidth'),lenEl=document.getElementById('mLength');
+  if(thickEl)thickEl.value=item.thickness||'';
+  if(widthEl)widthEl.value=item.width||'';
+  if(lenEl)lenEl.value=item.length||'';
+  // Pipe extras
+  const odEl=document.getElementById('mOD'),wtEl=document.getElementById('mWT'),plEl=document.getElementById('mPipeLen');
+  if(odEl)odEl.value=item.thickness||''; if(wtEl)wtEl.value=item.width||''; if(plEl)plEl.value=item.length||'';
+  // Profile extras
+  const secEl=document.getElementById('mSection'),phEl=document.getElementById('mPHeight'),profLenEl=document.getElementById('mProfLen');
+  if(secEl)secEl.value=item.section||''; if(phEl)phEl.value=item.width||''; if(profLenEl)profLenEl.value=item.length||'';
+  // Bar extras
+  const diamEl=document.getElementById('mDiam'),blEl=document.getElementById('mBarLen'),bwEl=document.getElementById('mBarWidth');
+  if(diamEl)diamEl.value=item.thickness||''; if(blEl)blEl.value=item.length||''; if(bwEl)bwEl.value=item.width||'';
   document.getElementById('mQty').value=item.quantity||'';
   document.getElementById('mUnit').value=item.unit||'ton';
   document.getElementById('mWeight').value=item.weight_kg||'';
@@ -1472,7 +1303,49 @@ function openEditStockItem(id,isCloud){
 }
 function closeStockModal(){ document.getElementById('stockModal').classList.remove('open'); }
 function buildItemObj(){
-  return{product_type:document.getElementById('mType').value.trim(),grade:document.getElementById('mGrade').value.trim(),thickness:Number(document.getElementById('mThick').value)||null,width:Number(document.getElementById('mWidth').value)||null,length:Number(document.getElementById('mLength').value)||null,quantity:Number(document.getElementById('mQty').value)||0,unit:document.getElementById('mUnit').value,weight_kg:Number(document.getElementById('mWeight').value)||null,origin:document.getElementById('mOrigin').value.trim(),supplier:document.getElementById('mSupplier').value.trim(),buy_price:Number(document.getElementById('mPrice').value)||0,currency:document.getElementById('mCurrency').value,location:document.getElementById('mLocation').value.trim(),heat_number:document.getElementById('mHeat').value.trim(),available:document.getElementById('mAvail')?.value||'yes',alternatives:document.getElementById('mAlts').value.trim(),notes:document.getElementById('mNotes').value.trim(),reserved:document.getElementById('mReserved')?.checked||false,reserved_by:document.getElementById('mReservedBy')?.value.trim()||null};
+  const cat=document.getElementById('mCategory')?.value||'flat';
+  let thickness=null,width=null,length=null,section='';
+  if(cat==='flat'){
+    thickness=Number(document.getElementById('mThick')?.value)||null;
+    width=Number(document.getElementById('mWidth')?.value)||null;
+    length=Number(document.getElementById('mLength')?.value)||null;
+  } else if(cat==='pipe'){
+    thickness=Number(document.getElementById('mOD')?.value)||null;   // OD stored as thickness
+    width=Number(document.getElementById('mWT')?.value)||null;        // WT stored as width
+    length=Number(document.getElementById('mPipeLen')?.value)||null;
+  } else if(cat==='profile'){
+    section=(document.getElementById('mSection')?.value||'').trim();
+    width=Number(document.getElementById('mPHeight')?.value)||null;   // H stored as width
+    length=Number(document.getElementById('mProfLen')?.value)||null;
+  } else if(cat==='bar'){
+    thickness=Number(document.getElementById('mDiam')?.value)||null;  // Diam stored as thickness
+    length=Number(document.getElementById('mBarLen')?.value)||null;
+    width=Number(document.getElementById('mBarWidth')?.value)||null;
+  } else {
+    // other / free
+    section=(document.getElementById('mDimFree')?.value||'').trim();
+  }
+  return{
+    product_category:cat,
+    product_type:document.getElementById('mType').value.trim(),
+    grade:document.getElementById('mGrade').value.trim(),
+    thickness,width,length,
+    section: section||null,
+    quantity:Number(document.getElementById('mQty').value)||0,
+    unit:document.getElementById('mUnit').value,
+    weight_kg:Number(document.getElementById('mWeight').value)||null,
+    origin:document.getElementById('mOrigin').value.trim(),
+    supplier:document.getElementById('mSupplier').value.trim(),
+    buy_price:Number(document.getElementById('mPrice').value)||0,
+    currency:document.getElementById('mCurrency').value,
+    location:document.getElementById('mLocation').value.trim(),
+    heat_number:document.getElementById('mHeat').value.trim(),
+    available:document.getElementById('mAvail')?.value||'yes',
+    alternatives:document.getElementById('mAlts').value.trim(),
+    notes:document.getElementById('mNotes').value.trim(),
+    reserved:document.getElementById('mReserved')?.checked||false,
+    reserved_by:document.getElementById('mReservedBy')?.value.trim()||null
+  };
 }
 async function saveStockItem(){
   const obj=buildItemObj(), list=activeList();
@@ -1504,7 +1377,7 @@ async function deleteStockItem(){
 // ══════════════════════════════════
 // FILE UPLOAD
 // ══════════════════════════════════
-const COL_MAP={'type':'product_type','product_type':'product_type','product type':'product_type','grade':'grade','thick':'thickness','thickness':'thickness','thick(mm)':'thickness','thickness(mm)':'thickness','width':'width','width(mm)':'width','length':'length','length(mm)':'length','supplier':'supplier','location':'location','qty':'quantity','quantity':'quantity','available qty':'quantity','avail. qty':'quantity','avail qty':'quantity','price':'buy_price','buy price':'buy_price','buy_price':'buy_price','price ex-works':'buy_price','buy$/ton':'buy_price','buy price / unit':'buy_price','exw':'buy_price','origin':'origin','heat':'heat_number','heat#':'heat_number','heat number':'heat_number','heat_number':'heat_number','available':'available','avail':'available','unit':'unit','currency':'currency','weight':'weight_kg','weight(kg)':'weight_kg','weight_kg':'weight_kg','notes':'notes','alternatives':'alternatives','alts':'alternatives'};
+const COL_MAP={'category':'product_category','product_category':'product_category','type':'product_type','product_type':'product_type','product type':'product_type','grade':'grade','thick':'thickness','thickness':'thickness','thick(mm)':'thickness','thickness(mm)':'thickness','od':'thickness','outer diameter':'thickness','wall thick':'width','wall thickness':'width','wt':'width','diameter':'thickness','diam':'thickness','section':'section','height':'width','width':'width','width(mm)':'width','length':'length','length(mm)':'length','supplier':'supplier','location':'location','qty':'quantity','quantity':'quantity','available qty':'quantity','avail. qty':'quantity','avail qty':'quantity','price':'buy_price','buy price':'buy_price','buy_price':'buy_price','price ex-works':'buy_price','buy$/ton':'buy_price','buy price / unit':'buy_price','exw':'buy_price','origin':'origin','heat':'heat_number','heat#':'heat_number','heat number':'heat_number','heat_number':'heat_number','available':'available','avail':'available','unit':'unit','currency':'currency','weight':'weight_kg','weight(kg)':'weight_kg','weight_kg':'weight_kg','notes':'notes','alternatives':'alternatives','alts':'alternatives'};
 function setUS(msg,cls){const e=document.getElementById('uploadStatus');e.textContent=msg;e.className='upload-status '+(cls||'');}
 function handleFile(file){
   if(!file)return;
@@ -1542,7 +1415,7 @@ async function confirmUpload(){
   if(!previewData.length)return;
   const btn=document.getElementById('confirmBtn');btn.disabled=true;
   const list=activeList();
-  const CLOUD_COLS=['product_type','grade','thickness','width','length','supplier','location','quantity','unit','buy_price','currency','origin','heat_number','available','weight_kg','alternatives','notes'];
+  const CLOUD_COLS=['product_category','product_type','grade','thickness','width','length','section','supplier','location','quantity','unit','buy_price','currency','origin','heat_number','available','weight_kg','alternatives','notes'];
   function itemKey(r){return[(r.grade||'').toLowerCase().trim(),r.thickness,r.width,r.length,(r.supplier||'').toLowerCase().trim()].join('|');}
   if(list.type==='cloud'){
     btn.textContent='Comparing…';
@@ -1607,8 +1480,13 @@ function showDiffBanner(added,updated,skipped){
   setTimeout(()=>{if(el)el.style.display='none';},12000);
 }
 function downloadTemplate(){
-  const cols=['product_type','grade','thickness','width','length','supplier','location','quantity','unit','buy_price','currency','origin','heat_number','available','weight_kg','alternatives','notes'];
-  const sample=[{product_type:'Plate',grade:'S235JR',thickness:10,width:1500,length:6000,supplier:'Acme Steel',location:'Istanbul',quantity:50,unit:'ton',buy_price:620,currency:'USD',origin:'Turkey',heat_number:'HT-001',available:'yes',weight_kg:'',alternatives:'A36 / SS400',notes:''}];
+  const cols=['product_category','product_type','grade','thickness','width','length','section','supplier','location','quantity','unit','buy_price','currency','origin','heat_number','available','weight_kg','alternatives','notes'];
+  const sample=[
+    {product_category:'flat',product_type:'Plate',grade:'S235JR',thickness:10,width:1500,length:6000,section:'',supplier:'Acme Steel',location:'Istanbul',quantity:50,unit:'ton',buy_price:620,currency:'USD',origin:'Turkey',heat_number:'HT-001',available:'yes',weight_kg:'',alternatives:'A36 / SS400',notes:''},
+    {product_category:'pipe',product_type:'ERW Pipe',grade:'API 5L X42',thickness:219.1,width:8,length:12000,section:'',supplier:'PipeCo',location:'Oran',quantity:20,unit:'ton',buy_price:880,currency:'USD',origin:'China',heat_number:'',available:'yes',weight_kg:'',alternatives:'',notes:'OD=219.1mm WT=8mm'},
+    {product_category:'profile',product_type:'H Beam',grade:'S355JR',thickness:'',width:200,length:12000,section:'HEA 200',supplier:'EuroSteel',location:'Hamburg',quantity:30,unit:'ton',buy_price:740,currency:'EUR',origin:'Germany',heat_number:'',available:'yes',weight_kg:'',alternatives:'',notes:''},
+    {product_category:'bar',product_type:'Round Bar',grade:'42CrMo4',thickness:80,width:'',length:6000,section:'',supplier:'BarTrade',location:'Lyon',quantity:10,unit:'ton',buy_price:950,currency:'EUR',origin:'France',heat_number:'',available:'yes',weight_kg:'',alternatives:'',notes:'Diameter 80mm'},
+  ];
   const wb=XLSX.utils.book_new();const ws=XLSX.utils.json_to_sheet(sample,{header:cols});
   XLSX.utils.book_append_sheet(wb,ws,'Stock Template');XLSX.writeFile(wb,'stock_template.xlsx');
 }
@@ -1628,8 +1506,8 @@ function showView(v){
   document.getElementById('viewOffer').style.display=v==='offer'?'block':'none';
   document.getElementById('hdrStock').style.display=v==='stock'?'flex':'none';
   document.getElementById('hdrOffer').style.display=v==='offer'?'flex':'none';
-  document.getElementById('nav-stock').classList.toggle('active',v==='stock'||v==='offer');
-  const navOffer=document.getElementById('nav-offer');if(navOffer)navOffer.classList.toggle('active',v==='offer');
+  document.getElementById('nav-stock').classList.toggle('active',v==='stock');
+  document.getElementById('nav-offer').classList.toggle('active',v==='offer');
   closeSidebar();
   if(v==='offer'){updateListSelect();renderSSPSaved();}
 }
@@ -1654,7 +1532,7 @@ function runOfferSearch(){
   renderSSPResults(results);
   document.getElementById('addAllBtn').style.display=results.length>1?'inline-flex':'none';
 }
-function clearOfferSearch(){ ['ospName','ospThick','ospWidth','ospLength'].forEach(id=>document.getElementById(id).value=''); document.getElementById('sspResults').innerHTML=''; document.getElementById('addAllBtn').style.display='none'; }
+function clearOfferSearch(){ ['ospName','ospThick','ospWidth','ospLength'].forEach(id=>document.getElementById(id).value=''); const c=document.getElementById('ospCategory');if(c)c.value=''; updateOfferSearchDims(); document.getElementById('sspResults').innerHTML=''; document.getElementById('addAllBtn').style.display='none'; }
 function renderSSPResults(results){
   const el=document.getElementById('sspResults');
   if(!results.length){el.innerHTML=`<div style="font-size:12px;color:var(--text3);padding:10px 0">No results</div>`;return;}
@@ -1664,7 +1542,12 @@ function renderSSPResults(results){
     <div class="ssp-item">
       <div class="ssp-meta">
         <div><span class="ssp-grade">${esc(s.grade||'—')}</span>${s.product_type?`<span class="ssp-type">${esc(s.product_type)}</span>`:''}<span class="ssp-list-tag ${s._lType}">${esc(s._lName)}</span></div>
-        <div class="ssp-dims">${[s.thickness?s.thickness+'mm':'',s.width?s.width+'mm':'',s.length?s.length+'mm':''].filter(Boolean).join(' × ')}</div>
+        <div class="ssp-dims">${(()=>{
+          const cat=s.product_category||inferCategory(s.product_type||'');
+          const cfg=getCatConfig(cat);
+          const d=[s.thickness||s.width?`${s.thickness||'?'}`:null,s.width?`${s.width}`:null,s.length?`${s.length}mm`:null].filter(Boolean);
+          return d.length?d.join(' × ')+` <small style="color:var(--text4)">${cfg.dims[0].split(' ')[0]}/…</small>`:'—';
+        })()}</div>
         <div style="font-size:10px;color:var(--text3);margin-top:2px">${esc(s.supplier||'')}${s.location?' · '+esc(s.location):''}</div>
       </div>
       <div class="ssp-right">
@@ -1679,7 +1562,8 @@ function addSSPItem(s){ addOfferLine({grade:s.grade||'',type:s.type||'',thick:s.
 function addSSPByIndex(idx){
   const s=window._sspResults&&window._sspResults[idx];
   if(!s)return;
-  addOfferLine({grade:s.grade||'',type:s.product_type||s.type||'',thick:s.thickness||s.thick||'',width:s.width||'',length:s.length||'',unit:s.unit||'ton',buy_price:Number(s.buy_price)||0});
+  const cat=s.product_category||inferCategory(s.product_type||'');
+  addOfferLine({grade:s.grade||'',type:s.product_type||s.type||'',category:cat,dim1:s.thickness||s.thick||'',dim2:s.width||'',dim3:s.length||'',unit:s.unit||'ton',buy_price:Number(s.buy_price)||0});
   showView('offer');
 }
 function addAllToOffer(){
@@ -1690,7 +1574,7 @@ function addAllToOffer(){
   searchIn.forEach(list=>filterItems(list.items,name,thick,width,length,'').forEach(item=>{
     if((item.available||'yes')!=='no') results.push(item);
   }));
-  results.forEach(s=>addOfferLine({grade:s.grade||'',type:s.product_type||'',thick:s.thickness||'',width:s.width||'',length:s.length||'',unit:s.unit||'ton',buy_price:Number(s.buy_price)||0}));
+  results.forEach(s=>addOfferLine({grade:s.grade||'',type:s.product_type||'',category:s.product_category||inferCategory(s.product_type||''),dim1:s.thickness||'',dim2:s.width||'',dim3:s.length||'',unit:s.unit||'ton',buy_price:Number(s.buy_price)||0}));
 }
 function renderSSPSaved(){
   const cont=document.getElementById('sspSaved'),chips=document.getElementById('sspSavedChips');
@@ -1725,7 +1609,8 @@ function newOffer(){
 }
 function addOfferLine(p={}){
   const id=lineId++;
-  offerLines.push({id,fromStock:!!p.buy_price,grade:p.grade||'',type:p.type||'',thick:p.thick||'',width:p.width||'',length:p.length||'',qty:0,unit:p.unit||'ton',buy_price:p.buy_price||0,fixed_add:0,margin_mode:'pct',margin_val:15});
+  const cat=p.category||'flat';
+  offerLines.push({id,fromStock:!!p.buy_price,grade:p.grade||'',type:p.type||'',category:cat,dim1:p.dim1||p.thick||'',dim2:p.dim2||p.width||'',dim3:p.dim3||p.length||'',qty:0,unit:p.unit||'ton',buy_price:p.buy_price||0,fixed_add:0,margin_mode:'pct',margin_val:15});
   renderOfferLines(); recalcOffer();
 }
 function removeOfferLine(id){ offerLines=offerLines.filter(l=>l.id!==id); renderOfferLines(); recalcOffer(); }
@@ -1760,16 +1645,27 @@ function recalcOffer(){
 function renderOfferLines(){
   const tbody=document.getElementById('offerLinesBody');
   if(!offerLines.length){tbody.innerHTML=`<tr><td colspan="15" class="empty">No lines yet</td></tr>`;return;}
-  tbody.innerHTML=offerLines.map((l,i)=>`
-    <tr>
+  tbody.innerHTML=offerLines.map((l,i)=>{
+    const cfg=getCatConfig(l.category||'flat');
+    const [d1lbl,d2lbl,d3lbl]=cfg.dims;
+    const [p1,p2,p3]=cfg.placeholders;
+    const unitOpts=['ton','kg','pcs','m','set'].map(u=>`<option${l.unit===u?' selected':''}>${u}</option>`).join('');
+    return`<tr>
       <td class="lnum">${i+1}${l.fromStock?`<span class="from-stock-dot" title="From stock"></span>`:''}</td>
       <td><input class="oi" id="ol_g_${l.id}" value="${esc(l.grade)}" placeholder="Grade" oninput="recalcOffer()"></td>
-      <td><input class="oi" id="ol_ty_${l.id}" value="${esc(l.type)}" placeholder="Type"></td>
-      <td><input class="oi mono" id="ol_th_${l.id}" type="number" value="${l.thick||''}" placeholder="mm"></td>
-      <td><input class="oi mono" id="ol_w_${l.id}" type="number" value="${l.width||''}" placeholder="mm"></td>
-      <td><input class="oi mono" id="ol_l_${l.id}" type="number" value="${l.length||''}" placeholder="mm"></td>
+      <td>
+        <div style="display:flex;gap:3px">
+          <select class="oi" id="ol_cat_${l.id}" title="Category" style="width:26px;padding:0 2px;font-size:10px;flex-shrink:0" onchange="onLineCategChange(${l.id})" title="Category">
+            ${['flat','pipe','profile','bar','other'].map(c=>`<option value="${c}"${(l.category||'flat')===c?' selected':''}>${{flat:'📐',pipe:'⭕',profile:'🔷',bar:'🔵',other:'📦'}[c]}</option>`).join('')}
+          </select>
+          <input class="oi" id="ol_ty_${l.id}" value="${esc(l.type)}" placeholder="${l.category==='profile'?'HEA / IPE…':'Type'}" style="flex:1">
+        </div>
+      </td>
+      <td><input class="oi mono" id="ol_th_${l.id}" type="${l.category==='profile'?'text':'number'}" value="${l.dim1||''}" placeholder="${p1}" title="${d1lbl}"></td>
+      <td><input class="oi mono" id="ol_w_${l.id}" type="number" value="${l.dim2||''}" placeholder="${p2}" title="${d2lbl}"></td>
+      <td><input class="oi mono" id="ol_l_${l.id}" type="number" value="${l.dim3||''}" placeholder="${p3}" title="${d3lbl}"></td>
       <td><input class="oi mono" id="ol_q_${l.id}" type="number" value="${l.qty||''}" placeholder="0" min="0" oninput="recalcOffer()"></td>
-      <td><select class="oi" id="ol_u_${l.id}" onchange="recalcOffer()"><option${l.unit==='ton'?' selected':''}>ton</option><option${l.unit==='kg'?' selected':''}>kg</option><option${l.unit==='pcs'?' selected':''}>pcs</option><option${l.unit==='m'?' selected':''}>m</option></select></td>
+      <td><select class="oi" id="ol_u_${l.id}" onchange="recalcOffer()">${unitOpts}</select></td>
       <td><input class="oi mono" id="ol_b_${l.id}" type="number" value="${l.buy_price||''}" placeholder="0.00" oninput="recalcOffer()"></td>
       <td><input class="oi mono" id="ol_f_${l.id}" type="number" value="${l.fixed_add||''}" placeholder="0.00" oninput="recalcOffer()"></td>
       <td><input class="oi mono" id="ol_m_${l.id}" type="number" value="${l.margin_val||''}" placeholder="0" oninput="recalcOffer()"></td>
@@ -1777,8 +1673,8 @@ function renderOfferLines(){
       <td class="ccell sell" id="ol_s_${l.id}">—</td>
       <td class="ccell total" id="ol_t_${l.id}">—</td>
       <td><button class="del-line-btn" onclick="removeOfferLine(${l.id})">×</button></td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
   recalcOffer();
 }
 
@@ -1794,7 +1690,18 @@ function readLines(){
     const qty=Number(document.getElementById(`ol_q_${l.id}`)?.value)||0;
     const cost=buy+fix;
     const sell=l.margin_mode==='pct'?cost*(1+mv/100):cost+mv;
-    return{...l,grade:document.getElementById(`ol_g_${l.id}`)?.value||l.grade,type:document.getElementById(`ol_ty_${l.id}`)?.value||l.type,thick:document.getElementById(`ol_th_${l.id}`)?.value||'',width:document.getElementById(`ol_w_${l.id}`)?.value||'',length:document.getElementById(`ol_l_${l.id}`)?.value||'',qty,unit:document.getElementById(`ol_u_${l.id}`)?.value||l.unit,buy_price:buy,fixed_add:fix,margin_val:mv,sell_price:sell,total:sell*qty};
+    const cat=document.getElementById(`ol_cat_${l.id}`)?.value||l.category||'flat';
+    const cfg=getCatConfig(cat);
+    return{...l,
+      grade:document.getElementById(`ol_g_${l.id}`)?.value||l.grade,
+      type:document.getElementById(`ol_ty_${l.id}`)?.value||l.type,
+      category:cat,
+      dim1:document.getElementById(`ol_th_${l.id}`)?.value||'',
+      dim2:document.getElementById(`ol_w_${l.id}`)?.value||'',
+      dim3:document.getElementById(`ol_l_${l.id}`)?.value||'',
+      dimLabels:cfg.dims,
+      qty,unit:document.getElementById(`ol_u_${l.id}`)?.value||l.unit,
+      buy_price:buy,fixed_add:fix,margin_val:mv,sell_price:sell,total:sell*qty};
   }).filter(l=>l.grade||l.qty);
 }
 function buildPreview(){
@@ -1813,8 +1720,11 @@ function buildPreview(){
       <div class="pi-block"><strong>Offer to</strong>${esc(document.getElementById('clientCompany').value)||'—'}<br>${esc(document.getElementById('clientContact').value)||''}<br>${esc(document.getElementById('clientEmail').value)||''}<br>${esc(document.getElementById('clientPhone').value)||''}</div>
       <div class="pi-block"><strong>Offer details</strong>Date: ${document.getElementById('offerDate').value||'—'}<br>Valid: ${document.getElementById('offerValid').value||'—'}<br>Currency: ${cur}<br>By: ${esc(document.getElementById('offerBy').value)||'—'}</div>
     </div>
-    <table class="pi-tbl"><thead><tr><th>#</th><th>Grade</th><th>Type</th><th>Thick</th><th>Width</th><th>Length</th><th>Qty</th><th>Unit</th><th>Sell/${cur}</th><th>Total</th></tr></thead>
-    <tbody>${lines.map((l,i)=>`<tr><td>${i+1}</td><td><strong>${esc(l.grade)}</strong></td><td>${esc(l.type)||'—'}</td><td>${l.thick||'—'}</td><td>${l.width||'—'}</td><td>${l.length||'—'}</td><td>${l.qty}</td><td>${l.unit}</td><td>${fmtNum(l.sell_price)}</td><td>${cur} ${fmtNum(l.total)}</td></tr>`).join('')}</tbody>
+    <table class="pi-tbl"><thead><tr><th>#</th><th>Grade</th><th>Type / Section</th><th>Dim 1</th><th>Dim 2</th><th>Dim 3</th><th>Qty</th><th>Unit</th><th>Sell/${cur}</th><th>Total</th></tr></thead>
+    <tbody>${lines.map((l,i)=>{
+      const cfg=getCatConfig(l.category||'flat');
+      return`<tr><td>${i+1}</td><td><strong>${esc(l.grade)}</strong></td><td>${esc(l.type)||'—'}</td><td>${l.dim1||'—'} <small style="color:#888">${cfg.dims[0].split(' ')[0]}</small></td><td>${l.dim2||'—'}</td><td>${l.dim3||'—'}</td><td>${l.qty}</td><td>${l.unit}</td><td>${fmtNum(l.sell_price)}</td><td>${cur} ${fmtNum(l.total)}</td></tr>`;
+    }).join('')}</tbody>
     </table>
     <div class="pi-totals">
       ${shipping?`<div class="pi-trow"><span>Shipping${shippingIncluded?' (included in prices)':''}</span><span>${shippingIncluded?'Included':cur+' '+fmtNum(shipping)}</span></div>`:''}
@@ -1845,9 +1755,12 @@ function exportExcel(){
     ['Email:',document.getElementById('clientEmail').value,'','','Valid:',document.getElementById('offerValid').value,'',''],
     ['Phone:',document.getElementById('clientPhone').value,'','','By:',document.getElementById('offerBy').value,'',''],
     ['','','','','','','','',''],
-    ['#','Grade','Type','Thick(mm)','Width(mm)','Length(mm)','Qty','Unit',`Sell/${cur}`,'Total'],
+    ['#','Grade','Type / Section','Dim 1','Dim 2','Dim 3','Qty','Unit',`Sell/${cur}`,'Total'],
   ];
-  lines.forEach((l,i)=>rows.push([i+1,l.grade,l.type||'',l.thick||'',l.width||'',l.length||'',l.qty,l.unit,l.sell_price,l.total]));
+  lines.forEach((l,i)=>{
+    const cfg=getCatConfig(l.category||'flat');
+    rows.push([i+1,l.grade,l.type||'',`${l.dim1||''} (${cfg.dims[0]})`,l.dim2||'',l.dim3||'',l.qty,l.unit,l.sell_price,l.total]);
+  });
   rows.push(['']);
   if(shipping) rows.push(['','','','','','','','',`Shipping${shippingIncluded?' (included)':''}`,shippingIncluded?'Included':shipping]);
   rows.push(['','','','','','','','','TOTAL',gs]);
@@ -1946,22 +1859,80 @@ function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 function fmtNum(n){ const v=Number(n)||0; return v>=1000?v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2}):v.toFixed(2); }
 function fmtShort(n){ const v=Number(n)||0; if(!v)return'—'; return v>=1000?v.toLocaleString('en-US',{maximumFractionDigits:0}):v.toFixed(2); }
 
+// ── Country flag helper
+function countryFlag(origin){
+  if(!origin)return'';
+  const o=origin.toLowerCase();
+  const flags={turkey:'🇹🇷',türkiye:'🇹🇷',ukraine:'🇺🇦',ukrayna:'🇺🇦',china:'🇨🇳',çin:'🇨🇳',germany:'🇩🇪',almanya:'🇩🇪',russia:'🇷🇺',rusya:'🇷🇺',spain:'🇪🇸',ispanya:'🇪🇸',italy:'🇮🇹',italya:'🇮🇹',france:'🇫🇷',fransa:'🇫🇷',india:'🇮🇳',hindistan:'🇮🇳',japan:'🇯🇵',japonya:'🇯🇵','south korea':'🇰🇷','güney kore':'🇰🇷',brazil:'🇧🇷',brezilya:'🇧🇷',usa:'🇺🇸','united states':'🇺🇸',uk:'🇬🇧','united kingdom':'🇬🇧',poland:'🇵🇱',polonya:'🇵🇱',romania:'🇷🇴',romanya:'🇷🇴',czech:'🇨🇿',czechia:'🇨🇿',sweden:'🇸🇪',isveç:'🇸🇪',netherlands:'🇳🇱',hollanda:'🇳🇱',belgium:'🇧🇪',belçika:'🇧🇪',austria:'🇦🇹',avusturya:'🇦🇹',slovakia:'🇸🇰',hungary:'🇭🇺',macaristan:'🇭🇺'};
+  for(const[k,v]of Object.entries(flags)){if(o.includes(k))return v;}
+  return'';
+}
+
+// ── Category switching in stock modal
+function onCategoryChange(){
+  const cat=document.getElementById('mCategory')?.value||'flat';
+  document.getElementById('dimFlat').style.display=cat==='flat'?'':'none';
+  document.getElementById('dimPipe').style.display=cat==='pipe'?'':'none';
+  document.getElementById('dimProfile').style.display=cat==='profile'?'':'none';
+  document.getElementById('dimBar').style.display=cat==='bar'?'':'none';
+  document.getElementById('dimOther').style.display=cat==='other'?'':'none';
+  // unit suggestions
+  const unitSel=document.getElementById('mUnit');
+  if(unitSel){
+    const cfg=getCatConfig(cat);
+    unitSel.innerHTML=cfg.units.map(u=>`<option>${u}</option>`).join('');
+  }
+}
+// ── Category switching per offer line
+function onLineCategChange(lid){
+  const l=offerLines.find(x=>x.id===lid); if(!l)return;
+  const cat=document.getElementById(`ol_cat_${lid}`)?.value||'flat';
+  l.category=cat;
+  const cfg=getCatConfig(cat);
+  // update placeholders and title attributes
+  const th=document.getElementById(`ol_th_${lid}`),w=document.getElementById(`ol_w_${lid}`),len=document.getElementById(`ol_l_${lid}`);
+  if(th){th.placeholder=cfg.placeholders[0];th.title=cfg.dims[0];th.type=cat==='profile'?'text':'number';}
+  if(w){w.placeholder=cfg.placeholders[1];w.title=cfg.dims[1];}
+  if(len){len.placeholder=cfg.placeholders[2];len.title=cfg.dims[2];}
+}
+// ── Offer search dimension relabelling
+function updateOfferSearchDims(){
+  const cat=document.getElementById('ospCategory')?.value||'';
+  const cfg=getCatConfig(cat||'flat');
+  const [l1,l2,l3]=cfg.dims;
+  const [p1,p2,p3]=cfg.placeholders;
+  const d1=document.getElementById('osp_dim1_lbl'),d2=document.getElementById('osp_dim2_lbl'),d3=document.getElementById('osp_dim3_lbl');
+  const i1=document.getElementById('ospThick'),i2=document.getElementById('ospWidth'),i3=document.getElementById('ospLength');
+  if(d1)d1.textContent=l1; if(d2)d2.textContent=l2; if(d3)d3.textContent=l3;
+  if(i1)i1.placeholder=p1||''; if(i2)i2.placeholder=p2||''; if(i3)i3.placeholder=p3||'';
+}
+
+// ── Reserve toggle
+function toggleReservedBy(){
+  const checked=document.getElementById('mReserved')?.checked;
+  const row=document.getElementById('mReservedByRow');
+  if(row)row.style.display=checked?'block':'none';
+}
+
+// ── Low stock threshold management
 function loadThresholds(){try{return JSON.parse(localStorage.getItem('sp_thresholds')||'{}');}catch(e){return{};}}
 function saveThresholds(t){localStorage.setItem('sp_thresholds',JSON.stringify(t));}
 function renderThresholdList(){
   const t=loadThresholds();
   const el=document.getElementById('thresholdList');if(!el)return;
   const entries=Object.entries(t);
-  if(!entries.length){el.innerHTML='<span style="font-size:11px;color:var(--text4)">No thresholds set</span>';return;}
+  if(!entries.length){el.innerHTML=`<span style="font-size:11px;color:var(--text4)">No thresholds set</span>`;return;}
   el.innerHTML=entries.map(([type,qty])=>`
     <span style="display:inline-flex;align-items:center;gap:5px;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">
       ${esc(type)}: ${qty}
       <button onclick="deleteThreshold('${esc(type)}')" style="background:none;border:none;cursor:pointer;color:var(--amber-text);font-size:13px;line-height:1;padding:0;margin-left:2px">×</button>
-    </span>`).join('');
+    </span>
+  `).join('');
 }
 function deleteThreshold(type){const t=loadThresholds();delete t[type];saveThresholds(t);renderThresholdList();runSearch();}
 function openThresholdModal(){
-  const types=[...new Set((activeList()?.items||[]).map(s=>s.product_type).filter(Boolean))];
+  // Populate datalist with known product types from current list
+  const types=[...new Set(activeList().items.map(s=>s.product_type).filter(Boolean))];
   const dl=document.getElementById('knownTypes');
   if(dl)dl.innerHTML=types.map(t=>`<option value="${esc(t)}">`).join('');
   document.getElementById('thresholdType').value='';
@@ -1977,7 +1948,6 @@ function saveThreshold(){
   const t=loadThresholds();t[type]=qty;saveThresholds(t);
   closeThresholdModal();renderThresholdList();runSearch();
 }
-
 </script>
 </body>
 </html>
