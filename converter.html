@@ -34,7 +34,7 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;font-size:13px}
 
-/* ── Auth ── */
+/* Auth */
 .auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
 .auth-card{background:var(--surface);border-radius:18px;border:1px solid var(--border);padding:32px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.08)}
 .auth-logo{font-size:20px;font-weight:700;color:var(--blue);letter-spacing:-.4px}
@@ -48,7 +48,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .auth-btn:disabled{opacity:.45;cursor:not-allowed}
 .auth-msg{font-size:12px;margin-top:12px;padding:9px;border-radius:7px;text-align:center;background:var(--red-bg);color:var(--red-text)}
 
-/* ── Layout ── */
+/* Layout */
 #app{display:none}
 .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:140}
 .sidebar-overlay.open{display:block}
@@ -73,7 +73,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .menu-btn{width:34px;height:34px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:16px;display:none;align-items:center;justify-content:center;flex-shrink:0}
 .page-body{padding:16px;max-width:1300px;margin:0 auto}
 
-/* ── Buttons ── */
+/* Buttons, Cards, Tables, Modals, etc. - all kept identical to original */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:34px;padding:0 13px;border:1px solid var(--border2);border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--sans);background:var(--surface);color:var(--text);white-space:nowrap;transition:background .12s,color .12s,border-color .12s}
 .btn:hover{background:var(--surface2)}
 .btn-blue{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}
@@ -90,21 +90,17 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .btn-xs{height:24px;padding:0 8px;font-size:10px;border-radius:6px}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 
-/* ── Cards ── */
 .card{background:var(--surface);border-radius:12px;border:1px solid var(--border);padding:16px;margin-bottom:14px}
 .card-hd{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .card-hd-left{display:flex;align-items:center;gap:8px}
 
-/* ── Two-column layout ── */
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:800px){.two-col{grid-template-columns:1fr}}
 
-/* ── Search bar ── */
 .search-bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
 .search-inp{flex:1;min-width:180px;height:36px;border:1px solid var(--border2);border-radius:8px;padding:0 12px;font-size:13px;font-family:var(--mono);background:var(--surface);color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s}
 .search-inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
 
-/* ── Grade table ── */
 .tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
 .gtbl{width:100%;border-collapse:collapse;font-size:12px}
 .gtbl th{background:var(--surface2);color:var(--text3);font-weight:700;font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;padding:9px 12px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border)}
@@ -117,34 +113,22 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .loading-row{text-align:center;padding:36px;color:var(--text3);font-size:13px}
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-/* ── Stats row ── */
 .stats-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
 .stat-pill{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;color:var(--text2)}
 .stat-pill strong{font-weight:700;color:var(--text);font-family:var(--mono);margin-right:4px}
-
-/* ── Admin badge ── */
 .admin-badge{font-size:9px;font-weight:700;background:var(--amber-bg);color:var(--amber-text);padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px;border:1px solid var(--amber)}
-
-/* ── Upload zone ── */
 .upload-zone{border:2px dashed var(--border2);border-radius:10px;padding:18px;text-align:center;cursor:pointer;transition:all .15s}
 .upload-zone:hover,.upload-zone.drag{border-color:var(--blue);background:var(--blue-bg)}
 .upload-zone input[type=file]{display:none}
 .last-file-note{font-size:10px;color:var(--text4);font-family:var(--mono);margin-top:8px;display:none}
-
-/* ── Transform result ── */
 .result-banner{border-radius:8px;padding:10px 14px;font-size:12px;margin-bottom:10px;display:none}
 .result-banner.ok{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green)}
 .result-banner.err{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red)}
 .result-banner.warn{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber)}
-
-/* ── Send to Stock progress ── */
 .stock-result{font-size:11px;padding:7px 10px;border-radius:7px;display:none;margin-top:6px}
 .stock-result.ok{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green)}
 .stock-result.err{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red)}
 .stock-result.warn{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber)}
-
-/* ── Modal ── */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center;z-index:300;padding:0}
 @media(min-width:600px){.modal-bg{align-items:center;padding:16px}}
 .modal-bg.open{display:flex}
@@ -161,12 +145,8 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .msec:first-of-type{border-top:none;padding-top:0;margin-top:0}
 select.inp{cursor:pointer}
 .inline-err{font-size:11px;color:var(--red-text);margin-top:4px;display:none}
-
-/* ── Toast ── */
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--surface);padding:9px 18px;border-radius:8px;font-size:12px;font-weight:600;z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
-
-/* ── Conversion preview table ── */
 .conv-tbl-wrap{overflow-x:auto;max-height:360px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;margin-bottom:10px}
 .conv-tbl{width:100%;border-collapse:collapse;font-size:11.5px}
 .conv-tbl th{background:var(--surface2);color:var(--text3);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0}
@@ -176,6 +156,9 @@ select.inp{cursor:pointer}
 .conv-tbl tr.unmatched td.grade-col{color:var(--amber-text);font-weight:700}
 .match-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;vertical-align:middle}
 .match-dot.y{background:var(--green)}.match-dot.n{background:var(--amber)}
+.sheet-list{max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.sheet-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:var(--surface2)}
+.sheet-item input[type=checkbox]{accent-color:var(--blue)}
 </style>
 </head>
 <body>
@@ -242,53 +225,58 @@ select.inp{cursor:pointer}
 
     <div class="page-body">
 
-      <!-- Stats -->
+      <!-- Stats (always visible) -->
       <div class="stats-row" id="statsRow">
         <div class="stat-pill"><span class="spinner"></span>Loading grades…</div>
       </div>
 
-      <div class="two-col">
+      <!-- Toggle button for Grade DB -->
+      <div style="margin-bottom:14px">
+        <button class="btn btn-sm" id="toggleGradeDB" onclick="toggleGradeDatabase()">📋 Show Grade Mappings</button>
+      </div>
 
-        <!-- LEFT: Grade Database (full width) -->
-        <div style="grid-column:1/-1">
-          <div class="card">
-            <div class="card-hd">
-              <div class="card-hd-left">📋 Grade Mapping Database <span id="cloudBadge" style="font-size:9px;background:var(--blue-bg);color:var(--blue);padding:2px 7px;border-radius:20px;font-weight:700;margin-left:4px">☁ Cloud</span></div>
-              <div style="display:flex;gap:6px;align-items:center" id="adminTableActions" style="display:none">
-                <button class="btn btn-xs btn-ghost" onclick="downloadTemplate()">⬇ CSV Template</button>
-                <label class="btn btn-xs btn-amber" style="cursor:pointer">
-                  ⬆ Import CSV <input type="file" accept=".csv,.xlsx,.xls" id="csvFileInput" style="display:none" onchange="handleCSVImport(this)">
-                </label>
-              </div>
-            </div>
-
-            <div class="search-bar">
-              <input class="search-inp" id="gradeSearch" placeholder="Search any standard — EN, DIN, ASTM, JIS, Erdemir, Tosyalı…" oninput="renderTable()">
-              <button class="btn btn-ghost btn-sm" onclick="document.getElementById('gradeSearch').value='';renderTable()">Clear</button>
-            </div>
-
-            <div id="importBanner" class="result-banner"></div>
-
-            <div class="tbl-wrap">
-              <table class="gtbl">
-                <thead>
-                  <tr>
-                    <th>EN Standard</th>
-                    <th>Erdemir Code</th>
-                    <th>Tosyalı Code</th>
-                    <th>DIN</th>
-                    <th>ASTM</th>
-                    <th>JIS</th>
-                    <th id="actionsThCol" style="display:none;width:72px"></th>
-                  </tr>
-                </thead>
-                <tbody id="gradeTableBody">
-                  <tr><td colspan="7" class="loading-row"><span class="spinner"></span>Loading…</td></tr>
-                </tbody>
-              </table>
+      <!-- Collapsible Grade Database -->
+      <div id="gradeDatabaseCard" style="display:none">
+        <div class="card">
+          <div class="card-hd">
+            <div class="card-hd-left">📋 Grade Mapping Database <span id="cloudBadge" style="font-size:9px;background:var(--blue-bg);color:var(--blue);padding:2px 7px;border-radius:20px;font-weight:700;margin-left:4px">☁ Cloud</span></div>
+            <div style="display:flex;gap:6px;align-items:center" id="adminTableActions" style="display:none">
+              <button class="btn btn-xs btn-ghost" onclick="downloadTemplate()">⬇ CSV Template</button>
+              <label class="btn btn-xs btn-amber" style="cursor:pointer">
+                ⬆ Import CSV <input type="file" accept=".csv,.xlsx,.xls" id="csvFileInput" style="display:none" onchange="handleCSVImport(this)">
+              </label>
             </div>
           </div>
+
+          <div class="search-bar">
+            <input class="search-inp" id="gradeSearch" placeholder="Search any standard — EN, DIN, ASTM, JIS, Erdemir, Tosyalı…" oninput="renderTable()">
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('gradeSearch').value='';renderTable()">Clear</button>
+          </div>
+
+          <div id="importBanner" class="result-banner"></div>
+
+          <div class="tbl-wrap">
+            <table class="gtbl">
+              <thead>
+                <tr>
+                  <th>EN Standard</th>
+                  <th>Erdemir Code</th>
+                  <th>Tosyalı Code</th>
+                  <th>DIN</th>
+                  <th>ASTM</th>
+                  <th>JIS</th>
+                  <th id="actionsThCol" style="display:none;width:72px"></th>
+                </tr>
+              </thead>
+              <tbody id="gradeTableBody">
+                <tr><td colspan="7" class="loading-row"><span class="spinner"></span>Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
+      </div>
+
+      <div class="two-col">
 
         <!-- LEFT: Excel Transform -->
         <div>
@@ -332,6 +320,70 @@ select.inp{cursor:pointer}
               </div>
             </div>
           </div>
+
+          <!-- KMC Detailed Stock Import -->
+          <div class="card">
+            <div class="card-hd">🏭 KMC Detailed Stock Import (Multi‑Sheet)</div>
+            <div style="margin-bottom:10px">
+              <button class="btn btn-blue" onclick="document.getElementById('kmcFileInput').click()">📥 Import KMC Detailed Stock</button>
+              <input type="file" id="kmcFileInput" accept=".xlsx,.xls" style="display:none" onchange="handleKMCFile(this.files[0])">
+            </div>
+            <div id="kmcBanner" class="result-banner"></div>
+
+            <!-- KMC Preview -->
+            <div id="kmcPreview" style="display:none">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+                <span style="font-size:12px;font-weight:600" id="kmcPreviewTitle">KMC Preview</span>
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                  <span style="font-size:11px;color:var(--text3)" id="kmcMatchStats"></span>
+                  <button class="btn btn-green btn-sm" onclick="downloadKMCExcel()">⬇ Download Excel</button>
+                  <button class="btn btn-blue btn-sm" id="sendKmcToStockBtn" onclick="sendToStockKMC()">→ Send to KMC Stock</button>
+                  <button class="btn btn-ghost btn-sm" onclick="clearKMCImport()">Discard</button>
+                </div>
+              </div>
+              <div class="stock-result" id="kmcStockResult"></div>
+              <div class="conv-tbl-wrap">
+                <table class="conv-tbl">
+                  <thead><tr>
+                    <th>Type</th><th>Grade</th><th>Original</th><th>Thick</th><th>Width</th><th>Length</th><th>Qty (ton)</th><th>Price</th><th>Location</th>
+                  </tr></thead>
+                  <tbody id="kmcPreviewBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Yıldız Demir Çelik Stock Import -->
+          <div class="card">
+            <div class="card-hd">🏭 Yıldız Demir Çelik Stock Import (Multi‑Sheet)</div>
+            <div style="margin-bottom:10px">
+              <button class="btn btn-blue" onclick="document.getElementById('yildizFileInput').click()">📥 Import Yıldız Demir Çelik Stock</button>
+              <input type="file" id="yildizFileInput" accept=".xlsx,.xls" style="display:none" onchange="handleYildizFile(this.files[0])">
+            </div>
+            <div id="yildizBanner" class="result-banner"></div>
+
+            <!-- Yıldız Preview -->
+            <div id="yildizPreview" style="display:none">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+                <span style="font-size:12px;font-weight:600" id="yildizPreviewTitle">Yıldız Preview</span>
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                  <span style="font-size:11px;color:var(--text3)" id="yildizMatchStats"></span>
+                  <button class="btn btn-green btn-sm" onclick="downloadYildizExcel()">⬇ Download Excel</button>
+                  <button class="btn btn-blue btn-sm" id="sendYildizToStockBtn" onclick="sendToStockYildiz()">→ Send to Yıldız Stock</button>
+                  <button class="btn btn-ghost btn-sm" onclick="clearYildizImport()">Discard</button>
+                </div>
+              </div>
+              <div class="stock-result" id="yildizStockResult"></div>
+              <div class="conv-tbl-wrap">
+                <table class="conv-tbl">
+                  <thead><tr>
+                    <th>Type</th><th>Grade</th><th>Original</th><th>Thick</th><th>Width</th><th>Length</th><th>Qty (ton)</th><th>Price</th><th>Location</th>
+                  </tr></thead>
+                  <tbody id="yildizPreviewBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- RIGHT: Quick Lookup + Admin Guide -->
@@ -348,11 +400,11 @@ select.inp{cursor:pointer}
           <div class="card" id="adminInfoCard" style="display:none">
             <div class="card-hd">ℹ️ Admin Guide</div>
             <div style="font-size:12px;color:var(--text2);line-height:1.8">
-              <div style="margin-bottom:6px">• Click <strong>+ Add Grade</strong> in the header to add a new mapping.</div>
-              <div style="margin-bottom:6px">• Click any row's <strong>Edit</strong> button to update or delete a grade.</div>
-              <div style="margin-bottom:6px">• Use <strong>Import CSV</strong> to bulk-upload grades.</div>
-              <div style="margin-bottom:6px">• CSV columns (order): <code style="font-family:var(--mono);font-size:11px;background:var(--surface2);padding:1px 5px;border-radius:3px">en_grade, erdemir, tosyali, din, astm, jis</code></div>
-              <div style="margin-bottom:6px">• EN Standard is the primary key — leave others blank if unknown.</div>
+              <div>• Click <strong>+ Add Grade</strong> in the header to add a new mapping.</div>
+              <div>• Click any row's <strong>Edit</strong> button to update or delete a grade.</div>
+              <div>• Use <strong>Import CSV</strong> to bulk-upload grades.</div>
+              <div>• CSV columns (order): <code style="font-family:var(--mono);font-size:11px;background:var(--surface2);padding:1px 5px;border-radius:3px">en_grade, erdemir, tosyali, din, astm, jis</code></div>
+              <div>• EN Standard is the primary key — leave others blank if unknown.</div>
               <div>• To add a 3rd supplier format, extend <code style="font-family:var(--mono);font-size:11px;background:var(--surface2);padding:1px 5px;border-radius:3px">SUPPLIER_PROFILES</code> in the JS config.</div>
             </div>
           </div>
@@ -368,31 +420,53 @@ select.inp{cursor:pointer}
   <div class="modal">
     <div class="modal-drag"></div>
     <p class="modal-ttl" id="gradeModalTitle">Add Grade Mapping</p>
-
     <div class="msec">EN Standard (primary)</div>
     <div class="form-row">
       <label class="lbl">EN Grade <span style="color:var(--red)">*</span></label>
       <input class="inp" id="mEn" placeholder="e.g. S235JR, S355J2, P265GH…" style="font-family:var(--mono)">
       <div class="inline-err" id="mEnErr">EN grade is required</div>
     </div>
-
     <div class="msec">Manufacturer Codes</div>
     <div class="g2">
       <div class="form-row"><label class="lbl">Erdemir Code</label><input class="inp" id="mErdemir" placeholder="e.g. 3237" style="font-family:var(--mono)"></div>
       <div class="form-row"><label class="lbl">Tosyalı Code</label><input class="inp" id="mTosyali" placeholder="e.g. TOS-3750" style="font-family:var(--mono)"></div>
     </div>
-
     <div class="msec">International Standards</div>
     <div class="g3">
       <div class="form-row"><label class="lbl">DIN</label><input class="inp" id="mDin" placeholder="St37-2" style="font-family:var(--mono)"></div>
       <div class="form-row"><label class="lbl">ASTM</label><input class="inp" id="mAstm" placeholder="A36" style="font-family:var(--mono)"></div>
       <div class="form-row"><label class="lbl">JIS</label><input class="inp" id="mJis" placeholder="SM400A" style="font-family:var(--mono)"></div>
     </div>
-
     <div class="modal-acts">
       <button class="btn btn-danger btn-sm" id="mDeleteBtn" style="display:none;margin-right:auto" onclick="deleteGrade()">Delete</button>
       <button class="btn btn-ghost btn-sm" onclick="closeGradeModal()">Cancel</button>
       <button class="btn btn-blue btn-sm" onclick="saveGrade()" id="mSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- KMC Sheet Selection Modal -->
+<div class="modal-bg" id="kmcSheetModal">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <p class="modal-ttl">Select Product Sheets to Import</p>
+    <div class="sheet-list" id="sheetCheckboxList"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost btn-sm" onclick="closeKMCSheetModal()">Cancel</button>
+      <button class="btn btn-blue btn-sm" onclick="processKMCSheets()">Process Selected</button>
+    </div>
+  </div>
+</div>
+
+<!-- Yıldız Sheet Selection Modal -->
+<div class="modal-bg" id="yildizSheetModal">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <p class="modal-ttl">Select Sheets to Import (Yıldız)</p>
+    <div class="sheet-list" id="yildizSheetCheckboxList"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost btn-sm" onclick="closeYildizSheetModal()">Cancel</button>
+      <button class="btn btn-blue btn-sm" onclick="processYildizSheets()">Process Selected</button>
     </div>
   </div>
 </div>
@@ -409,13 +483,7 @@ const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const TABLE='grade_mappings';
 
-// ══════════════════════════════════
-// SUPPLIER PROFILES — EXTENSIBLE
-// To add a 3rd (or Nth) supplier, add a new entry here.
-// Each entry maps field names to an array of possible column headers.
-// The transform engine merges ALL profiles when scanning a file,
-// so any recognised header from any supplier will be detected automatically.
-// ══════════════════════════════════
+// SUPPLIER PROFILES
 const SUPPLIER_PROFILES = {
   erdemir_tosyali: {
     product_type : ['sekil','şekil','shape','product type','producttype','urun tipi','ürün tipi'],
@@ -427,20 +495,7 @@ const SUPPLIER_PROFILES = {
     quantity     : ['satilabilirtonaj','satılabilirtonaj','tonaj','qty','quantity','miktar','adet','stok','stok(ton)'],
     price        : ['istenenfiyat','istenen fiyat','fiyat','price','birimfiyat','unit price','birim fiyat']
   }
-  // ── Add future suppliers here, e.g.:
-  // metline: {
-  //   product_type: ['product','type'],
-  //   grade:        ['grade','material grade'],
-  //   thickness:    ['thickness mm','thk'],
-  //   width:        ['width mm','wdt'],
-  //   length:       ['length mm','len'],
-  //   location:     ['warehouse','location'],
-  //   quantity:     ['qty tons','available qty'],
-  //   price:        ['price usd','unit price usd']
-  // }
 };
-
-// Build merged column name lookup from all profiles
 function buildMergedColumns() {
   const merged = {};
   Object.values(SUPPLIER_PROFILES).forEach(profile => {
@@ -456,9 +511,13 @@ function buildMergedColumns() {
 // STATE
 // ══════════════════════════════════
 let currentUser=null, isAdmin=false;
-let allGrades=[];           // {id, en_grade, erdemir, tosyali, din, astm, jis}
+let allGrades=[];
 let editingId=null;
-let transformedRows=[];     // ready for download / insert
+let transformedRows=[];
+let kmcTransformedRows=[];
+let kmcWorkbook=null;
+let yildizTransformedRows=[];
+let yildizWorkbook=null;
 
 // ══════════════════════════════════
 // DARK MODE
@@ -536,12 +595,7 @@ function applyAdminUI(){
   document.getElementById('adminInfoCard').style.display='block';
 }
 
-// ══════════════════════════════════
-// LAST FILE NAME — remembered in session
-// ══════════════════════════════════
-function saveLastFileName(name){
-  try{sessionStorage.setItem('sp_conv_last_file',name);}catch(e){}
-}
+function saveLastFileName(name){try{sessionStorage.setItem('sp_conv_last_file',name);}catch(e){}}
 function restoreLastFileName(){
   try{
     const last=sessionStorage.getItem('sp_conv_last_file');
@@ -554,8 +608,22 @@ function restoreLastFileName(){
 }
 
 // ══════════════════════════════════
-// NORMALIZE — handles Turkish chars,
-// spaces, slashes, case
+// GRADE DB TOGGLE
+// ══════════════════════════════════
+function toggleGradeDatabase(){
+  const card = document.getElementById('gradeDatabaseCard');
+  const btn = document.getElementById('toggleGradeDB');
+  if (card.style.display === 'none') {
+    card.style.display = '';
+    btn.textContent = '📋 Hide Grade Mappings';
+  } else {
+    card.style.display = 'none';
+    btn.textContent = '📋 Show Grade Mappings';
+  }
+}
+
+// ══════════════════════════════════
+// NORMALIZE
 // ══════════════════════════════════
 function norm(s){
   return String(s||'')
@@ -570,16 +638,13 @@ function normContains(a,b){return norm(a).includes(norm(b));}
 function normEq(a,b){return norm(a)===norm(b);}
 
 // ══════════════════════════════════
-// LOAD GRADES FROM SUPABASE
+// LOAD GRADES
 // ══════════════════════════════════
 async function loadGrades(){
   document.getElementById('gradeTableBody').innerHTML='<tr><td colspan="7" class="loading-row"><span class="spinner"></span>Loading from cloud…</td></tr>';
   const{data,error}=await sb.from(TABLE).select('*').order('en_grade');
   if(error){
-    document.getElementById('gradeTableBody').innerHTML=`<tr><td colspan="7" class="empty-row">
-      Could not load grades.<br><small style="font-size:11px;color:var(--text4)">Make sure the <code style="font-family:var(--mono)">grade_mappings</code> table exists in Supabase.<br>
-      Run: <code style="font-family:var(--mono);font-size:10px">CREATE TABLE grade_mappings (id uuid DEFAULT gen_random_uuid() PRIMARY KEY, en_grade text NOT NULL, erdemir text, tosyali text, din text, astm text, jis text, created_by uuid REFERENCES auth.users);</code></small>
-    </td></tr>`;
+    document.getElementById('gradeTableBody').innerHTML=`<tr><td colspan="7" class="empty-row">Could not load grades.</td></tr>`;
     renderStats();
     return;
   }
@@ -587,7 +652,6 @@ async function loadGrades(){
   renderTable();
   renderStats();
 }
-
 function renderStats(){
   const total=allGrades.length;
   const withErdemir=allGrades.filter(g=>g.erdemir).length;
@@ -602,10 +666,6 @@ function renderStats(){
     <div class="stat-pill"><strong>${withJis}</strong> JIS mapped</div>
   `;
 }
-
-// ══════════════════════════════════
-// RENDER GRADE TABLE
-// ══════════════════════════════════
 function renderTable(){
   const q=(document.getElementById('gradeSearch')?.value||'').trim();
   let rows=allGrades;
@@ -654,7 +714,7 @@ function quickLookup(){
     norm(g.din).includes(nq)||norm(g.astm).includes(nq)||norm(g.jis).includes(nq)
   );
   if(!match){
-    el.innerHTML=`<div style="font-size:12px;color:var(--amber-text);background:var(--amber-bg);padding:9px 12px;border-radius:7px;border:1px solid var(--amber)">⚠ No match found for <strong>${esc(q)}</strong> in the database.</div>`;
+    el.innerHTML=`<div style="font-size:12px;color:var(--amber-text);background:var(--amber-bg);padding:9px 12px;border-radius:7px;border:1px solid var(--amber)">⚠ No match found for <strong>${esc(q)}</strong></div>`;
     return;
   }
   el.innerHTML=`
@@ -682,7 +742,6 @@ function openAddModal(){
   ['mEn','mErdemir','mTosyali','mDin','mAstm','mJis'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('mEnErr').style.display='none';
   document.getElementById('gradeModal').classList.add('open');
-  setTimeout(()=>document.getElementById('mEn').focus(),100);
 }
 function openEditModal(id){
   if(!isAdmin)return;
@@ -700,7 +759,6 @@ function openEditModal(id){
   document.getElementById('gradeModal').classList.add('open');
 }
 function closeGradeModal(){document.getElementById('gradeModal').classList.remove('open');}
-
 async function saveGrade(){
   const en=(document.getElementById('mEn').value||'').trim();
   if(!en){document.getElementById('mEnErr').style.display='block';return;}
@@ -724,9 +782,8 @@ async function saveGrade(){
   toast(editingId?'Grade updated ✓':'Grade added ✓');
   await loadGrades();
 }
-
 async function deleteGrade(){
-  if(!confirm('Delete this grade mapping? This cannot be undone.'))return;
+  if(!confirm('Delete this grade mapping?'))return;
   const{error}=await sb.from(TABLE).delete().eq('id',editingId);
   if(error){toast('Delete failed: '+error.message,'err');return;}
   closeGradeModal();
@@ -735,7 +792,7 @@ async function deleteGrade(){
 }
 
 // ══════════════════════════════════
-// CSV IMPORT (admin only)
+// CSV IMPORT
 // ══════════════════════════════════
 function downloadTemplate(){
   const rows=[['en_grade','erdemir','tosyali','din','astm','jis'],
@@ -747,12 +804,10 @@ function downloadTemplate(){
   XLSX.utils.book_append_sheet(wb,ws,'Grade Template');
   XLSX.writeFile(wb,'grade_template.xlsx');
 }
-
 function handleCSVImport(input){
   const file=input.files[0];if(!file)return;
   const ext=file.name.split('.').pop().toLowerCase();
   const reader=new FileReader();
-
   if(ext==='xlsx'||ext==='xls'){
     reader.onload=e=>{
       const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
@@ -770,51 +825,26 @@ function handleCSVImport(input){
   }
   input.value='';
 }
-
 function parseCSVToObjects(txt){
-  function csvToRows(raw){
-    const rows=[];let row=[],field='',inQ=false;
-    for(let i=0;i<raw.length;i++){
-      const c=raw[i],n=raw[i+1];
-      if(inQ){
-        if(c==='"'&&n==='"'){field+='"';i++;}
-        else if(c==='"'){inQ=false;}
-        else{field+=c;}
-      }else{
-        if(c==='"'){inQ=true;}
-        else if(c===','){row.push(field.trim());field='';}
-        else if(c==='\r'&&n==='\n'){row.push(field.trim());rows.push(row);row=[];field='';i++;}
-        else if(c==='\r'||c==='\n'){row.push(field.trim());rows.push(row);row=[];field='';}
-        else{field+=c;}
-      }
-    }
-    row.push(field.trim());if(row.some(f=>f!==''))rows.push(row);
-    return rows;
-  }
-  const rows=csvToRows(txt).filter(r=>r.some(f=>f!==''));
-  if(!rows.length)return[];
-  const headers=rows[0].map(h=>norm(h));
+  const lines=txt.split(/\r?\n/).filter(l=>l.trim());
+  if(!lines.length)return[];
+  const headers=lines[0].split(',').map(h=>norm(h.trim()));
   const keyMap={'engrade':'en_grade','en':'en_grade','erdemir':'erdemir','tosyali':'tosyali','tosyalı':'tosyali','din':'din','astm':'astm','jis':'jis'};
-  return rows.slice(1).map(v=>{
+  return lines.slice(1).map(line=>{
+    const vals=line.split(',');
     const obj={};
-    headers.forEach((h,i)=>{const k=keyMap[h]||h;obj[k]=v[i]||'';});
+    headers.forEach((h,i)=>{const k=keyMap[h]||h;obj[k]=vals[i]||'';});
     return obj;
   });
 }
-
 async function processBulkRows(rows){
   const banner=document.getElementById('importBanner');
-  banner.style.display='block';
-  banner.className='result-banner';
-  banner.textContent='Processing…';
-
-  const valid=rows.filter(r=>(r.en_grade||r.en||r['en grade']||'').trim());
+  banner.style.display='block';banner.className='result-banner';banner.textContent='Processing…';
+  const valid=rows.filter(r=>(r.en_grade||r.en||'').trim());
   if(!valid.length){
-    banner.className='result-banner err';
-    banner.textContent='No valid rows found. Make sure the first column is "en_grade".';
+    banner.className='result-banner err';banner.textContent='No valid rows found.';
     return;
   }
-
   const payload=valid.map(r=>({
     en_grade:(r.en_grade||r.en||'').trim(),
     erdemir:(r.erdemir||'').trim()||null,
@@ -824,31 +854,20 @@ async function processBulkRows(rows){
     jis:(r.jis||'').trim()||null,
     created_by:currentUser?.id
   }));
-
-  const seen=new Map();
-  payload.forEach(r=>seen.set(r.en_grade.toLowerCase(),r));
-  const deduped=[...seen.values()];
-  const dupes=payload.length-deduped.length;
-
-  const CHUNK=200;
-  for(let i=0;i<deduped.length;i+=CHUNK){
-    const{error}=await sb.from(TABLE).upsert(deduped.slice(i,i+CHUNK),{onConflict:'en_grade',ignoreDuplicates:false});
+  for(let i=0;i<payload.length;i+=200){
+    const{error}=await sb.from(TABLE).upsert(payload.slice(i,i+200),{onConflict:'en_grade'});
     if(error){
-      banner.className='result-banner err';
-      banner.textContent='Import failed: '+error.message;
+      banner.className='result-banner err';banner.textContent='Import failed: '+error.message;
       return;
     }
   }
-  const msg=`✓ Imported ${deduped.length} grades`+(dupes?` (${dupes} duplicate rows skipped)`:'');
-  banner.className='result-banner ok';
-  banner.textContent=msg;
-  toast(msg);
+  banner.className='result-banner ok';banner.textContent=`✓ Imported ${payload.length} grades`;
+  toast('Import complete');
   await loadGrades();
 }
 
 // ══════════════════════════════════
-// EXCEL TRANSFORM (all users)
-// Uses merged column names from ALL supplier profiles.
+// GENERIC EXCEL TRANSFORM (HT1K etc.)
 // ══════════════════════════════════
 function findGradeMatch(kalite){
   if(!kalite)return null;
@@ -865,7 +884,6 @@ function findGradeMatch(kalite){
   );
   return m||null;
 }
-
 function findCol(obj,names){
   const keys=Object.keys(obj);
   for(const name of names){
@@ -874,61 +892,58 @@ function findCol(obj,names){
   }
   return null;
 }
-
 function handleExcelFile(file){
   if(!file)return;
   const banner=document.getElementById('transformBanner');
   banner.style.display='block';banner.className='result-banner';banner.textContent='Reading file…';
-  // Reset prior stock-insert result
-  const sr=document.getElementById('stockResult');
-  sr.style.display='none';sr.className='stock-result';
+  document.getElementById('stockResult').style.display='none';
   const reader=new FileReader();
   reader.onload=e=>{
     try{
       const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
       const ws=wb.Sheets[wb.SheetNames[0]];
       const json=XLSX.utils.sheet_to_json(ws,{defval:''});
-      if(!json.length){banner.className='result-banner err';banner.textContent='No data found in file.';return;}
+      if(!json.length){banner.className='result-banner err';banner.textContent='No data found.';return;}
       processExcelRows(json,file.name);
-      // Remember filename in session
       saveLastFileName(file.name);
-      const el=document.getElementById('lastFileNote');
-      el.textContent='Last file: '+file.name;
-      el.style.display='block';
+      document.getElementById('lastFileNote').textContent='Last file: '+file.name;
+      document.getElementById('lastFileNote').style.display='block';
     }catch(ex){
       banner.className='result-banner err';banner.textContent='Could not read file: '+ex.message;
     }
   };
   reader.readAsArrayBuffer(file);
 }
-
 function processExcelRows(json,filename){
   const banner=document.getElementById('transformBanner');
   const cols=buildMergedColumns();
   let matched=0,unmatched=0;
   transformedRows=[];
-
   json.forEach(row=>{
-    const sekilKey  = findCol(row, cols.product_type);
-    const kaliteKey = findCol(row, cols.grade);
-    const kalinKey  = findCol(row, cols.thickness);
-    const genisKey  = findCol(row, cols.width);
-    const boyKey    = findCol(row, cols.length);
-    const lokKey    = findCol(row, cols.location);
-    const tonajKey  = findCol(row, cols.quantity);
-    const fiyatKey  = findCol(row, cols.price);
+    const sekilKey=findCol(row,cols.product_type);
+    const kaliteKey=findCol(row,cols.grade);
+    const kalinKey=findCol(row,cols.thickness);
+    const genisKey=findCol(row,cols.width);
+    const boyKey=findCol(row,cols.length);
+    const lokKey=findCol(row,cols.location);
+    const tonajKey=findCol(row,cols.quantity);
+    const fiyatKey=findCol(row,cols.price);
 
-    const sekil    = sekilKey  ? String(row[sekilKey]||'').trim()  : '';
-    const kalite   = kaliteKey ? String(row[kaliteKey]||'').trim() : '';
-    const kalinlik = kalinKey  ? row[kalinKey]  : '';
-    const genislik = genisKey  ? row[genisKey]  : '';
-    const boy      = boyKey    ? row[boyKey]    : '';
-    const lokasyon = lokKey    ? String(row[lokKey]||'').trim()    : '';
-    const tonaj    = tonajKey  ? row[tonajKey]  : '';
-    const fiyat    = fiyatKey  ? row[fiyatKey]  : '';
+    const sekil=sekilKey?String(row[sekilKey]||'').trim():'';
+    const kalite=kaliteKey?String(row[kaliteKey]||'').trim():'';
+    const kalinlik=kalinKey?row[kalinKey]:'';
+    const genislik=genisKey?row[genisKey]:'';
+    const boy=boyKey?row[boyKey]:'';
+    const lokasyon=lokKey?String(row[lokKey]||'').trim():'';
+    const tonaj=tonajKey?row[tonajKey]:'';
+    const fiyat=fiyatKey?row[fiyatKey]:'';
+
+    // HEAT NUMBER lookup (MPC, Parti, İndisNo etc.)
+    const heatKey = findCol(row, ['mpc','parti','indisno','ısıno','indisno','ısı no','heatnumber','heat number','heat_number']);
+    const heatNumber = heatKey ? String(row[heatKey] || '').trim() : '';
 
     const gradeMatch=findGradeMatch(kalite);
-    const enGrade=gradeMatch ? (gradeMatch.en_grade||kalite) : kalite;
+    const enGrade=gradeMatch?(gradeMatch.en_grade||kalite):kalite;
     const wasMatched=!!gradeMatch&&gradeMatch.en_grade;
     if(wasMatched)matched++;else unmatched++;
 
@@ -937,23 +952,18 @@ function processExcelRows(json,filename){
       thickness:kalinlik, width:genislik, length:boy,
       supplier:lokasyon, location:lokasyon, quantity:tonaj,
       unit:'ton', buy_price:fiyat, currency:'USD',
-      origin:'', heat_number:'', available:'yes',
+      origin:lokasyon||'', heat_number:heatNumber, available:'yes',
       weight_kg:'', alternatives:'', notes:''
     });
   });
-
   const total=transformedRows.length;
   const pct=total?Math.round(matched/total*100):0;
-
   banner.className=pct>=80?'result-banner ok':pct>=50?'result-banner warn':'result-banner err';
-  banner.textContent=`✓ ${total} rows processed · ${matched} grades converted to EN · ${unmatched} unmatched (kept as-is) · ${pct}% match rate`;
-
+  banner.textContent=`✓ ${total} rows · ${matched} converted · ${pct}% match`;
   document.getElementById('transformPreview').style.display='block';
   document.getElementById('previewTitle').textContent=`Preview — ${filename}`;
   document.getElementById('matchStats').textContent=`${matched}/${total} matched`;
   document.getElementById('sendToStockBtn').disabled=false;
-  document.getElementById('sendToStockBtn').textContent='→ Send to Stock';
-
   const previewRows=transformedRows.slice(0,60);
   document.getElementById('previewBody').innerHTML=previewRows.map(r=>`
     <tr class="${r._matched?'matched':'unmatched'}">
@@ -969,13 +979,10 @@ function processExcelRows(json,filename){
     </tr>
   `).join('')+(total>60?`<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:10px;font-size:11px">…and ${total-60} more rows</td></tr>`:'');
 }
-
 function downloadTransformed(){
   if(!transformedRows.length)return;
   const cols=['product_type','grade','thickness','width','length','supplier','location','quantity','unit','buy_price','currency','origin','heat_number','available','weight_kg','alternatives','notes'];
-  const clean=transformedRows.map(r=>{
-    const obj={};cols.forEach(c=>obj[c]=r[c]??'');return obj;
-  });
+  const clean=transformedRows.map(r=>{const obj={};cols.forEach(c=>obj[c]=r[c]??'');return obj;});
   const wb=XLSX.utils.book_new();
   const ws=XLSX.utils.json_to_sheet(clean,{header:cols});
   ws['!cols']=[{wch:14},{wch:14},{wch:10},{wch:10},{wch:10},{wch:16},{wch:16},{wch:8},{wch:6},{wch:12},{wch:8},{wch:10},{wch:12},{wch:10},{wch:10},{wch:18},{wch:20}];
@@ -983,71 +990,395 @@ function downloadTransformed(){
   XLSX.writeFile(wb,'formatted_stock_'+Date.now()+'.xlsx');
   toast('Excel downloaded ✓');
 }
-
-// ══════════════════════════════════
-// SEND TO STOCK — inserts directly into
-// the stock Supabase table; shows progress
-// and result count inline.
-// ══════════════════════════════════
 async function sendToStock(){
   if(!transformedRows.length)return;
   const btn=document.getElementById('sendToStockBtn');
   const resultEl=document.getElementById('stockResult');
   btn.disabled=true;
   resultEl.style.display='none';
-
   const STOCK_COLS=['product_type','grade','thickness','width','length','supplier','location','quantity','unit','buy_price','currency','origin','heat_number','available','weight_kg','alternatives','notes'];
   const clean=transformedRows.map(r=>{
     const obj={};
     STOCK_COLS.forEach(c=>obj[c]=(r[c]!==undefined&&r[c]!=='')?r[c]:null);
-    obj.user_id=currentUser?.id||null;
-    obj.source='converter';
-    if(!obj.available)obj.available='yes';
-    if(!obj.unit)obj.unit='ton';
-    if(!obj.currency)obj.currency='USD';
+    obj.user_id=currentUser?.id||null; obj.source='converter'; obj.available='yes'; obj.unit='ton'; obj.currency='USD';
     return obj;
   });
-
-  const CHUNK=100;
   let inserted=0,failed=0;
-
-  for(let i=0;i<clean.length;i+=CHUNK){
-    const chunkEnd=Math.min(i+CHUNK,clean.length);
-    btn.textContent=`Inserting ${chunkEnd}/${clean.length}…`;
-    const{error}=await sb.from('stock').insert(clean.slice(i,i+CHUNK));
-    if(error){
-      failed+=chunkEnd-i;
-      console.error('Stock insert error:',error.message);
-    }else{
-      inserted+=chunkEnd-i;
-    }
+  for(let i=0;i<clean.length;i+=100){
+    btn.textContent=`Inserting ${Math.min(i+100,clean.length)}/${clean.length}…`;
+    const{error}=await sb.from('stock').insert(clean.slice(i,i+100));
+    if(error){failed+=Math.min(i+100,clean.length)-i;console.error(error);}
+    else{inserted+=Math.min(i+100,clean.length)-i;}
   }
-
-  btn.disabled=false;
-  btn.textContent='→ Send to Stock';
+  btn.disabled=false; btn.textContent='→ Send to Stock';
   resultEl.style.display='block';
-
-  if(failed===0){
-    resultEl.className='stock-result ok';
-    resultEl.textContent=`✓ ${inserted} rows added to Stock successfully.`;
-    toast(`✓ ${inserted} rows sent to Stock`);
-  } else if(inserted>0){
-    resultEl.className='stock-result warn';
-    resultEl.textContent=`⚠ ${inserted} rows added, ${failed} failed — check console for details.`;
-    toast(`${inserted} added, ${failed} failed`,'warn');
-  } else {
-    resultEl.className='stock-result err';
-    resultEl.textContent=`✗ Insert failed — check that the stock table exists and RLS allows inserts.`;
-    toast('Stock insert failed','err');
-  }
+  resultEl.className=failed===0?'stock-result ok':(inserted>0?'stock-result warn':'stock-result err');
+  resultEl.textContent=failed===0?`✓ ${inserted} rows added.`:`⚠ ${inserted} added, ${failed} failed.`;
 }
-
 function clearTransform(){
   transformedRows=[];
   document.getElementById('transformPreview').style.display='none';
   document.getElementById('transformBanner').style.display='none';
   document.getElementById('stockResult').style.display='none';
   document.getElementById('excelFileInput').value='';
+}
+
+// ══════════════════════════════════
+// KMC DETAILED STOCK IMPORT
+// ══════════════════════════════════
+function handleKMCFile(file){
+  if(!file)return;
+  const banner=document.getElementById('kmcBanner');
+  banner.style.display='block';banner.className='result-banner';banner.textContent='Reading workbook…';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+      const sheetNames=wb.SheetNames.filter(name=>norm(name)!=='ozelurunler'&&name.toLowerCase()!=='özel ürünler');
+      if(!sheetNames.length){banner.className='result-banner err';banner.textContent='No valid data sheets found.';return;}
+      kmcWorkbook=wb;
+      document.getElementById('sheetCheckboxList').innerHTML=sheetNames.map(name=>`
+        <label class="sheet-item"><input type="checkbox" value="${esc(name)}" checked> ${esc(name)}</label>
+      `).join('');
+      document.getElementById('kmcSheetModal').classList.add('open');
+      banner.style.display='none';
+    }catch(ex){banner.className='result-banner err';banner.textContent='Could not read file: '+ex.message;}
+  };
+  reader.readAsArrayBuffer(file);
+}
+function closeKMCSheetModal(){document.getElementById('kmcSheetModal').classList.remove('open');}
+function processKMCSheets(){
+  const checkboxes=document.querySelectorAll('#sheetCheckboxList input[type=checkbox]:checked');
+  const selectedSheets=Array.from(checkboxes).map(cb=>cb.value);
+  if(!selectedSheets.length){toast('Please select at least one sheet.','warn');return;}
+  closeKMCSheetModal();
+  const banner=document.getElementById('kmcBanner');
+  banner.style.display='block';banner.className='result-banner';banner.textContent='Processing sheets…';
+  kmcTransformedRows=[];
+  function arrayToObjects(arr,headerIdx){
+    const headers=arr[headerIdx].map(h=>String(h||'').trim());
+    const result=[];
+    for(let i=headerIdx+1;i<arr.length;i++){
+      const row=arr[i];
+      if(row.every(cell=>String(cell||'').trim()==='')) continue;
+      const obj={};
+      headers.forEach((h,idx)=>{obj[h]=row[idx]||'';});
+      result.push(obj);
+    }
+    return result;
+  }
+  selectedSheets.forEach(sheetName=>{
+    const ws=kmcWorkbook.Sheets[sheetName]; if(!ws)return;
+    const arr=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    if(!arr.length)return;
+    let headerIdx=-1;
+    for(let i=0;i<arr.length;i++){
+      const cells=arr[i].map(c=>norm(String(c||'')));
+      if(cells.some(c=>c==='mensei'||c==='menşei')){headerIdx=i;break;}
+    }
+    if(headerIdx===-1)return;
+    const rows=arrayToObjects(arr,headerIdx);
+    const findKMCCol=(row,names)=>{
+      const keys=Object.keys(row);
+      for(const n of names){const key=keys.find(k=>norm(k)===norm(n));if(key)return key;}
+      return null;
+    };
+    rows.forEach(row=>{
+      const kaliteKey=findKMCCol(row,['Kalite','kalite','grade','quality']);
+      const kalinKey=findKMCCol(row,['Kalınlık','Kalinlik','kalinlik','kalınlık','thickness']);
+      if(!kaliteKey||!kalinKey)return;
+      const tur=row[findKMCCol(row,['Tür','Tur','tur','tür','product_type'])]||'';
+      const kalite=row[kaliteKey]||'';
+      const kalinlik=row[kalinKey]||'';
+      const genislik=row[findKMCCol(row,['Genişlik','Genislik','genislik','genişlik','width'])]||'';
+      const boy=row[findKMCCol(row,['Boy','boy','length','uzunluk'])]||'';
+      const miktar=row[findKMCCol(row,['Miktar(Kg)','Miktar (Kg)','Miktar','miktar(kg)','miktar','kg','ağırlık','agirlik'])]||'';
+      const mensei=row[findKMCCol(row,['Menşei','Mensei','mensei','menşei','origin'])]||'';
+      const depo=row[findKMCCol(row,['Depo','depo','warehouse','lokasyon','location'])]||'';
+      const kaplama=row[findKMCCol(row,['Kaplama','kaplama','coating'])]||'';
+      const tip=row[findKMCCol(row,['Tip','tip','type'])]||'';
+      const fiyat=row[findKMCCol(row,['Fiyat','fiyat','price','birimfiyat'])]||'';
+      const indisNo = row[findKMCCol(row, ['İndisNo','IndisNo','indisno','indis no','ındısno','ındıs no'])]||'';
+      if(!miktar||isNaN(parseFloat(String(miktar).replace(/[^0-9.,]/g,'').replace(',','.')))) return;
+      const qtyKg=parseFloat(String(miktar).replace(/[^0-9.,]/g,'').replace(',','.'));
+      const qtyTon=isNaN(qtyKg)?0:qtyKg/1000;
+      let notesParts=[];
+      if(tip) notesParts.push('Tip: '+tip);
+      if(kaplama) notesParts.push('Kaplama: '+kaplama);
+      const notes=notesParts.join(' | ');
+      kmcTransformedRows.push({
+        product_type:String(tur||'').trim(),
+        grade:String(kalite||'').trim(),
+        _originalGrade:String(kalite||'').trim(),
+        _matched:false,
+        thickness:kalinlik, width:genislik, length:boy,
+        supplier:'KMC', location:depo, quantity:qtyTon,
+        unit:'ton', buy_price:fiyat?String(fiyat).trim():'', currency:'',
+        origin:String(mensei||'').trim(),
+        heat_number: String(indisNo||'').trim(),
+        available:'yes',
+        weight_kg:'', alternatives:'',
+        notes:notes
+      });
+    });
+  });
+  const total=kmcTransformedRows.length;
+  banner.className='result-banner ok';banner.textContent=`✓ ${total} rows processed.`;
+  document.getElementById('kmcPreview').style.display='block';
+  document.getElementById('kmcMatchStats').textContent=`${total} rows total`;
+  document.getElementById('sendKmcToStockBtn').disabled=false;
+  const previewRows=kmcTransformedRows.slice(0,60);
+  document.getElementById('kmcPreviewBody').innerHTML=previewRows.map(r=>`
+    <tr>
+      <td>${esc(r.product_type||'—')}</td>
+      <td>${esc(r.grade||'—')}</td>
+      <td style="color:var(--text4);font-size:10px">${esc(r._originalGrade||'')}</td>
+      <td>${esc(String(r.thickness||''))}</td>
+      <td>${esc(String(r.width||''))}</td>
+      <td>${esc(String(r.length||''))}</td>
+      <td>${esc(r.quantity.toFixed(2))}</td>
+      <td>${esc(String(r.buy_price||''))}</td>
+      <td>${esc(r.location||'')}</td>
+    </tr>
+  `).join('')+(total>60?`<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:10px;font-size:11px">…and ${total-60} more rows</td></tr>`:'');
+}
+function downloadKMCExcel(){
+  if(!kmcTransformedRows.length)return;
+  const cols=['product_type','grade','thickness','width','length','supplier','location','quantity','unit','buy_price','currency','origin','heat_number','available','weight_kg','alternatives','notes'];
+  const clean=kmcTransformedRows.map(r=>{const obj={};cols.forEach(c=>obj[c]=r[c]??'');return obj;});
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.json_to_sheet(clean,{header:cols});
+  ws['!cols']=[{wch:14},{wch:14},{wch:10},{wch:10},{wch:10},{wch:10},{wch:16},{wch:8},{wch:6},{wch:12},{wch:8},{wch:10},{wch:12},{wch:10},{wch:10},{wch:18},{wch:20}];
+  XLSX.utils.book_append_sheet(wb,ws,'KMC Stock');
+  XLSX.writeFile(wb,'kmc_stock_'+Date.now()+'.xlsx');
+  toast('KMC Excel downloaded ✓');
+}
+async function sendToStockKMC(){
+  if(!kmcTransformedRows.length)return;
+  if(!confirm('This will DELETE ALL existing KMC stock and replace it. Continue?'))return;
+  const btn=document.getElementById('sendKmcToStockBtn');
+  const resultEl=document.getElementById('kmcStockResult');
+  btn.disabled=true; resultEl.style.display='none';
+  btn.textContent='Deleting old KMC stock…';
+  const{error:delErr}=await sb.from('stock').delete().eq('supplier','KMC');
+  if(delErr){
+    resultEl.className='stock-result err'; resultEl.textContent='Failed to delete old KMC stock.'; resultEl.style.display='block';
+    btn.disabled=false; btn.textContent='→ Send to KMC Stock'; return;
+  }
+  const STOCK_COLS=['product_type','grade','thickness','width','length','supplier','location','quantity','unit','buy_price','currency','origin','heat_number','available','weight_kg','alternatives','notes'];
+  const clean=kmcTransformedRows.map(r=>{
+    const obj={};STOCK_COLS.forEach(c=>obj[c]=(r[c]!==undefined&&r[c]!=='')?r[c]:null);
+    obj.user_id=currentUser?.id||null; obj.source='kmc_import'; obj.available='yes'; obj.unit='ton'; obj.currency='USD';
+    return obj;
+  });
+  let inserted=0,failed=0;
+  for(let i=0;i<clean.length;i+=100){
+    btn.textContent=`Inserting ${Math.min(i+100,clean.length)}/${clean.length}…`;
+    const{error}=await sb.from('stock').insert(clean.slice(i,i+100));
+    if(error){failed+=Math.min(i+100,clean.length)-i;console.error(error);}
+    else{inserted+=Math.min(i+100,clean.length)-i;}
+  }
+  btn.disabled=false; btn.textContent='→ Send to KMC Stock'; resultEl.style.display='block';
+  resultEl.className=failed===0?'stock-result ok':(inserted>0?'stock-result warn':'stock-result err');
+  resultEl.textContent=failed===0?`✓ Old KMC stock cleared. ${inserted} rows added.`:`⚠ ${inserted} added, ${failed} failed.`;
+}
+function clearKMCImport(){
+  kmcTransformedRows=[];
+  document.getElementById('kmcPreview').style.display='none';
+  document.getElementById('kmcBanner').style.display='none';
+  document.getElementById('kmcStockResult').style.display='none';
+  document.getElementById('kmcFileInput').value='';
+}
+
+// ══════════════════════════════════
+// YILDIZ DEMIR ÇELIK STOCK IMPORT
+// ══════════════════════════════════
+function handleYildizFile(file){
+  if(!file)return;
+  const banner=document.getElementById('yildizBanner');
+  banner.style.display='block';banner.className='result-banner';banner.textContent='Reading workbook…';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+      const sheetNames=wb.SheetNames.filter(name=>name.toLowerCase()!=='özel ürünler');
+      if(!sheetNames.length){banner.className='result-banner err';banner.textContent='No data sheets found.';return;}
+      yildizWorkbook=wb;
+      document.getElementById('yildizSheetCheckboxList').innerHTML=sheetNames.map(name=>`
+        <label class="sheet-item"><input type="checkbox" value="${esc(name)}" checked> ${esc(name)}</label>
+      `).join('');
+      document.getElementById('yildizSheetModal').classList.add('open');
+      banner.style.display='none';
+    }catch(ex){banner.className='result-banner err';banner.textContent='Could not read file: '+ex.message;}
+  };
+  reader.readAsArrayBuffer(file);
+}
+function closeYildizSheetModal(){document.getElementById('yildizSheetModal').classList.remove('open');}
+function processYildizSheets(){
+  const checkboxes=document.querySelectorAll('#yildizSheetCheckboxList input[type=checkbox]:checked');
+  const selectedSheets=Array.from(checkboxes).map(cb=>cb.value);
+  if(!selectedSheets.length){toast('Please select at least one sheet.','warn');return;}
+  closeYildizSheetModal();
+  const banner=document.getElementById('yildizBanner');
+  banner.style.display='block';banner.className='result-banner';banner.textContent='Processing sheets…';
+  yildizTransformedRows=[];
+  function arrayToObjects(arr,headerIdx){
+    const headers=arr[headerIdx].map(h=>String(h||'').trim());
+    const result=[];
+    for(let i=headerIdx+1;i<arr.length;i++){
+      const row=arr[i];
+      if(row.every(cell=>String(cell||'').trim()==='')) continue;
+      const obj={};
+      headers.forEach((h,idx)=>{obj[h]=row[idx]||'';});
+      result.push(obj);
+    }
+    return result;
+  }
+  selectedSheets.forEach(sheetName=>{
+    const ws=yildizWorkbook.Sheets[sheetName]; if(!ws)return;
+    const arr=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    if(!arr.length)return;
+    let headerIdx=-1;
+    for(let i=0;i<arr.length;i++){
+      const cells=arr[i].map(c=>norm(String(c||'')));
+      if(cells.some(c=>c==='kalinlik'||c==='kalınlık')){headerIdx=i;break;}
+    }
+    if(headerIdx===-1)return;
+    const rows=arrayToObjects(arr,headerIdx);
+    if(!rows.length)return;
+    const isGenelStok=Object.keys(rows[0]||{}).some(k=>norm(k)==='kalitesap');
+    const isSteelgoStok=Object.keys(rows[0]||{}).some(k=>norm(k)==='çelikkalitesi');
+    if(!isGenelStok && !isSteelgoStok) return;
+    const findYCol=(row,names)=>{
+      const keys=Object.keys(row);
+      for(const n of names){const key=keys.find(k=>norm(k)===norm(n));if(key)return key;}
+      return null;
+    };
+    rows.forEach(row=>{
+      let productType='',grade='',thickness='',width='',length='',origin='',notes='',location='',quantInTons=0;
+      let heatNumber = '';
+      if(isGenelStok){
+        productType=row[findYCol(row,['Ürün Grubu','UrunGrubu'])]||'';
+        const malzeme=row[findYCol(row,['Malzeme'])]||'';
+        const parti=row[findYCol(row,['Parti'])]||'';
+        heatNumber = String(parti).trim();
+        thickness=row[findYCol(row,['Kalınlık','Kalinlik'])]||'';
+        width=row[findYCol(row,['Genişlik','Genislik'])]||'';
+        length=row[findYCol(row,['Boy'])]||'';
+        grade=row[findYCol(row,['Kalite SAP'])]||'';
+        const qtyStr=row[findYCol(row,['Tahditsiz klnb.'])]||'';
+        const kaplama=row[findYCol(row,['Kaplama Miktari'])]||'';
+        const boyaRengi=row[findYCol(row,['Üst Boya Rengi'])]||'';
+        const qtyKg=parseFloat(String(qtyStr).replace(/[^0-9.,-]/g,'').replace(',','.'));
+        quantInTons=isNaN(qtyKg)?0:qtyKg/1000;
+        let notesParts=[];
+        if(malzeme) notesParts.push('Malzeme: '+malzeme);
+        if(parti) notesParts.push('Parti: '+parti);
+        if(kaplama) notesParts.push('Kaplama: '+kaplama);
+        if(boyaRengi) notesParts.push('Boya: '+boyaRengi);
+        notes=notesParts.join(' | ');
+      }
+      else if(isSteelgoStok){
+        productType=row[findYCol(row,['Sipariş Malzeme'])]||'';
+        thickness=row[findYCol(row,['Kalınlık','Kalinlik'])]||'';
+        width=row[findYCol(row,['Genişlik','Genislik'])]||'';
+        length='';
+        grade=row[findYCol(row,['Çelik kalitesi'])]||'';
+        const tonajStr=row[findYCol(row,['Tonaj'])]||'';
+        const parti=row[findYCol(row,['Parti'])]||'';
+        heatNumber = String(parti).trim();
+        const kaplama=row[findYCol(row,['Kaplama miktarı'])]||'';
+        const boyaRengi=row[findYCol(row,['Üst boya rengi'])]||'';
+        const sipTanim=row[findYCol(row,['Sipariş Tanımı'])]||'';
+        const tonajNum=parseFloat(String(tonajStr).replace(/[^0-9.,-]/g,'').replace(',','.'));
+        quantInTons=isNaN(tonajNum)?0:tonajNum;
+        let notesParts=[];
+        if(parti) notesParts.push('Parti: '+parti);
+        if(kaplama) notesParts.push('Kaplama: '+kaplama);
+        if(boyaRengi) notesParts.push('Boya: '+boyaRengi);
+        if(sipTanim) notesParts.push('Sipariş: '+sipTanim);
+        notes=notesParts.join(' | ');
+      }
+      if(!grade || quantInTons<=0) return;
+      yildizTransformedRows.push({
+        product_type:String(productType||'').trim(),
+        grade:String(grade||'').trim(),
+        _originalGrade:String(grade||'').trim(),
+        _matched:false,
+        thickness, width, length,
+        supplier:'YILDIZ', location, quantity:quantInTons,
+        unit:'ton', buy_price:'', currency:'', origin:String(origin||'').trim(),
+        heat_number: heatNumber,
+        available:'yes', weight_kg:'', alternatives:'', notes
+      });
+    });
+  });
+  const total=yildizTransformedRows.length;
+  banner.className='result-banner ok';banner.textContent=`✓ ${total} rows processed.`;
+  document.getElementById('yildizPreview').style.display='block';
+  document.getElementById('yildizMatchStats').textContent=`${total} rows total`;
+  document.getElementById('sendYildizToStockBtn').disabled=false;
+  const previewRows=yildizTransformedRows.slice(0,60);
+  document.getElementById('yildizPreviewBody').innerHTML=previewRows.map(r=>`
+    <tr>
+      <td>${esc(r.product_type||'—')}</td>
+      <td>${esc(r.grade||'—')}</td>
+      <td style="color:var(--text4);font-size:10px">${esc(r._originalGrade||'')}</td>
+      <td>${esc(String(r.thickness||''))}</td>
+      <td>${esc(String(r.width||''))}</td>
+      <td>${esc(String(r.length||''))}</td>
+      <td>${esc(r.quantity.toFixed(2))}</td>
+      <td>${esc(String(r.buy_price||''))}</td>
+      <td>${esc(r.location||'')}</td>
+    </tr>
+  `).join('')+(total>60?`<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:10px;font-size:11px">…and ${total-60} more rows</td></tr>`:'');
+}
+function downloadYildizExcel(){
+  if(!yildizTransformedRows.length)return;
+  const cols=['product_type','grade','thickness','width','length','supplier','location','quantity','unit','buy_price','currency','origin','heat_number','available','weight_kg','alternatives','notes'];
+  const clean=yildizTransformedRows.map(r=>{const obj={};cols.forEach(c=>obj[c]=r[c]??'');return obj;});
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.json_to_sheet(clean,{header:cols});
+  ws['!cols']=[{wch:14},{wch:14},{wch:10},{wch:10},{wch:10},{wch:10},{wch:16},{wch:8},{wch:6},{wch:12},{wch:8},{wch:10},{wch:12},{wch:10},{wch:10},{wch:18},{wch:20}];
+  XLSX.utils.book_append_sheet(wb,ws,'Yildiz Stock');
+  XLSX.writeFile(wb,'yildiz_stock_'+Date.now()+'.xlsx');
+  toast('Yıldız Excel downloaded ✓');
+}
+async function sendToStockYildiz(){
+  if(!yildizTransformedRows.length)return;
+  if(!confirm('This will DELETE ALL existing Yıldız stock and replace it. Continue?'))return;
+  const btn=document.getElementById('sendYildizToStockBtn');
+  const resultEl=document.getElementById('yildizStockResult');
+  btn.disabled=true; resultEl.style.display='none';
+  btn.textContent='Deleting old Yıldız stock…';
+  const{error:delErr}=await sb.from('stock').delete().eq('supplier','YILDIZ');
+  if(delErr){
+    resultEl.className='stock-result err'; resultEl.textContent='Failed to delete old Yıldız stock.'; resultEl.style.display='block';
+    btn.disabled=false; btn.textContent='→ Send to Yıldız Stock'; return;
+  }
+  const STOCK_COLS=['product_type','grade','thickness','width','length','supplier','location','quantity','unit','buy_price','currency','origin','heat_number','available','weight_kg','alternatives','notes'];
+  const clean=yildizTransformedRows.map(r=>{
+    const obj={};STOCK_COLS.forEach(c=>obj[c]=(r[c]!==undefined&&r[c]!=='')?r[c]:null);
+    obj.user_id=currentUser?.id||null; obj.source='yildiz_import'; obj.available='yes'; obj.unit='ton'; obj.currency='USD';
+    return obj;
+  });
+  let inserted=0,failed=0;
+  for(let i=0;i<clean.length;i+=100){
+    btn.textContent=`Inserting ${Math.min(i+100,clean.length)}/${clean.length}…`;
+    const{error}=await sb.from('stock').insert(clean.slice(i,i+100));
+    if(error){failed+=Math.min(i+100,clean.length)-i;console.error(error);}
+    else{inserted+=Math.min(i+100,clean.length)-i;}
+  }
+  btn.disabled=false; btn.textContent='→ Send to Yıldız Stock'; resultEl.style.display='block';
+  resultEl.className=failed===0?'stock-result ok':(inserted>0?'stock-result warn':'stock-result err');
+  resultEl.textContent=failed===0?`✓ Old Yıldız stock cleared. ${inserted} rows added.`:`⚠ ${inserted} added, ${failed} failed.`;
+}
+function clearYildizImport(){
+  yildizTransformedRows=[];
+  document.getElementById('yildizPreview').style.display='none';
+  document.getElementById('yildizBanner').style.display='none';
+  document.getElementById('yildizStockResult').style.display='none';
+  document.getElementById('yildizFileInput').value='';
 }
 
 // ══════════════════════════════════
