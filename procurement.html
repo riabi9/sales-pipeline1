@@ -504,7 +504,6 @@ function addPOLine(p={}){
     '<td><input class="li" id="plp-'+id+'" type="number" value="'+(p.agreed_price||'')+'" placeholder="0.00" style="width:70px"></td>'+
     '<td style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--green-text);white-space:nowrap;padding:4px 6px" id="plt-tot-'+id+'">—</td>'+
     '<td><button class="del-row-btn">×</button></td>';
-  // Attach events via JS — no inline onclick quoting issues
   tr.querySelector('.del-row-btn').addEventListener('click',function(){tr.remove();recalcPO();});
   tr.querySelector('#plq-'+id).addEventListener('input',recalcPO);
   tr.querySelector('#plp-'+id).addEventListener('input',recalcPO);
@@ -530,6 +529,35 @@ function collectPOLines(){
     return{grade:(document.getElementById('plg-'+id)?.value||'').trim(),product_type:(document.getElementById('plt-'+id)?.value||'').trim(),thickness:Number(document.getElementById('plthk-'+id)?.value)||null,width:Number(document.getElementById('plw-'+id)?.value)||null,qty:Number(document.getElementById('plq-'+id)?.value)||0,unit:document.getElementById('plu-'+id)?.value||'ton',agreed_price:Number(document.getElementById('plp-'+id)?.value)||0};
   }).filter(l=>l&&(l.grade||l.qty));
 }
+
+// ═══════════════════════════════════════════
+// NEW: Create payable record when a PO is confirmed
+// ═══════════════════════════════════════════
+async function createPayableForPO(poObj) {
+  const sup = allSuppliers.find(s => s.id === poObj.supplier_id);
+  if (!sup) {
+    toast('Cannot create payable – supplier not found', 'warn');
+    return;
+  }
+  const payload = {
+    user_id: currentUser.id,
+    po_id: poObj.po_number,
+    supplier: sup.company,
+    amount: poObj.total_value || 0,
+    currency: poObj.currency || 'USD',
+    due_date: poObj.delivery_date,
+    status: 'Unpaid',
+    lead_id: poObj.lead_id || null,
+    paid_date: null
+  };
+  const { error } = await sb.from('payables').insert(payload);
+  if (error) {
+    toast('Payable creation failed: ' + error.message, 'warn');
+  } else {
+    toast('✓ Payable record created for ' + poObj.po_number);
+  }
+}
+
 async function savePO(){
   const btn=document.getElementById('mSaveBtn');btn.disabled=true;btn.textContent='Saving…';
   const lines=collectPOLines();
@@ -540,10 +568,19 @@ async function savePO(){
   let error;
   if(editingPOId){({error}=await sb.from('purchase_orders').update(obj).eq('id',editingPOId));}
   else{({error}=await sb.from('purchase_orders').insert(obj));}
-  btn.disabled=false;btn.textContent='Save';
-  if(error){toast('Save failed: '+error.message,'err');return;}
+
+  if(error){btn.disabled=false;btn.textContent='Save';toast('Save failed: '+error.message,'err');return;}
+
+  // ════════════════════════════════
+  // NEW: Auto‑create payable if status is now Confirmed
+  // ════════════════════════════════
+  if (newStatus === 'Confirmed' && prevStatus !== 'Confirmed') {
+    await createPayableForPO(obj);
+  }
+
   if(newStatus==='Received'&&prevStatus!=='Received')await pushToStock(lines,obj);
   if(lines.length){const ph=lines.filter(l=>l.grade&&l.agreed_price).map(l=>({grade:l.grade,supplier_id:obj.supplier_id,price_usd:l.agreed_price,date:obj.order_date||new Date().toISOString().slice(0,10)}));if(ph.length)await sb.from('price_history').insert(ph).catch(()=>{});}
+  btn.disabled=false;btn.textContent='Save';
   closePOModal();await loadAll();toast(editingPOId?'PO updated ✓':'PO created ✓');
 }
 async function pushToStock(lines,po){
