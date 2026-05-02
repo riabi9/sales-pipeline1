@@ -1,0 +1,1702 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1456a0">
+<title>Steel Stock Catalogue — Browse & Enquire</title>
+<meta name="description" content="Browse our live steel stock and submit an enquiry — plates, coils, pipes, profiles and bars in international grades.">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&display=swap" rel="stylesheet">
+<style>
+:root{
+    --bg:#f0f0ee;
+    --surface:#fff;
+    --surface2:#ebebea;
+    --surface3:#f6f6f4;
+    --border:#e0e0de;
+    --border2:#cacac6;
+    --text:#111110;
+    --text2:#4a4a48;
+    --text3:#888884;
+    --text4:#bbbbb6;
+    --blue:#1456a0;
+    --blue-bg:#e8f1fb;
+    --blue-mid:#4a8fd4;
+    --green:#15895f;
+    --green-bg:#e2f4ee;
+    --green-text:#0c5e42;
+    --red:#cc3333;
+    --red-bg:#fdeaea;
+    --red-text:#922020;
+    --amber:#c47d00;
+    --amber-bg:#fdf2de;
+    --amber-text:#764900;
+    --purple:#6055c0;
+    --purple-bg:#eeedfb;
+    --purple-text:#3f36a0;
+    --sans:'IBM Plex Sans',system-ui,sans-serif;
+    --mono:'IBM Plex Mono',monospace;
+    --serif:'Fraunces',Georgia,serif;
+    --shadow-1:0 1px 2px rgba(0,0,0,.04);
+    --shadow-2:0 4px 14px rgba(0,0,0,.06);
+    --shadow-3:0 10px 32px rgba(0,0,0,.10);
+}
+[data-theme="dark"]{
+    --bg:#0d0d0c;
+    --surface:#181817;
+    --surface2:#202020;
+    --surface3:#1b1b1a;
+    --border:#282826;
+    --border2:#343432;
+    --text:#edecea;
+    --text2:#b4b4b0;
+    --text3:#727270;
+    --text4:#424240;
+    --blue:#4a90d9;
+    --blue-bg:#0a1f3a;
+    --blue-mid:#2468b0;
+    --green:#28b488;
+    --green-bg:#082a1e;
+    --green-text:#50c8a0;
+    --red:#e04848;
+    --red-bg:#280c0c;
+    --red-text:#ee8888;
+    --amber:#f0a820;
+    --amber-bg:#281a00;
+    --amber-text:#f8c860;
+    --purple:#9088e0;
+    --purple-bg:#181538;
+    --purple-text:#b0a8f4;
+    --shadow-1:0 1px 2px rgba(0,0,0,.4);
+    --shadow-2:0 4px 14px rgba(0,0,0,.5);
+    --shadow-3:0 10px 32px rgba(0,0,0,.6);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{transition:background .25s,color .15s}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;color:inherit}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ── Header ── */
+.top-bar{position:sticky;top:0;z-index:60;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:var(--shadow-1)}
+.top-bar-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:12px 18px}
+.brand{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.brand-logo{width:36px;height:36px;border-radius:9px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;flex-shrink:0;box-shadow:var(--shadow-2)}
+.brand-name{font-weight:700;font-size:16px;color:var(--text);letter-spacing:-.2px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-sub{font-family:var(--mono);font-size:10px;color:var(--text4);text-transform:uppercase;letter-spacing:.6px;margin-top:1px;white-space:nowrap}
+.top-acts{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.icon-btn{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--text2);transition:background .15s,color .15s}
+.icon-btn:hover{background:var(--surface2);color:var(--text)}
+.cart-btn{display:flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:8px;background:var(--blue);color:#fff;font-weight:600;font-size:13px;transition:transform .15s,opacity .15s;position:relative}
+.cart-btn:hover{opacity:.92}
+.cart-btn:active{transform:scale(.97)}
+.cart-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:#fff;color:var(--blue);font-size:11px;font-weight:700;font-family:var(--mono)}
+.cart-count.zero{background:rgba(255,255,255,.25);color:#fff}
+
+/* ── Hero ── */
+.hero{max-width:1280px;margin:0 auto;padding:42px 18px 22px;text-align:center}
+.hero h1{font-family:var(--serif);font-weight:600;font-size:clamp(30px,5vw,52px);letter-spacing:-1px;line-height:1.05;color:var(--text);margin-bottom:14px}
+.hero h1 em{font-style:italic;color:var(--blue);font-weight:600}
+.hero p{font-size:15px;color:var(--text2);max-width:560px;margin:0 auto;line-height:1.55}
+.hero-stats{display:flex;flex-wrap:wrap;justify-content:center;gap:20px 32px;margin-top:24px;font-family:var(--mono);font-size:12px;color:var(--text3)}
+.hero-stats b{color:var(--text);font-weight:600;font-size:13px;display:block;font-family:var(--sans);margin-bottom:2px}
+.hero-stats > div{text-align:center}
+
+/* ── Filter bar ── */
+.filter-shell{max-width:1280px;margin:0 auto;padding:6px 18px 16px;position:sticky;top:60px;z-index:50}
+.filter-bar{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px;display:grid;grid-template-columns:1.4fr .8fr .6fr .6fr .6fr auto;gap:8px;box-shadow:var(--shadow-2)}
+.filter-bar input,.filter-bar select{height:38px;border:1px solid var(--border2);border-radius:8px;padding:0 11px;font-size:13px;background:var(--surface3);color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s}
+.filter-bar input.mono{font-family:var(--mono)}
+.filter-bar input:focus,.filter-bar select:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+.filter-bar input::placeholder{color:var(--text4)}
+.search-input-wrap{position:relative}
+.search-input-wrap input{padding-left:36px}
+.search-input-wrap::before{content:"🔍";position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.7;pointer-events:none}
+.filter-clear{height:38px;padding:0 14px;border-radius:8px;background:var(--surface2);color:var(--text2);font-size:12px;font-weight:600;transition:background .15s}
+.filter-clear:hover{background:var(--border)}
+@media(max-width:900px){
+    .filter-bar{grid-template-columns:1fr 1fr;gap:6px;padding:8px}
+    .filter-bar > .search-input-wrap{grid-column:1/-1}
+    .filter-bar > .filter-clear{grid-column:1/-1}
+}
+
+/* ── Results ── */
+.results-shell{max-width:1280px;margin:0 auto;padding:8px 18px 100px}
+.results-meta{display:flex;align-items:center;justify-content:space-between;padding:10px 4px;font-size:12px;color:var(--text3);font-family:var(--mono)}
+.results-meta .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:99px;background:var(--surface2);color:var(--text2);font-size:11px;font-weight:500}
+.sort-select{height:30px;border:1px solid var(--border);border-radius:7px;padding:0 28px 0 10px;font-size:12px;background:var(--surface);color:var(--text2);font-family:var(--sans);cursor:pointer;outline:none;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 16px 14px;display:flex;flex-direction:column;gap:10px;transition:border-color .15s,transform .15s,box-shadow .2s;position:relative;overflow:hidden}
+.card:hover{border-color:var(--border2);box-shadow:var(--shadow-2);transform:translateY(-1px)}
+.card.in-cart{border-color:var(--blue);background:linear-gradient(0deg,var(--blue-bg) 0%,transparent 60%)}
+[data-theme="dark"] .card.in-cart{background:linear-gradient(0deg,var(--blue-bg) 0%,transparent 50%)}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.cat-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;background:var(--surface2);color:var(--text2);font-size:11px;font-weight:600;font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;flex-shrink:0}
+.cat-badge.flat{background:var(--blue-bg);color:var(--blue)}
+.cat-badge.pipe{background:var(--purple-bg);color:var(--purple-text)}
+.cat-badge.profile{background:var(--green-bg);color:var(--green-text)}
+.cat-badge.bar{background:var(--amber-bg);color:var(--amber-text)}
+.card-grade{font-family:var(--serif);font-size:22px;font-weight:600;letter-spacing:-.4px;line-height:1.05;color:var(--text);word-break:break-word}
+.card-type{font-size:13px;color:var(--text2);margin-top:-2px}
+.card-alts{font-size:11px;color:var(--text4);font-family:var(--mono);margin-top:1px}
+.card-dims{display:flex;flex-wrap:wrap;gap:4px;margin-top:auto}
+.dim-chip{display:inline-flex;align-items:baseline;gap:3px;padding:5px 9px;border-radius:6px;background:var(--surface3);border:1px solid var(--border);font-family:var(--mono);font-size:12px;color:var(--text)}
+.dim-chip .lbl{font-size:9px;color:var(--text4);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.dim-chip .val{font-weight:600;color:var(--text)}
+.card-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:10px;border-top:1px dashed var(--border)}
+.qty-info{font-size:12px;color:var(--text2)}
+.qty-info b{font-family:var(--mono);font-weight:600;color:var(--green-text);font-size:14px}
+.add-btn{height:32px;padding:0 12px;border-radius:8px;background:var(--blue);color:#fff;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;transition:background .15s,transform .1s}
+.add-btn:hover{background:#0d4685}
+.add-btn:active{transform:scale(.96)}
+.add-btn.added{background:var(--green);color:#fff}
+.add-btn.added::before{content:"✓ "}
+
+.empty,.loading{padding:60px 20px;text-align:center;color:var(--text3)}
+.empty .icon,.loading .icon{font-size:48px;margin-bottom:12px;opacity:.5}
+.empty h3{font-family:var(--serif);font-weight:600;font-size:22px;color:var(--text);margin-bottom:6px}
+.empty p{font-size:13px;line-height:1.5;max-width:380px;margin:0 auto}
+.spinner{width:32px;height:32px;border:3px solid var(--surface2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Footer note ── */
+.foot{max-width:1280px;margin:0 auto;padding:18px;text-align:center;font-size:11px;color:var(--text4);font-family:var(--mono);border-top:1px solid var(--border)}
+.foot a{color:var(--text3)}
+
+/* ── Floating cart pill (mobile) ── */
+.float-cart{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:11px 18px 11px 14px;border-radius:99px;display:none;align-items:center;gap:10px;box-shadow:var(--shadow-3);font-size:13px;font-weight:600;cursor:pointer;z-index:55;transition:transform .2s,opacity .2s}
+.float-cart:active{transform:translateX(-50%) scale(.96)}
+.float-cart.show{display:flex;animation:popup .25s ease-out}
+@keyframes popup{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.float-cart-count{background:var(--blue);color:#fff;min-width:24px;height:24px;padding:0 8px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-family:var(--mono);font-weight:700}
+
+/* ── Modal ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-start;justify-content:center;padding:20px 12px;z-index:200;overflow-y:auto;animation:fadeIn .2s}
+.modal-bg.open{display:flex}
+[data-theme="dark"] .modal-bg{background:rgba(0,0,0,.7)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--surface);border-radius:18px;width:100%;max-width:760px;max-height:none;display:flex;flex-direction:column;box-shadow:var(--shadow-3);animation:modalIn .25s cubic-bezier(.2,.9,.4,1.1);margin:auto}
+@keyframes modalIn{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.modal-hd{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.modal-hd h2{font-family:var(--serif);font-weight:600;font-size:22px;letter-spacing:-.3px;flex:1}
+.modal-hd .close{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--text2);transition:background .15s}
+.modal-hd .close:hover{background:var(--surface2);color:var(--text)}
+.modal-bd{padding:18px 22px;overflow-y:auto;flex:1}
+.modal-ft{padding:14px 22px 18px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.modal-ft .spacer{flex:1}
+
+/* ── Cart items ── */
+.cart-section-ttl{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin:8px 0 10px;display:flex;align-items:center;gap:8px}
+.cart-section-ttl::after{content:"";flex:1;height:1px;background:var(--border)}
+.cart-section-ttl:first-child{margin-top:0}
+.cart-item{background:var(--surface3);border:1px solid var(--border);border-radius:11px;padding:11px 12px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px}
+.cart-item.custom{border-style:dashed;background:transparent}
+.cart-item-body{flex:1;min-width:0}
+.ci-line1{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:3px}
+.ci-grade{font-weight:600;font-size:14px;color:var(--text)}
+.ci-cat{font-family:var(--mono);font-size:10px;padding:2px 6px;border-radius:4px;background:var(--surface2);color:var(--text3);text-transform:uppercase;letter-spacing:.4px}
+.ci-dims{font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.45;word-break:break-word}
+.ci-qty{display:flex;align-items:center;gap:4px;margin-top:6px}
+.ci-qty input{width:80px;height:30px;border:1px solid var(--border2);border-radius:6px;padding:0 8px;font-size:12px;font-family:var(--mono);background:var(--surface);color:var(--text);outline:none;text-align:right}
+.ci-qty input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+.ci-qty select{height:30px;border:1px solid var(--border2);border-radius:6px;padding:0 6px;font-size:12px;font-family:var(--mono);background:var(--surface);color:var(--text);outline:none;cursor:pointer}
+.ci-qty .lbl{font-size:11px;color:var(--text3);margin-right:4px}
+.ci-rm{width:28px;height:28px;border-radius:7px;color:var(--text3);font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s}
+.ci-rm:hover{background:var(--red-bg);color:var(--red-text)}
+
+.add-custom{display:block;width:100%;padding:11px;border-radius:10px;border:1.5px dashed var(--border2);background:transparent;color:var(--text3);font-size:13px;font-weight:500;transition:border-color .15s,color .15s,background .15s}
+.add-custom:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+
+.custom-form{background:var(--surface3);border:1.5px dashed var(--purple);border-radius:11px;padding:12px;margin-bottom:8px}
+.custom-form .row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.custom-form .row.r3{grid-template-columns:1fr 1fr 1fr}
+.custom-form .row.r1{grid-template-columns:1fr}
+.custom-form input,.custom-form select{height:34px;border:1px solid var(--border2);border-radius:7px;padding:0 10px;font-size:12px;background:var(--surface);color:var(--text);outline:none;width:100%}
+.custom-form input:focus,.custom-form select:focus{border-color:var(--purple);box-shadow:0 0 0 3px var(--purple-bg)}
+.custom-form .lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;font-weight:600;margin-bottom:3px;display:block;font-family:var(--mono)}
+.custom-form .acts{display:flex;gap:6px;justify-content:flex-end;margin-top:4px}
+@media(max-width:520px){.custom-form .row,.custom-form .row.r3{grid-template-columns:1fr 1fr}}
+
+/* ── Form ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr}}
+.fld{display:flex;flex-direction:column}
+.fld.full{grid-column:1/-1}
+.fld label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;font-weight:600;margin-bottom:4px;font-family:var(--mono)}
+.fld label .req{color:var(--red);margin-left:2px}
+.fld input,.fld select,.fld textarea{height:40px;border:1px solid var(--border2);border-radius:9px;padding:0 12px;font-size:13px;background:var(--surface);color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s;width:100%}
+.fld textarea{height:auto;min-height:90px;padding:10px 12px;resize:vertical;line-height:1.5}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+.fld input.error,.fld textarea.error{border-color:var(--red);background:var(--red-bg)}
+
+/* ── Buttons ── */
+.btn{height:40px;padding:0 18px;border-radius:9px;background:var(--surface2);color:var(--text);font-size:13px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,opacity .15s,transform .1s;border:1px solid var(--border)}
+.btn:hover{background:var(--border)}
+.btn:active{transform:scale(.97)}
+.btn-blue{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-blue:hover{background:#0d4685;opacity:1}
+.btn-blue:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
+.btn-purple{background:var(--purple);color:#fff;border-color:var(--purple)}
+.btn-purple:hover{background:#4d44b0}
+.btn-green{background:var(--green);color:#fff;border-color:var(--green)}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--text2)}
+.btn-ghost:hover{background:var(--surface2)}
+.btn-sm{height:32px;padding:0 12px;font-size:12px}
+
+.banner{padding:11px 14px;border-radius:10px;font-size:12px;line-height:1.5;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start}
+.banner.amber{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber)}
+.banner.green{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green)}
+.banner.red{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red)}
+
+/* ── Success view ── */
+.success-view{text-align:center;padding:24px 12px}
+.success-icon{width:72px;height:72px;border-radius:50%;background:var(--green-bg);color:var(--green-text);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 18px;animation:popIn .4s cubic-bezier(.2,.9,.4,1.4)}
+@keyframes popIn{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
+.success-view h3{font-family:var(--serif);font-weight:600;font-size:26px;letter-spacing:-.3px;margin-bottom:8px}
+.success-view p{font-size:14px;color:var(--text2);max-width:420px;margin:0 auto 6px;line-height:1.55}
+.success-ref{display:inline-block;margin-top:12px;padding:6px 14px;background:var(--surface2);border-radius:8px;font-family:var(--mono);font-size:12px;color:var(--text2)}
+
+/* ── Misc ── */
+.tab-bar{display:flex;gap:4px;background:var(--surface3);padding:4px;border-radius:10px;margin-bottom:14px}
+.tab{flex:1;height:34px;font-size:12px;font-weight:600;border-radius:7px;color:var(--text3);transition:background .15s,color .15s}
+.tab.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow-1)}
+
+.subtle-link{font-size:11px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px}
+
+@media(max-width:600px){
+    .top-bar-inner{padding:10px 14px;gap:8px}
+    .brand-name{font-size:14px}
+    .brand-sub{font-size:9px}
+    .hero{padding:30px 16px 16px}
+    .results-shell{padding:6px 14px 120px}
+    .filter-shell{padding:6px 14px 12px;top:56px}
+    .modal{border-radius:16px}
+    .modal-hd,.modal-bd{padding-left:16px;padding-right:16px}
+    .modal-ft{padding-left:16px;padding-right:16px}
+}
+
+/* SQL setup modal pre */
+.sql-pre{background:#0d0d0c;color:#d8d8d4;border-radius:10px;padding:14px;font-size:11px;font-family:var(--mono);overflow-x:auto;line-height:1.65;white-space:pre-wrap;word-break:break-word;max-height:340px}
+[data-theme="dark"] .sql-pre{background:#000;border:1px solid var(--border)}
+
+/* ── Admin banner ── */
+.admin-banner{position:sticky;top:0;z-index:70;background:linear-gradient(90deg,#0c5e42,#15895f);color:#fff;padding:8px 16px;display:none;align-items:center;gap:12px;font-size:12px;flex-wrap:wrap}
+.admin-banner.show{display:flex}
+.admin-banner .ab-pill{background:rgba(255,255,255,.15);padding:3px 9px;border-radius:99px;font-family:var(--mono);font-size:11px;font-weight:600}
+.admin-banner .ab-spacer{flex:1}
+.admin-banner button{background:rgba(255,255,255,.18);color:#fff;height:28px;padding:0 12px;border-radius:6px;font-size:12px;font-weight:600;transition:background .15s}
+.admin-banner button:hover{background:rgba(255,255,255,.28)}
+.admin-banner .ab-inbox-btn{background:#fff;color:var(--green-text)}
+.admin-banner .ab-inbox-btn:hover{background:#f0f0ee}
+
+/* ── Inbox ── */
+.inbox-shell{display:grid;grid-template-columns:340px 1fr;gap:0;height:min(78vh,720px);min-height:480px}
+@media(max-width:780px){.inbox-shell{grid-template-columns:1fr;height:auto;min-height:0}}
+.inbox-list{border-right:1px solid var(--border);overflow-y:auto;background:var(--surface3)}
+@media(max-width:780px){.inbox-list{border-right:none;border-bottom:1px solid var(--border);max-height:340px}}
+.inbox-list-hd{position:sticky;top:0;background:var(--surface3);padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;z-index:1}
+.inbox-list-hd input{flex:1;height:30px;border:1px solid var(--border2);border-radius:6px;padding:0 9px 0 28px;font-size:12px;background:var(--surface);color:var(--text);outline:none}
+.inbox-list-hd input:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-bg)}
+.inbox-search-wrap{position:relative;flex:1}
+.inbox-search-wrap::before{content:"🔍";position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;opacity:.5;pointer-events:none}
+.inbox-filter{height:30px;border:1px solid var(--border2);border-radius:6px;padding:0 8px;font-size:12px;background:var(--surface);color:var(--text);outline:none;cursor:pointer}
+.inbox-row{padding:11px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;position:relative}
+.inbox-row:hover{background:var(--surface2)}
+.inbox-row.active{background:var(--green-bg)}
+.inbox-row.unread::before{content:"";position:absolute;left:5px;top:50%;transform:translateY(-50%);width:6px;height:6px;border-radius:50%;background:var(--green)}
+.ir-line1{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;flex-wrap:wrap}
+.ir-line1 .ir-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ir-line1 .ir-time{font-family:var(--mono);font-size:10px;color:var(--text3);font-weight:400;flex-shrink:0}
+.ir-line2{font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono)}
+.ir-line3{display:flex;gap:5px;margin-top:5px;align-items:center;flex-wrap:wrap}
+.ir-status{padding:1px 7px;border-radius:99px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;font-family:var(--mono)}
+.ir-status.new{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green)}
+.ir-status.contacted{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue)}
+.ir-status.quoted{background:var(--purple-bg);color:var(--purple-text);border:1px solid var(--purple)}
+.ir-status.closed{background:var(--surface2);color:var(--text3);border:1px solid var(--border2)}
+.ir-itct{font-size:10px;color:var(--text3);font-family:var(--mono)}
+
+.inbox-detail{overflow-y:auto;padding:18px 22px}
+@media(max-width:780px){.inbox-detail{padding:14px 16px;max-height:60vh}}
+.inbox-empty{padding:40px 20px;text-align:center;color:var(--text3)}
+.inbox-empty .icon{font-size:42px;opacity:.4;margin-bottom:10px}
+
+.det-hd{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.det-hd-main{flex:1;min-width:0}
+.det-hd-ref{font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:3px}
+.det-hd-name{font-family:var(--serif);font-size:24px;font-weight:600;letter-spacing:-.3px;line-height:1.1}
+.det-hd-co{font-size:13px;color:var(--text2);margin-top:2px}
+.det-hd-acts{display:flex;gap:6px;flex-wrap:wrap}
+
+.det-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+@media(max-width:600px){.det-grid{grid-template-columns:1fr}}
+.det-fld{background:var(--surface3);border-radius:9px;padding:10px 12px}
+.det-fld .lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;font-weight:600;font-family:var(--mono);margin-bottom:3px}
+.det-fld .val{font-size:13px;color:var(--text);word-break:break-word}
+.det-fld .val a{color:var(--blue)}
+
+.det-msg{background:var(--amber-bg);border-left:3px solid var(--amber);border-radius:0 9px 9px 0;padding:11px 13px;font-size:13px;line-height:1.55;color:var(--amber-text);margin-bottom:18px;white-space:pre-wrap;word-break:break-word}
+
+.det-section-ttl{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin:18px 0 8px;display:flex;align-items:center;gap:8px}
+.det-section-ttl::after{content:"";flex:1;height:1px;background:var(--border)}
+
+.itm-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.itm-tbl th{text-align:left;padding:7px 9px;font-size:9px;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);font-weight:700;font-family:var(--mono);border-bottom:1px solid var(--border);background:var(--surface3);position:sticky;top:0}
+.itm-tbl td{padding:8px 9px;border-bottom:1px solid var(--border);color:var(--text2);font-family:var(--mono);font-size:11.5px;vertical-align:top}
+.itm-tbl td.grade{color:var(--text);font-weight:600;font-family:var(--sans);font-size:12.5px}
+.itm-tbl td.qty{font-weight:600;color:var(--text)}
+.itm-tbl tr.sourcing{background:var(--purple-bg)}
+.itm-tbl tr.sourcing td.grade{color:var(--purple-text)}
+
+.status-select{height:30px;border:1px solid var(--border2);border-radius:6px;padding:0 8px;font-size:12px;background:var(--surface);color:var(--text);font-family:var(--sans);cursor:pointer;outline:none;font-weight:600}
+
+/* Login modal specifics */
+.login-modal{max-width:380px}
+.login-modal .modal-bd{padding:22px 22px 4px}
+
+</style>
+</head>
+<body>
+
+<!-- ─── ADMIN BANNER (shown only when logged in) ─── -->
+<div class="admin-banner" id="adminBanner">
+    <span>👤</span>
+    <span>Logged in as <b id="adminEmail">—</b></span>
+    <span class="ab-pill" id="adminEnqCount">0 enquiries</span>
+    <div class="ab-spacer"></div>
+    <button class="ab-inbox-btn" onclick="openInbox()">📬 Open Inbox</button>
+    <button onclick="doAdminLogout()">Logout</button>
+</div>
+
+<!-- ─── HEADER ─── -->
+<header class="top-bar">
+    <div class="top-bar-inner">
+        <div class="brand">
+            <div class="brand-logo" id="brandLogo">⚙</div>
+            <div style="min-width:0">
+                <div class="brand-name" id="brandName">Steel Trading</div>
+                <div class="brand-sub" id="brandSub">Live Stock Catalogue</div>
+            </div>
+        </div>
+        <div class="top-acts">
+            <button class="icon-btn" id="darkBtn" onclick="toggleDark()" title="Toggle theme">🌙</button>
+            <button class="cart-btn" onclick="openCart()">
+                <span>📋</span><span class="hide-sm">Enquiry</span>
+                <span class="cart-count zero" id="cartCount">0</span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- ─── HERO ─── -->
+<section class="hero">
+    <h1>Find the steel you need.<br><em>Send us your enquiry.</em></h1>
+    <p>Browse our live stock of plates, coils, pipes, profiles and bars. Add what you need to your enquiry — including items you're sourcing — and we'll get back to you with a tailored offer.</p>
+    <div class="hero-stats">
+        <div><b id="statTotal">—</b>items in stock</div>
+        <div><b id="statCats">—</b>product categories</div>
+        <div><b id="statGrades">—</b>unique grades</div>
+    </div>
+</section>
+
+<!-- ─── FILTER ─── -->
+<div class="filter-shell">
+    <div class="filter-bar">
+        <div class="search-input-wrap"><input id="fName" placeholder="Search grade, type, alternatives… (e.g. S235, plate, X52)" oninput="onFilterChange()"></div>
+        <select id="fCategory" onchange="updateDimLabels();onFilterChange()">
+            <option value="">All categories</option>
+            <option value="flat">📐 Flat / Plate / Coil</option>
+            <option value="pipe">⭕ Pipe / Tube</option>
+            <option value="profile">🔷 Profile / Beam</option>
+            <option value="bar">🔵 Bar / Rod</option>
+            <option value="other">📦 Other</option>
+        </select>
+        <input id="fThick" class="mono" type="number" placeholder="Thick" oninput="onFilterChange()" title="Thickness in mm (±1mm)">
+        <input id="fWidth" class="mono" type="number" placeholder="Width" oninput="onFilterChange()" title="Width in mm (±50mm)">
+        <input id="fLength" class="mono" type="number" placeholder="Length" oninput="onFilterChange()" title="Length in mm (±100mm)">
+        <button class="filter-clear" onclick="clearFilters()">Clear</button>
+    </div>
+</div>
+
+<!-- ─── RESULTS ─── -->
+<main class="results-shell">
+    <div class="results-meta">
+        <div><span class="pill" id="resultsCount">Loading…</span></div>
+        <select class="sort-select" id="fSort" onchange="renderResults()">
+            <option value="grade">Sort by Grade</option>
+            <option value="product_type">Sort by Type</option>
+            <option value="thickness">Sort by Thickness</option>
+            <option value="quantity">Sort by Quantity</option>
+        </select>
+    </div>
+    <div id="resultsArea">
+        <div class="loading">
+            <div class="spinner"></div>
+            <div>Loading stock…</div>
+        </div>
+    </div>
+</main>
+
+<footer class="foot">
+    <span>Powered by your sales platform · Submitted enquiries are securely sent to our team only</span>
+    <span style="margin:0 6px;color:var(--text4)">·</span>
+    <a href="#admin" id="teamLoginLink" onclick="openAdminLogin();return false">Team login</a>
+    <span style="margin:0 6px;color:var(--text4)">·</span>
+    <span style="color:var(--text4);font-size:10px" id="versionLabel">v5</span>
+</footer>
+
+<!-- ─── FLOATING CART (mobile) ─── -->
+<button class="float-cart" id="floatCart" onclick="openCart()">
+    <span>📋 View enquiry</span>
+    <span class="float-cart-count" id="floatCartCount">0</span>
+</button>
+
+<!-- ─── CART/ENQUIRY MODAL ─── -->
+<div class="modal-bg" id="cartModal" onclick="if(event.target===this)closeCart()">
+    <div class="modal" onclick="event.stopPropagation()">
+
+        <!-- Step indicator + Header -->
+        <div class="modal-hd">
+            <h2 id="cartTitle">Your Enquiry</h2>
+            <button class="close" onclick="closeCart()">×</button>
+        </div>
+
+        <!-- BODY: Step 1 (items) -->
+        <div class="modal-bd" id="step1Body">
+            <div class="tab-bar">
+                <button class="tab active" id="tabFromStock" onclick="switchTab('stock')">From stock <span id="cntStock" class="subtle-link">(0)</span></button>
+                <button class="tab" id="tabResearch" onclick="switchTab('research')">My sourcing list <span id="cntCustom" class="subtle-link">(0)</span></button>
+            </div>
+
+            <!-- From-stock items -->
+            <div id="paneStock">
+                <div id="cartStockList"></div>
+                <div id="cartStockEmpty" style="display:none;text-align:center;padding:32px 16px;color:var(--text3);font-size:13px">
+                    <div style="font-size:36px;opacity:.4;margin-bottom:8px">🔍</div>
+                    No items selected from stock yet.<br>
+                    <span style="font-size:11px;color:var(--text4)">Browse the catalogue and tap "+ Add" on any product.</span>
+                </div>
+            </div>
+
+            <!-- Custom research items -->
+            <div id="paneResearch" style="display:none">
+                <div id="cartCustomList"></div>
+                <div id="customFormWrap"></div>
+                <button class="add-custom" onclick="showCustomForm()">+ Add an item we need to source</button>
+                <p style="font-size:11px;color:var(--text4);margin-top:8px;line-height:1.5;text-align:center">Use this for items you'd like quoted that aren't in our current stock.</p>
+            </div>
+        </div>
+
+        <!-- BODY: Step 2 (contact) -->
+        <div class="modal-bd" id="step2Body" style="display:none">
+            <div class="banner amber" id="contactBanner">
+                <span>📨</span>
+                <div>Almost done. Tell us how to reach you and we'll get back to you with a tailored offer within one business day.</div>
+            </div>
+
+            <div class="form-grid">
+                <div class="fld"><label>Full name <span class="req">*</span></label><input id="cName" placeholder="Your name" autocomplete="name"></div>
+                <div class="fld"><label>Email <span class="req">*</span></label><input id="cEmail" type="email" placeholder="you@company.com" autocomplete="email"></div>
+                <div class="fld"><label>Company</label><input id="cCompany" placeholder="Company name" autocomplete="organization"></div>
+                <div class="fld"><label>Phone</label><input id="cPhone" placeholder="+213 …" autocomplete="tel"></div>
+                <div class="fld"><label>Country</label><input id="cCountry" placeholder="e.g. Algeria" autocomplete="country-name"></div>
+                <div class="fld"><label>Project / Reference</label><input id="cProject" placeholder="Optional — project name or PO ref"></div>
+                <div class="fld full"><label>Message</label><textarea id="cMessage" placeholder="Required delivery date, incoterms, certifications, special requests, etc."></textarea></div>
+            </div>
+
+            <div id="submitMsg"></div>
+        </div>
+
+        <!-- BODY: Success -->
+        <div class="modal-bd" id="successBody" style="display:none">
+            <div class="success-view">
+                <div class="success-icon">✓</div>
+                <h3>Enquiry sent</h3>
+                <p>Thank you for your interest. Our team has received your enquiry and will get back to you shortly with a tailored offer.</p>
+                <div class="success-ref" id="successRef">Reference: —</div>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="modal-ft" id="cartFooter">
+            <span class="subtle-link" id="footMeta"></span>
+            <div class="spacer"></div>
+            <button class="btn" id="footBack" onclick="backToStep1()" style="display:none">← Back</button>
+            <button class="btn btn-ghost" id="footCancel" onclick="closeCart()">Close</button>
+            <button class="btn btn-blue" id="footNext" onclick="goToContact()" disabled>Continue to contact details →</button>
+            <button class="btn btn-green" id="footSubmit" onclick="submitEnquiry()" style="display:none">Send enquiry</button>
+        </div>
+    </div>
+</div>
+
+<!-- ─── ADMIN LOGIN MODAL ─── -->
+<div class="modal-bg" id="loginModal" onclick="if(event.target===this)closeAdminLogin()">
+    <div class="modal login-modal" onclick="event.stopPropagation()">
+        <div class="modal-hd">
+            <h2>Team Login</h2>
+            <button class="close" onclick="closeAdminLogin()">×</button>
+        </div>
+        <div class="modal-bd">
+            <p style="font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.5">Sign in with your sales platform account to view incoming client enquiries.</p>
+            <div class="fld" style="margin-bottom:10px"><label>Email</label><input id="liEmail" type="email" placeholder="you@company.com" autocomplete="email" onkeydown="if(event.key==='Enter')document.getElementById('liPass').focus()"></div>
+            <div class="fld" style="margin-bottom:14px"><label>Password</label><input id="liPass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doAdminLogin()"></div>
+            <div id="liMsg"></div>
+        </div>
+        <div class="modal-ft">
+            <div class="spacer"></div>
+            <button class="btn btn-ghost" onclick="closeAdminLogin()">Cancel</button>
+            <button class="btn btn-blue" id="liBtn" onclick="doAdminLogin()">Sign in</button>
+        </div>
+    </div>
+</div>
+
+<!-- ─── INBOX MODAL ─── -->
+<div class="modal-bg" id="inboxModal" onclick="if(event.target===this)closeInbox()">
+    <div class="modal" style="max-width:1100px;width:100%" onclick="event.stopPropagation()">
+        <div class="modal-hd">
+            <h2 id="inboxTitle">📬 Client Enquiries</h2>
+            <button class="btn btn-sm btn-ghost" onclick="loadEnquiries()" title="Refresh">↻ Refresh</button>
+            <button class="close" onclick="closeInbox()">×</button>
+        </div>
+        <div class="inbox-shell">
+            <div class="inbox-list" id="inboxList">
+                <div class="inbox-list-hd">
+                    <div class="inbox-search-wrap"><input id="inboxSearch" placeholder="Search…" oninput="renderInboxList()"></div>
+                    <select class="inbox-filter" id="inboxStatusFilter" onchange="renderInboxList()">
+                        <option value="">All</option>
+                        <option value="new">New</option>
+                        <option value="contacted">Contacted</option>
+                        <option value="quoted">Quoted</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                </div>
+                <div id="inboxRows"></div>
+            </div>
+            <div class="inbox-detail" id="inboxDetail">
+                <div class="inbox-empty">
+                    <div class="icon">📭</div>
+                    <p>Select an enquiry to view details</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal-bg" id="sqlModal" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="modal" style="max-width:640px" onclick="event.stopPropagation()">
+        <div class="modal-hd">
+            <h2 style="color:var(--amber-text)">⚠ One-time setup needed</h2>
+            <button class="close" onclick="document.getElementById('sqlModal').classList.remove('open')">×</button>
+        </div>
+        <div class="modal-bd">
+            <p style="font-size:13px;line-height:1.6;margin-bottom:12px;color:var(--text2)">The <code style="background:var(--surface2);padding:1px 5px;border-radius:4px;font-family:var(--mono)">client_enquiries</code> table doesn't exist in your Supabase project yet. Run this SQL once in your <a href="https://supabase.com/dashboard" target="_blank">Supabase SQL Editor</a>, then refresh the page.</p>
+            <pre class="sql-pre" id="sqlCode">-- Step 1 — table for incoming client enquiries
+CREATE TABLE IF NOT EXISTS client_enquiries (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at timestamptz DEFAULT now(),
+    ref text,
+    client_name text NOT NULL,
+    client_email text NOT NULL,
+    client_company text,
+    client_phone text,
+    client_country text,
+    project_ref text,
+    message text,
+    items jsonb,
+    item_count int,
+    status text DEFAULT 'new',
+    source text DEFAULT 'public_catalogue'
+);
+
+-- Wipe any leftover policies from previous attempts
+DROP POLICY IF EXISTS "anon_insert_enquiries"   ON client_enquiries;
+DROP POLICY IF EXISTS "auth_read_enquiries"     ON client_enquiries;
+DROP POLICY IF EXISTS "auth_update_enquiries"   ON client_enquiries;
+DROP POLICY IF EXISTS "auth_delete_enquiries"   ON client_enquiries;
+DROP POLICY IF EXISTS "anyone_can_submit"       ON client_enquiries;
+DROP POLICY IF EXISTS "team_can_read"           ON client_enquiries;
+DROP POLICY IF EXISTS "team_can_update"         ON client_enquiries;
+DROP POLICY IF EXISTS "team_can_delete"         ON client_enquiries;
+
+ALTER TABLE client_enquiries ENABLE ROW LEVEL SECURITY;
+
+-- Anyone (TO public = anon + authenticated + everyone) can SUBMIT
+CREATE POLICY "anyone_can_submit" ON client_enquiries
+    FOR INSERT TO public WITH CHECK (true);
+
+-- Only logged-in team members can READ / MANAGE
+CREATE POLICY "team_can_read"   ON client_enquiries FOR SELECT TO authenticated USING (true);
+CREATE POLICY "team_can_update" ON client_enquiries FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "team_can_delete" ON client_enquiries FOR DELETE TO authenticated USING (true);
+
+-- Step 2 — make sure anonymous visitors can READ stock
+DROP POLICY IF EXISTS "anon_read_stock" ON stock;
+CREATE POLICY "anon_read_stock" ON stock
+    FOR SELECT TO public USING (true);
+
+DROP POLICY IF EXISTS "anon_read_stock_lists" ON stock_lists;
+CREATE POLICY "anon_read_stock_lists" ON stock_lists
+    FOR SELECT TO public USING (true);
+
+-- Verification — should return 4 enquiry policies
+SELECT policyname, cmd, roles FROM pg_policies
+WHERE tablename = 'client_enquiries' ORDER BY policyname;</pre>
+        </div>
+        <div class="modal-ft">
+            <div class="spacer"></div>
+            <button class="btn" onclick="copySQL()">📋 Copy SQL</button>
+            <a class="btn btn-blue" href="https://supabase.com/dashboard" target="_blank">Open Supabase →</a>
+        </div>
+    </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// ⚙️ CONFIG — edit these to brand the page
+// ════════════════════════════════════════════════════════════
+const CONFIG = {
+    companyName: 'Steel Trading',                     // ← shown in header
+    companySub: 'Live Stock Catalogue',               // ← small subtitle
+    supabaseUrl: 'https://fmmfofjkebdsrnkchrfo.supabase.co',
+    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtbWZvZmprZWJkc3Jua2NocmZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDAxNDIsImV4cCI6MjA5MjA3NjE0Mn0.bQQJt06mucLCQCrY1NgN-ed2ngDeRLmITmOfQCAM7ZU'
+};
+
+// Apply branding
+document.getElementById('brandName').textContent = CONFIG.companyName;
+document.getElementById('brandSub').textContent = CONFIG.companySub;
+document.title = CONFIG.companyName + ' — Stock Catalogue & Enquiry';
+
+const sb = supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
+
+// Version stamp — change every release so you can tell which file is loaded
+const APP_VERSION = 'public-catalog v5 (fixed insert + stock probe)';
+console.log('%c' + APP_VERSION, 'color:#1456a0;font-weight:bold;font-size:13px');
+console.log('If you see a different version after refresh, your browser is caching. Do a hard refresh (Ctrl+Shift+R).');
+
+// ════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════
+let allItems = [];
+let cart = { stock: [], custom: [] };   // stock = items from catalogue, custom = client-added items
+let currentStep = 1;
+let currentTab = 'stock';
+let isSubmitting = false;
+
+const CART_KEY = 'pub_catalogue_cart_v1';
+const CONTACT_KEY = 'pub_catalogue_contact_v1';
+
+// Category configs
+const DIM_LABELS = {
+    flat:    ['Thick', 'Width', 'Length'],
+    pipe:    ['OD',    'Wall',  'Length'],
+    profile: ['Section','Height','Length'],
+    bar:     ['Diam',  'Length','Width'],
+    other:   ['Dim 1', 'Dim 2', 'Dim 3'],
+    mixed:   ['Dim 1', 'Dim 2', 'Dim 3'],
+};
+const CAT_LABELS = {
+    flat: '📐 FLAT', pipe: '⭕ PIPE', profile: '🔷 PROFILE',
+    bar: '🔵 BAR', other: '📦 OTHER', mixed: '📦 GENERAL'
+};
+
+// ════════════════════════════════════════════════════════════
+// DARK MODE
+// ════════════════════════════════════════════════════════════
+function toggleDark(){
+    const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    document.getElementById('darkBtn').textContent = t === 'dark' ? '☀' : '🌙';
+    localStorage.setItem('pub_theme', t);
+}
+(()=>{
+    const t = localStorage.getItem('pub_theme') || (window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', t);
+    setTimeout(()=>{ const b = document.getElementById('darkBtn'); if(b) b.textContent = t === 'dark' ? '☀' : '🌙'; }, 30);
+})();
+
+// ════════════════════════════════════════════════════════════
+// UTILITIES
+// ════════════════════════════════════════════════════════════
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function fmtNum(n){ if(n==null||n==='')return '—'; const num=Number(n); if(isNaN(num))return n; return num.toLocaleString('en-US',{maximumFractionDigits:2}); }
+function inferCategory(productType){
+    const t = (productType||'').toLowerCase();
+    if(/pipe|tube|tubing/.test(t)) return 'pipe';
+    if(/beam|hea|heb|ipe|upn|profile|angle|channel|section/.test(t)) return 'profile';
+    if(/bar|rod|wire|round|rebar/.test(t)) return 'bar';
+    if(/plate|coil|sheet|strip|flat/.test(t)) return 'flat';
+    return 'other';
+}
+
+// ════════════════════════════════════════════════════════════
+// LOAD STOCK
+// ════════════════════════════════════════════════════════════
+// Try a tiered list of column sets — falls back gracefully if some optional
+// columns (product_category, section, alternatives) don't exist on the table.
+// Origin/country deliberately omitted — would hint at supplier location.
+// Supplier, location, buy_price, heat_number, notes, currency are also never fetched.
+const STOCK_COLUMN_TIERS = [
+    'id,product_category,product_type,grade,thickness,width,length,section,quantity,unit,available,alternatives',
+    'id,product_type,grade,thickness,width,length,quantity,unit,available,alternatives',
+    'id,product_type,grade,thickness,width,length,quantity,unit,available',
+    'id,product_type,grade,thickness,width,length,quantity,unit'
+];
+
+async function loadStock(){
+    let lastError = null;
+    let columnsUsed = null;
+
+    // Probe each tier — try ALL of them, log every attempt, never give up early
+    for(let i = 0; i < STOCK_COLUMN_TIERS.length; i++){
+        const cols = STOCK_COLUMN_TIERS[i];
+        const { data, error } = await sb.from('stock').select(cols).limit(1);
+        if(!error){
+            columnsUsed = cols;
+            console.log('[loadStock] ✓ tier ' + (i+1) + ' works with columns:', cols);
+            break;
+        }
+        lastError = error;
+        console.warn('[loadStock] tier ' + (i+1) + ' failed:', error.message || error, '(code:', error.code+')');
+    }
+
+    if(!columnsUsed){
+        // Could be RLS blocking, table missing, or something else — show what we know
+        const e = lastError || { message:'Unknown error' };
+        const msg = [e.message, e.details, e.hint, e.code].filter(Boolean).join(' · ');
+        const isPerms = /permission|policy|denied|jwt|rls/i.test(msg);
+        const isMissing = /relation .* does not exist|does not exist/i.test(msg);
+        document.getElementById('resultsArea').innerHTML = `
+            <div class="empty">
+                <div class="icon">${isPerms ? '🔒' : isMissing ? '📭' : '⚠'}</div>
+                <h3>${isPerms ? 'Stock not yet readable' : isMissing ? 'Stock table not found' : "Couldn't load stock"}</h3>
+                <p>${isPerms
+                    ? 'Anonymous read access on the <code>stock</code> table needs to be enabled in Supabase. <a href="#" onclick="document.getElementById(\'sqlModal\').classList.add(\'open\');return false">Show setup SQL</a>.'
+                    : isMissing
+                    ? 'The <code>stock</code> table doesn\'t exist in this Supabase project.'
+                    : 'There was a problem fetching the catalogue.'}</p>
+                <p style="font-family:var(--mono);font-size:11px;color:var(--text4);margin-top:14px;word-break:break-word">${esc(msg)}</p>
+            </div>`;
+        console.error('Stock load failed:', e);
+        return;
+    }
+
+    // Now paginate the full load with the working column set
+    try {
+        let all = [], page = 0, size = 1000;
+        while(true){
+            const from = page * size, to = from + size - 1;
+            const { data, error } = await sb.from('stock').select(columnsUsed).range(from, to);
+            if(error) throw error;
+            if(!data || !data.length) break;
+            all = all.concat(data);
+            if(data.length < size) break;
+            page++;
+        }
+        // Only show items that are explicitly available (or have no flag, i.e. assumed available)
+        allItems = all.filter(s => (s.available || 'yes') !== 'no');
+        renderStats();
+        renderResults();
+    } catch(e){
+        console.error(e);
+        const msg = [e.message, e.details, e.hint].filter(Boolean).join(' · ');
+        document.getElementById('resultsArea').innerHTML = `
+            <div class="empty">
+                <div class="icon">⚠</div>
+                <h3>Couldn't load stock</h3>
+                <p style="font-family:var(--mono);font-size:11px;word-break:break-word">${esc(msg||e)}</p>
+            </div>`;
+    }
+}
+
+function renderStats(){
+    document.getElementById('statTotal').textContent = allItems.length.toLocaleString('en-US');
+    const cats = new Set(allItems.map(s => s.product_category || inferCategory(s.product_type||'')));
+    document.getElementById('statCats').textContent = cats.size || '—';
+    const grades = new Set(allItems.map(s => (s.grade||'').trim()).filter(Boolean));
+    document.getElementById('statGrades').textContent = grades.size || '—';
+}
+
+// ════════════════════════════════════════════════════════════
+// SEARCH / FILTER
+// ════════════════════════════════════════════════════════════
+function getFilters(){
+    return {
+        name: document.getElementById('fName').value.trim(),
+        cat: document.getElementById('fCategory').value,
+        thick: document.getElementById('fThick').value,
+        width: document.getElementById('fWidth').value,
+        length: document.getElementById('fLength').value,
+        sort: document.getElementById('fSort').value,
+    };
+}
+function clearFilters(){
+    ['fName','fThick','fWidth','fLength'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('fCategory').value = '';
+    updateDimLabels();
+    renderResults();
+}
+function updateDimLabels(){
+    const cat = document.getElementById('fCategory').value || 'flat';
+    const lbls = DIM_LABELS[cat] || DIM_LABELS.flat;
+    document.getElementById('fThick').placeholder = lbls[0];
+    document.getElementById('fWidth').placeholder = lbls[1];
+    document.getElementById('fLength').placeholder = lbls[2];
+}
+
+let filterDebounce = null;
+function onFilterChange(){
+    clearTimeout(filterDebounce);
+    filterDebounce = setTimeout(renderResults, 120);
+}
+
+function filterItems(){
+    const f = getFilters();
+    const n = f.name.toLowerCase();
+    const nNorm = n.replace(/[-\s]/g,'');
+    return allItems.filter(s => {
+        if(f.cat){
+            const sCat = s.product_category || inferCategory(s.product_type||'');
+            if(sCat !== f.cat) return false;
+        }
+        if(f.thick && Math.abs(Number(s.thickness) - Number(f.thick)) > 1) return false;
+        if(f.width && Math.abs(Number(s.width)  - Number(f.width)) > 50) return false;
+        if(f.length && Math.abs(Number(s.length) - Number(f.length)) > 100) return false;
+        if(n){
+            const fields = [s.grade, s.product_type, s.alternatives, s.section].map(x => (x||'').toLowerCase());
+            const fieldsNorm = fields.map(x => x.replace(/[-\s]/g,''));
+            const hit = fieldsNorm.some(x => x.includes(nNorm)) || fields.some(x => x.includes(n));
+            if(!hit) return false;
+        }
+        return true;
+    });
+}
+
+function sortItems(items, sortKey){
+    return [...items].sort((a,b) => {
+        let av = a[sortKey] ?? '', bv = b[sortKey] ?? '';
+        if(!isNaN(Number(av)) && !isNaN(Number(bv)) && av !== '' && bv !== '') return Number(bv) - Number(av);
+        return String(av).localeCompare(String(bv));
+    });
+}
+
+// ════════════════════════════════════════════════════════════
+// RENDER RESULTS
+// ════════════════════════════════════════════════════════════
+function renderResults(){
+    const f = getFilters();
+    let items = filterItems();
+    items = sortItems(items, f.sort);
+
+    document.getElementById('resultsCount').textContent =
+        items.length === allItems.length
+            ? `${items.length} items`
+            : `${items.length} of ${allItems.length} items`;
+
+    const area = document.getElementById('resultsArea');
+    if(!items.length){
+        area.innerHTML = `
+            <div class="empty">
+                <div class="icon">🔍</div>
+                <h3>No matches</h3>
+                <p>Try widening your dimensions or clearing filters. You can also list the item in your enquiry as a sourcing request.</p>
+                <button class="btn btn-purple btn-sm" style="margin-top:14px" onclick="openCart();switchTab('research');showCustomForm();">+ Add as sourcing request</button>
+            </div>`;
+        return;
+    }
+
+    const inCart = new Set(cart.stock.map(c => c.stock_id));
+    area.innerHTML = `<div class="grid">${items.map(s => renderCard(s, inCart.has(s.id))).join('')}</div>`;
+}
+
+function renderCard(s, isInCart){
+    const cat = s.product_category || inferCategory(s.product_type||'');
+    const lbls = DIM_LABELS[cat] || DIM_LABELS.flat;
+
+    // Pull dim values smartly
+    let d1, d2, d3;
+    if(cat === 'profile'){
+        d1 = s.section || (s.thickness ? s.thickness+'' : '');
+        d2 = s.width;
+        d3 = s.length;
+    } else {
+        d1 = s.thickness;
+        d2 = s.width;
+        d3 = s.length;
+    }
+
+    const dims = [
+        d1 ? `<span class="dim-chip"><span class="lbl">${lbls[0]}</span><span class="val">${esc(d1)}</span></span>` : '',
+        d2 ? `<span class="dim-chip"><span class="lbl">${lbls[1]}</span><span class="val">${esc(d2)}</span></span>` : '',
+        d3 ? `<span class="dim-chip"><span class="lbl">${lbls[2]}</span><span class="val">${esc(d3)}</span></span>` : '',
+    ].filter(Boolean).join('');
+
+    const qty = s.quantity != null && s.quantity !== '' ? `<b>${fmtNum(s.quantity)}</b> ${esc(s.unit||'ton')} avail.` : 'In stock';
+
+    return `<div class="card ${isInCart?'in-cart':''}" data-id="${esc(s.id)}">
+        <div class="card-top">
+            <span class="cat-badge ${cat}">${CAT_LABELS[cat]||CAT_LABELS.other}</span>
+        </div>
+        <div>
+            <div class="card-grade">${esc(s.grade || '—')}</div>
+            ${s.product_type ? `<div class="card-type">${esc(s.product_type)}</div>` : ''}
+            ${s.alternatives ? `<div class="card-alts">≈ ${esc(s.alternatives)}</div>` : ''}
+        </div>
+        <div class="card-dims">${dims || '<span style="font-size:11px;color:var(--text4)">—</span>'}</div>
+        <div class="card-foot">
+            <span class="qty-info">${qty}</span>
+            <button class="add-btn ${isInCart?'added':''}" onclick="toggleStockItem('${esc(s.id)}')">${isInCart ? 'Added' : '+ Add'}</button>
+        </div>
+    </div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// CART: add / remove / sync
+// ════════════════════════════════════════════════════════════
+function loadCart(){
+    try {
+        const raw = localStorage.getItem(CART_KEY);
+        if(raw){ cart = JSON.parse(raw); cart.stock = cart.stock||[]; cart.custom = cart.custom||[]; }
+    } catch(e){ cart = { stock:[], custom:[] }; }
+}
+function saveCart(){ try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch(e){} }
+function loadContact(){
+    try {
+        const raw = localStorage.getItem(CONTACT_KEY);
+        if(raw){ const c = JSON.parse(raw);
+            ['cName','cEmail','cCompany','cPhone','cCountry'].forEach(k => {
+                if(c[k]) document.getElementById(k).value = c[k];
+            });
+        }
+    } catch(e){}
+}
+function saveContact(){
+    const c = {};
+    ['cName','cEmail','cCompany','cPhone','cCountry'].forEach(k => c[k] = document.getElementById(k).value.trim());
+    try { localStorage.setItem(CONTACT_KEY, JSON.stringify(c)); } catch(e){}
+}
+
+function toggleStockItem(id){
+    const idx = cart.stock.findIndex(c => c.stock_id === id);
+    if(idx >= 0){
+        cart.stock.splice(idx, 1);
+    } else {
+        const item = allItems.find(s => s.id === id);
+        if(!item) return;
+        const cat = item.product_category || inferCategory(item.product_type||'');
+        cart.stock.push({
+            stock_id: id,
+            cart_id: uid(),
+            grade: item.grade || '',
+            product_type: item.product_type || '',
+            product_category: cat,
+            section: item.section || '',
+            thickness: item.thickness ?? '',
+            width: item.width ?? '',
+            length: item.length ?? '',
+            unit: item.unit || 'ton',
+            avail_qty: item.quantity,
+            requested_qty: '',
+        });
+    }
+    saveCart();
+    renderResults();
+    updateCartUI();
+}
+
+function removeStockCartItem(cartId){
+    cart.stock = cart.stock.filter(c => c.cart_id !== cartId);
+    saveCart();
+    renderResults();
+    renderCartItems();
+    updateCartUI();
+}
+
+function updateStockQty(cartId, qty){
+    const it = cart.stock.find(c => c.cart_id === cartId);
+    if(it){ it.requested_qty = qty; saveCart(); }
+}
+function updateStockUnit(cartId, unit){
+    const it = cart.stock.find(c => c.cart_id === cartId);
+    if(it){ it.unit = unit; saveCart(); }
+}
+
+function totalCartCount(){ return cart.stock.length + cart.custom.length; }
+
+function updateCartUI(){
+    const n = totalCartCount();
+    const cnt = document.getElementById('cartCount');
+    const fcnt = document.getElementById('floatCartCount');
+    const fc = document.getElementById('floatCart');
+    cnt.textContent = n;
+    cnt.classList.toggle('zero', n === 0);
+    fcnt.textContent = n;
+    fc.classList.toggle('show', n > 0 && !document.getElementById('cartModal').classList.contains('open'));
+    document.getElementById('cntStock').textContent = `(${cart.stock.length})`;
+    document.getElementById('cntCustom').textContent = `(${cart.custom.length})`;
+}
+
+// ════════════════════════════════════════════════════════════
+// CART MODAL
+// ════════════════════════════════════════════════════════════
+function openCart(){
+    document.getElementById('cartModal').classList.add('open');
+    document.getElementById('floatCart').classList.remove('show');
+    document.body.style.overflow = 'hidden';
+    goToStep(1);
+    renderCartItems();
+}
+function closeCart(){
+    document.getElementById('cartModal').classList.remove('open');
+    document.body.style.overflow = '';
+    updateCartUI();
+}
+function goToStep(n){
+    currentStep = n;
+    document.getElementById('step1Body').style.display = n === 1 ? '' : 'none';
+    document.getElementById('step2Body').style.display = n === 2 ? '' : 'none';
+    document.getElementById('successBody').style.display = n === 3 ? '' : 'none';
+    document.getElementById('cartFooter').style.display = n === 3 ? 'none' : '';
+
+    document.getElementById('cartTitle').textContent = n === 1 ? 'Your Enquiry'
+        : n === 2 ? 'Contact Details'
+        : 'Sent ✓';
+
+    document.getElementById('footBack').style.display = n === 2 ? '' : 'none';
+    document.getElementById('footNext').style.display = n === 1 ? '' : 'none';
+    document.getElementById('footSubmit').style.display = n === 2 ? '' : 'none';
+    document.getElementById('footCancel').style.display = n === 1 ? '' : 'none';
+
+    refreshFooter();
+}
+
+function refreshFooter(){
+    const n = totalCartCount();
+    document.getElementById('footMeta').textContent = n === 0 ? 'No items yet' : `${n} item${n>1?'s':''}`;
+    document.getElementById('footNext').disabled = n === 0;
+}
+
+function switchTab(tab){
+    currentTab = tab;
+    document.getElementById('tabFromStock').classList.toggle('active', tab === 'stock');
+    document.getElementById('tabResearch').classList.toggle('active', tab === 'research');
+    document.getElementById('paneStock').style.display = tab === 'stock' ? '' : 'none';
+    document.getElementById('paneResearch').style.display = tab === 'research' ? '' : 'none';
+}
+
+function renderCartItems(){
+    // Stock pane
+    const sList = document.getElementById('cartStockList');
+    document.getElementById('cartStockEmpty').style.display = cart.stock.length ? 'none' : '';
+    sList.innerHTML = cart.stock.map(c => {
+        const cat = c.product_category || 'other';
+        const lbls = DIM_LABELS[cat] || DIM_LABELS.flat;
+        const dimParts = [];
+        let d1 = c.thickness, d2 = c.width, d3 = c.length;
+        if(cat === 'profile' && c.section) d1 = c.section;
+        if(d1) dimParts.push(`${lbls[0]} ${esc(d1)}`);
+        if(d2) dimParts.push(`${lbls[1]} ${esc(d2)}`);
+        if(d3) dimParts.push(`${lbls[2]} ${esc(d3)}`);
+        const dimStr = dimParts.join(' × ') || '—';
+        return `<div class="cart-item">
+            <div class="cart-item-body">
+                <div class="ci-line1">
+                    <span class="ci-grade">${esc(c.grade||'—')}</span>
+                    <span class="ci-cat">${CAT_LABELS[cat]||cat}</span>
+                    ${c.product_type ? `<span style="font-size:11px;color:var(--text3)">${esc(c.product_type)}</span>` : ''}
+                </div>
+                <div class="ci-dims">${dimStr}</div>
+                <div class="ci-qty">
+                    <span class="lbl">Qty needed:</span>
+                    <input type="number" min="0" step="any" placeholder="?" value="${esc(c.requested_qty||'')}" oninput="updateStockQty('${c.cart_id}',this.value)">
+                    <select onchange="updateStockUnit('${c.cart_id}',this.value)">
+                        ${['ton','kg','pcs','m','set'].map(u => `<option value="${u}"${u===c.unit?' selected':''}>${u}</option>`).join('')}
+                    </select>
+                    ${c.avail_qty != null ? `<span style="font-size:10px;color:var(--text4);margin-left:4px;font-family:var(--mono)">avail: ${fmtNum(c.avail_qty)}</span>` : ''}
+                </div>
+            </div>
+            <button class="ci-rm" onclick="removeStockCartItem('${c.cart_id}')" title="Remove">×</button>
+        </div>`;
+    }).join('');
+
+    // Custom pane
+    renderCustomList();
+    refreshFooter();
+}
+
+function renderCustomList(){
+    const cList = document.getElementById('cartCustomList');
+    cList.innerHTML = cart.custom.map(c => {
+        const dim = [c.dim1, c.dim2, c.dim3].filter(Boolean).join(' × ') || '—';
+        return `<div class="cart-item custom">
+            <div class="cart-item-body">
+                <div class="ci-line1">
+                    <span class="ci-grade">${esc(c.grade||c.description||'(no grade)')}</span>
+                    <span class="ci-cat" style="background:var(--purple-bg);color:var(--purple-text)">SOURCING</span>
+                    ${c.product_type ? `<span style="font-size:11px;color:var(--text3)">${esc(c.product_type)}</span>` : ''}
+                </div>
+                <div class="ci-dims">${esc(dim)}</div>
+                <div class="ci-dims" style="margin-top:2px">${esc(c.qty||'?')} ${esc(c.unit||'ton')}${c.notes?` — ${esc(c.notes)}`:''}</div>
+            </div>
+            <button class="ci-rm" onclick="removeCustomItem('${c.id}')">×</button>
+        </div>`;
+    }).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+// CUSTOM ITEM FORM
+// ════════════════════════════════════════════════════════════
+function showCustomForm(){
+    const wrap = document.getElementById('customFormWrap');
+    if(wrap.querySelector('.custom-form')) return; // already showing
+    wrap.innerHTML = `<div class="custom-form">
+        <div class="row r3">
+            <div><label class="lbl">Category</label>
+                <select id="cf_cat" onchange="updateCustomDims()">
+                    <option value="flat">📐 Flat</option>
+                    <option value="pipe">⭕ Pipe</option>
+                    <option value="profile">🔷 Profile</option>
+                    <option value="bar">🔵 Bar</option>
+                    <option value="other">📦 Other</option>
+                </select></div>
+            <div><label class="lbl">Grade</label><input id="cf_grade" placeholder="e.g. S275JR"></div>
+            <div><label class="lbl">Product Type</label><input id="cf_type" placeholder="e.g. Plate"></div>
+        </div>
+        <div class="row r3">
+            <div><label class="lbl" id="cf_dim1_lbl">Thick (mm)</label><input id="cf_dim1" placeholder="e.g. 12"></div>
+            <div><label class="lbl" id="cf_dim2_lbl">Width (mm)</label><input id="cf_dim2" placeholder="e.g. 1500"></div>
+            <div><label class="lbl" id="cf_dim3_lbl">Length (mm)</label><input id="cf_dim3" placeholder="e.g. 6000"></div>
+        </div>
+        <div class="row">
+            <div><label class="lbl">Quantity</label><input id="cf_qty" placeholder="e.g. 25"></div>
+            <div><label class="lbl">Unit</label>
+                <select id="cf_unit">
+                    <option>ton</option><option>kg</option><option>pcs</option><option>m</option><option>set</option>
+                </select></div>
+        </div>
+        <div class="row r1">
+            <div><label class="lbl">Notes (origin preference, certs, delivery, etc.)</label><input id="cf_notes" placeholder="Optional"></div>
+        </div>
+        <div class="acts">
+            <button class="btn btn-ghost btn-sm" onclick="cancelCustomForm()">Cancel</button>
+            <button class="btn btn-purple btn-sm" onclick="saveCustomItem()">+ Add to enquiry</button>
+        </div>
+    </div>`;
+    setTimeout(()=>document.getElementById('cf_grade').focus(), 50);
+}
+function updateCustomDims(){
+    const cat = document.getElementById('cf_cat').value;
+    const lbls = DIM_LABELS[cat] || DIM_LABELS.flat;
+    document.getElementById('cf_dim1_lbl').textContent = lbls[0] + (cat==='profile'?'':' (mm)');
+    document.getElementById('cf_dim2_lbl').textContent = lbls[1] + ' (mm)';
+    document.getElementById('cf_dim3_lbl').textContent = lbls[2] + ' (mm)';
+}
+function cancelCustomForm(){ document.getElementById('customFormWrap').innerHTML = ''; }
+function saveCustomItem(){
+    const cat = document.getElementById('cf_cat').value;
+    const grade = document.getElementById('cf_grade').value.trim();
+    const type = document.getElementById('cf_type').value.trim();
+    const d1 = document.getElementById('cf_dim1').value.trim();
+    const d2 = document.getElementById('cf_dim2').value.trim();
+    const d3 = document.getElementById('cf_dim3').value.trim();
+    const qty = document.getElementById('cf_qty').value.trim();
+    const unit = document.getElementById('cf_unit').value;
+    const notes = document.getElementById('cf_notes').value.trim();
+
+    if(!grade && !type && !d1 && !d2 && !d3){
+        alert('Please give at least a grade, type, or dimensions so we know what to source.');
+        return;
+    }
+    cart.custom.push({
+        id: uid(),
+        product_category: cat,
+        grade, product_type: type,
+        dim1: d1, dim2: d2, dim3: d3,
+        qty, unit, notes,
+        is_sourcing: true
+    });
+    saveCart();
+    cancelCustomForm();
+    renderCustomList();
+    updateCartUI();
+    refreshFooter();
+}
+function removeCustomItem(id){
+    cart.custom = cart.custom.filter(c => c.id !== id);
+    saveCart();
+    renderCustomList();
+    updateCartUI();
+    refreshFooter();
+}
+
+// ════════════════════════════════════════════════════════════
+// SUBMISSION
+// ════════════════════════════════════════════════════════════
+function goToContact(){
+    if(totalCartCount() === 0) return;
+    loadContact();
+    goToStep(2);
+}
+function backToStep1(){ goToStep(1); }
+
+function validEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+
+async function submitEnquiry(){
+    if(isSubmitting) return;
+    const name = document.getElementById('cName').value.trim();
+    const email = document.getElementById('cEmail').value.trim();
+    const company = document.getElementById('cCompany').value.trim();
+    const phone = document.getElementById('cPhone').value.trim();
+    const country = document.getElementById('cCountry').value.trim();
+    const project = document.getElementById('cProject').value.trim();
+    const message = document.getElementById('cMessage').value.trim();
+
+    document.getElementById('cName').classList.toggle('error', !name);
+    document.getElementById('cEmail').classList.toggle('error', !email || !validEmail(email));
+
+    const msgEl = document.getElementById('submitMsg');
+    if(!name || !email || !validEmail(email)){
+        msgEl.innerHTML = `<div class="banner red"><span>⚠</span><div>Please provide your name and a valid email address.</div></div>`;
+        return;
+    }
+    msgEl.innerHTML = '';
+
+    saveContact();
+
+    const items = [
+        ...cart.stock.map(c => ({
+            source: 'stock',
+            stock_id: c.stock_id,
+            grade: c.grade,
+            product_type: c.product_type,
+            product_category: c.product_category,
+            section: c.section,
+            thickness: c.thickness,
+            width: c.width,
+            length: c.length,
+            requested_qty: c.requested_qty,
+            unit: c.unit,
+        })),
+        ...cart.custom.map(c => ({
+            source: 'sourcing',
+            grade: c.grade,
+            product_type: c.product_type,
+            product_category: c.product_category,
+            dim1: c.dim1,
+            dim2: c.dim2,
+            dim3: c.dim3,
+            requested_qty: c.qty,
+            unit: c.unit,
+            notes: c.notes,
+        }))
+    ];
+
+    const ref = 'ENQ-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + uid().slice(0,5).toUpperCase();
+
+    isSubmitting = true;
+    const submitBtn = document.getElementById('footSubmit');
+    const oldText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 6px 0 0"></span>Sending…';
+
+    try {
+        const payload = {
+            ref,
+            client_name: name,
+            client_email: email,
+            client_company: company || null,
+            client_phone: phone || null,
+            client_country: country || null,
+            project_ref: project || null,
+            message: message || null,
+            items: items,
+            item_count: items.length,
+        };
+        console.log('[submitEnquiry] inserting:', payload);
+        // Note: we deliberately do NOT chain .select() here — clients don't have
+        // SELECT permission on this table (only the team does). Adding .select()
+        // would cause a 401 even though the INSERT itself succeeded.
+        const { error } = await sb.from('client_enquiries').insert(payload);
+
+        if(error){
+            console.error('[submitEnquiry] FAILED:', error);
+            const tableMissing = /relation .* does not exist|client_enquiries.*not exist/i.test(error.message||'');
+            if(tableMissing){
+                document.getElementById('sqlModal').classList.add('open');
+                msgEl.innerHTML = `<div class="banner amber"><span>⚙</span><div>One-time database setup needed. The setup SQL has been opened — copy it, run it in Supabase, then try again.</div></div>`;
+            } else {
+                const fullMsg = [error.message, error.details, error.hint, error.code].filter(Boolean).join(' · ');
+                msgEl.innerHTML = `<div class="banner red"><span>⚠</span><div><b>Couldn't send your enquiry.</b><br>${esc(fullMsg)}<br><span style="font-size:10px;opacity:.8">If this keeps happening, please email us directly.</span></div></div>`;
+            }
+            throw error;
+        }
+
+        console.log('[submitEnquiry] ✓ saved with ref:', ref);
+
+        // Success!
+        document.getElementById('successRef').textContent = 'Reference: ' + ref;
+        cart = { stock: [], custom: [] };
+        saveCart();
+        goToStep(3);
+        renderResults();
+        updateCartUI();
+        // If admin is logged in, refresh inbox immediately so new submission is visible
+        if(adminUser) loadEnquiries();
+    } catch(e){
+        console.error('[submitEnquiry] caught:', e);
+    } finally {
+        isSubmitting = false;
+        submitBtn.disabled = false;
+        submitBtn.textContent = oldText;
+    }
+}
+
+// ════════════════════════════════════════════════════════════
+// SQL helpers
+// ════════════════════════════════════════════════════════════
+function copySQL(){
+    const t = document.getElementById('sqlCode').textContent;
+    navigator.clipboard.writeText(t).then(()=>{
+        const btns = document.querySelectorAll('#sqlModal button');
+        const copyBtn = Array.from(btns).find(b => b.textContent.includes('Copy'));
+        if(copyBtn){ const old = copyBtn.innerHTML; copyBtn.innerHTML = '✓ Copied'; setTimeout(()=>copyBtn.innerHTML = old, 1500); }
+    });
+}
+
+// ════════════════════════════════════════════════════════════
+// ADMIN — auth + inbox
+// ════════════════════════════════════════════════════════════
+let adminUser = null;
+let enquiries = [];
+let selectedEnqId = null;
+
+function openAdminLogin(){
+    document.getElementById('loginModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(()=>document.getElementById('liEmail').focus(), 60);
+}
+function closeAdminLogin(){
+    document.getElementById('loginModal').classList.remove('open');
+    document.body.style.overflow = '';
+    document.getElementById('liMsg').innerHTML = '';
+}
+
+async function doAdminLogin(){
+    const email = document.getElementById('liEmail').value.trim();
+    const pass = document.getElementById('liPass').value;
+    const msg = document.getElementById('liMsg');
+    if(!email || !pass){
+        msg.innerHTML = `<div class="banner red"><span>⚠</span><div>Please enter email and password.</div></div>`;
+        return;
+    }
+    const btn = document.getElementById('liBtn');
+    btn.disabled = true; btn.textContent = 'Signing in…';
+    msg.innerHTML = '';
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    btn.disabled = false; btn.textContent = 'Sign in';
+    if(error){
+        msg.innerHTML = `<div class="banner red"><span>⚠</span><div>${esc(error.message)}</div></div>`;
+        return;
+    }
+    closeAdminLogin();
+    onAdminSignedIn(data.user);
+}
+
+async function doAdminLogout(){
+    await sb.auth.signOut();
+    adminUser = null;
+    enquiries = [];
+    document.getElementById('adminBanner').classList.remove('show');
+    closeInbox();
+}
+
+async function onAdminSignedIn(user){
+    adminUser = user;
+    document.getElementById('adminEmail').textContent = user.email;
+    document.getElementById('adminBanner').classList.add('show');
+    await loadEnquiries();
+}
+
+// Restore session on load
+sb.auth.getSession().then(({ data: { session } }) => {
+    if(session) onAdminSignedIn(session.user);
+});
+
+// Open login if URL has #admin
+if(location.hash === '#admin'){ setTimeout(openAdminLogin, 50); }
+window.addEventListener('hashchange', () => {
+    if(location.hash === '#admin' && !adminUser) openAdminLogin();
+});
+
+async function loadEnquiries(){
+    if(!adminUser) return;
+    const { data, error } = await sb.from('client_enquiries')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(500);
+    if(error){
+        console.error('[loadEnquiries] error:', error);
+        const tableMissing = /relation .* does not exist|does not exist/i.test(error.message||'');
+
+        // Loud signal in admin banner
+        const cnt = document.getElementById('adminEnqCount');
+        cnt.textContent = tableMissing ? '⚠ Setup SQL not run yet' : '⚠ ' + (error.message||'load failed');
+        cnt.style.background = 'rgba(255,80,80,.45)';
+
+        const errBox = `<div style="padding:18px;font-size:12px;color:var(--red-text);background:var(--red-bg);border:1px solid var(--red);border-radius:8px;margin:14px;line-height:1.6">
+            <b>${tableMissing ? 'The client_enquiries table does not exist yet.' : 'Could not load enquiries.'}</b><br>
+            ${esc(error.message||'')}
+            ${tableMissing ? `<br><br>Run the one-time setup SQL: <a href="#" onclick="document.getElementById('sqlModal').classList.add('open');return false" style="color:var(--blue);font-weight:600">Show setup SQL →</a>` : ''}
+        </div>`;
+        document.getElementById('inboxRows').innerHTML = errBox;
+        document.getElementById('inboxDetail').innerHTML = errBox;
+        return;
+    }
+    enquiries = data || [];
+    console.log('[loadEnquiries] loaded ' + enquiries.length + ' enquiries');
+    const newCount = enquiries.filter(e => (e.status||'new') === 'new').length;
+    const cnt = document.getElementById('adminEnqCount');
+    cnt.textContent = `${newCount} new · ${enquiries.length} total`;
+    cnt.style.background = '';
+    renderInboxList();
+}
+
+function fmtRelTime(ts){
+    if(!ts) return '';
+    const d = new Date(ts);
+    const diffSec = (Date.now() - d.getTime()) / 1000;
+    if(diffSec < 60) return 'just now';
+    if(diffSec < 3600) return Math.floor(diffSec/60) + 'm';
+    if(diffSec < 86400) return Math.floor(diffSec/3600) + 'h';
+    if(diffSec < 86400*7) return Math.floor(diffSec/86400) + 'd';
+    return d.toLocaleDateString();
+}
+
+function fmtFullTime(ts){
+    if(!ts) return '—';
+    const d = new Date(ts);
+    return d.toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+function renderInboxList(){
+    const q = (document.getElementById('inboxSearch').value || '').toLowerCase().trim();
+    const sf = document.getElementById('inboxStatusFilter').value;
+    let list = enquiries.slice();
+    if(sf) list = list.filter(e => (e.status||'new') === sf);
+    if(q) list = list.filter(e => {
+        const blob = [e.client_name, e.client_email, e.client_company, e.client_country, e.message, e.ref, e.project_ref].map(x => (x||'').toLowerCase()).join(' ');
+        return blob.includes(q);
+    });
+
+    const rows = document.getElementById('inboxRows');
+    if(!list.length){
+        rows.innerHTML = `<div style="padding:30px 16px;font-size:12px;color:var(--text3);text-align:center"><div style="font-size:28px;opacity:.4;margin-bottom:6px">🔍</div>No enquiries${q||sf?' match':' yet'}</div>`;
+        return;
+    }
+    rows.innerHTML = list.map(e => {
+        const status = e.status || 'new';
+        const isUnread = status === 'new';
+        const itct = e.item_count || (e.items ? e.items.length : 0);
+        return `<div class="inbox-row ${isUnread?'unread':''} ${selectedEnqId===e.id?'active':''}" onclick="openEnquiry('${e.id}')">
+            <div class="ir-line1">
+                <span class="ir-name">${esc(e.client_name||'(no name)')}</span>
+                <span class="ir-time">${fmtRelTime(e.created_at)}</span>
+            </div>
+            <div class="ir-line2">${esc(e.client_company||e.client_email||'—')}</div>
+            <div class="ir-line3">
+                <span class="ir-status ${status}">${status}</span>
+                <span class="ir-itct">${itct} item${itct!==1?'s':''}</span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function openEnquiry(id){
+    selectedEnqId = id;
+    const e = enquiries.find(x => x.id === id);
+    renderInboxList();
+    if(!e){ return; }
+    const items = Array.isArray(e.items) ? e.items : [];
+    const stockItems = items.filter(i => i.source !== 'sourcing');
+    const sourceItems = items.filter(i => i.source === 'sourcing');
+
+    const itemRow = (it, isSrc) => {
+        const cat = it.product_category || inferCategory(it.product_type||'');
+        const dim = isSrc
+            ? [it.dim1, it.dim2, it.dim3].filter(Boolean).join(' × ')
+            : [
+                cat==='profile' && it.section ? it.section : it.thickness,
+                it.width,
+                it.length
+            ].filter(Boolean).join(' × ');
+        return `<tr class="${isSrc?'sourcing':''}">
+            <td class="grade">${esc(it.grade||'—')}</td>
+            <td>${esc(it.product_type||'')} ${cat?`<span style="font-size:9px;color:var(--text4);text-transform:uppercase">[${cat}]</span>`:''}</td>
+            <td>${esc(dim||'—')}</td>
+            <td class="qty">${esc(it.requested_qty||'?')} ${esc(it.unit||'')}</td>
+            ${isSrc ? `<td>${esc(it.notes||'')}</td>` : ''}
+        </tr>`;
+    };
+
+    const stockTbl = stockItems.length ? `
+        <div class="det-section-ttl">📦 From stock (${stockItems.length})</div>
+        <table class="itm-tbl"><thead><tr>
+            <th>Grade</th><th>Type</th><th>Dimensions</th><th>Qty needed</th>
+        </tr></thead><tbody>${stockItems.map(i => itemRow(i,false)).join('')}</tbody></table>` : '';
+
+    const srcTbl = sourceItems.length ? `
+        <div class="det-section-ttl">🔮 Sourcing requests (${sourceItems.length})</div>
+        <table class="itm-tbl"><thead><tr>
+            <th>Grade</th><th>Type</th><th>Dimensions</th><th>Qty needed</th><th>Notes</th>
+        </tr></thead><tbody>${sourceItems.map(i => itemRow(i,true)).join('')}</tbody></table>` : '';
+
+    const status = e.status || 'new';
+    const mailto = e.client_email ? `mailto:${e.client_email}?subject=${encodeURIComponent('Re: Your enquiry '+(e.ref||''))}` : '#';
+    const fullClient = [e.client_name, e.client_company].filter(Boolean).join(' — ');
+
+    document.getElementById('inboxDetail').innerHTML = `
+        <div class="det-hd">
+            <div class="det-hd-main">
+                <div class="det-hd-ref">${esc(e.ref||'(no ref)')} · ${fmtFullTime(e.created_at)}</div>
+                <div class="det-hd-name">${esc(e.client_name||'(no name)')}</div>
+                ${e.client_company ? `<div class="det-hd-co">${esc(e.client_company)}</div>` : ''}
+            </div>
+            <div class="det-hd-acts">
+                <select class="status-select" onchange="updateStatus('${e.id}',this.value)" title="Status">
+                    ${['new','contacted','quoted','closed'].map(s => `<option value="${s}"${s===status?' selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}
+                </select>
+                <a class="btn btn-sm btn-blue" href="${mailto}">✉ Reply</a>
+                <button class="btn btn-sm" onclick="copyEnquiry('${e.id}')" title="Copy as text">📋</button>
+                <button class="btn btn-sm" onclick="deleteEnquiry('${e.id}')" style="color:var(--red-text)" title="Delete">🗑</button>
+            </div>
+        </div>
+
+        <div class="det-grid">
+            <div class="det-fld"><div class="lbl">Email</div><div class="val"><a href="mailto:${esc(e.client_email||'')}">${esc(e.client_email||'—')}</a></div></div>
+            <div class="det-fld"><div class="lbl">Phone</div><div class="val">${e.client_phone?`<a href="tel:${esc(e.client_phone)}">${esc(e.client_phone)}</a>`:'—'}</div></div>
+            <div class="det-fld"><div class="lbl">Company</div><div class="val">${esc(e.client_company||'—')}</div></div>
+            <div class="det-fld"><div class="lbl">Country</div><div class="val">${esc(e.client_country||'—')}</div></div>
+            ${e.project_ref ? `<div class="det-fld" style="grid-column:1/-1"><div class="lbl">Project / Reference</div><div class="val">${esc(e.project_ref)}</div></div>` : ''}
+        </div>
+
+        ${e.message ? `<div class="det-msg">💬 ${esc(e.message)}</div>` : ''}
+
+        ${stockTbl}
+        ${srcTbl}
+
+        ${!stockItems.length && !sourceItems.length ? `<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">No items in this enquiry</div>` : ''}
+    `;
+}
+
+async function updateStatus(id, status){
+    const { error } = await sb.from('client_enquiries').update({ status }).eq('id', id);
+    if(error){ alert('Failed to update status: ' + error.message); return; }
+    const e = enquiries.find(x => x.id === id);
+    if(e) e.status = status;
+    const newCount = enquiries.filter(x => (x.status||'new') === 'new').length;
+    document.getElementById('adminEnqCount').textContent = `${newCount} new · ${enquiries.length} total`;
+    renderInboxList();
+}
+
+async function deleteEnquiry(id){
+    if(!confirm('Delete this enquiry permanently? This cannot be undone.')) return;
+    const { error } = await sb.from('client_enquiries').delete().eq('id', id);
+    if(error){ alert('Failed to delete: ' + error.message); return; }
+    enquiries = enquiries.filter(x => x.id !== id);
+    if(selectedEnqId === id){
+        selectedEnqId = null;
+        document.getElementById('inboxDetail').innerHTML = `<div class="inbox-empty"><div class="icon">📭</div><p>Select an enquiry to view details</p></div>`;
+    }
+    const newCount = enquiries.filter(x => (x.status||'new') === 'new').length;
+    document.getElementById('adminEnqCount').textContent = `${newCount} new · ${enquiries.length} total`;
+    renderInboxList();
+}
+
+function copyEnquiry(id){
+    const e = enquiries.find(x => x.id === id);
+    if(!e) return;
+    const items = Array.isArray(e.items) ? e.items : [];
+    const lines = [
+        `Enquiry: ${e.ref||''}`,
+        `Date: ${fmtFullTime(e.created_at)}`,
+        `Status: ${e.status||'new'}`,
+        ``,
+        `Client: ${e.client_name||''}${e.client_company?' / '+e.client_company:''}`,
+        `Email: ${e.client_email||''}`,
+        `Phone: ${e.client_phone||''}`,
+        `Country: ${e.client_country||''}`,
+        e.project_ref ? `Project: ${e.project_ref}` : null,
+        ``,
+        e.message ? `Message:\n${e.message}\n` : null,
+        `Items (${items.length}):`,
+        ...items.map((i, idx) => {
+            const cat = i.product_category || inferCategory(i.product_type||'');
+            const dim = i.source === 'sourcing'
+                ? [i.dim1, i.dim2, i.dim3].filter(Boolean).join(' × ')
+                : [cat==='profile' && i.section ? i.section : i.thickness, i.width, i.length].filter(Boolean).join(' × ');
+            return `  ${idx+1}. [${i.source==='sourcing'?'SOURCING':'STOCK'}] ${i.grade||'?'} ${i.product_type||''} — ${dim||'—'} — ${i.requested_qty||'?'} ${i.unit||''}${i.notes?' — '+i.notes:''}`;
+        })
+    ].filter(x => x !== null).join('\n');
+    navigator.clipboard.writeText(lines).then(()=>{
+        const btn = event.target;
+        const old = btn.innerHTML;
+        btn.innerHTML = '✓';
+        setTimeout(()=>btn.innerHTML = old, 1200);
+    });
+}
+
+function openInbox(){
+    if(!adminUser) return;
+    document.getElementById('inboxModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    if(!enquiries.length) loadEnquiries();
+}
+function closeInbox(){
+    document.getElementById('inboxModal').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+// ════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════
+loadCart();
+updateCartUI();
+updateDimLabels();
+loadStock();
+
+// Re-validate on contact field changes
+['cName','cEmail'].forEach(id => {
+    document.addEventListener('DOMContentLoaded', () => {
+        const el = document.getElementById(id);
+        if(el) el.addEventListener('input', () => el.classList.remove('error'));
+    });
+});
+// Also bind directly since DOMContentLoaded may have fired
+setTimeout(()=>{
+    ['cName','cEmail'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.addEventListener('input', () => el.classList.remove('error'));
+    });
+}, 50);
+
+// Close modals on ESC (in priority order)
+document.addEventListener('keydown', e => {
+    if(e.key !== 'Escape') return;
+    if(document.getElementById('sqlModal').classList.contains('open')){
+        document.getElementById('sqlModal').classList.remove('open');
+    } else if(document.getElementById('loginModal').classList.contains('open')){
+        closeAdminLogin();
+    } else if(document.getElementById('inboxModal').classList.contains('open')){
+        closeInbox();
+    } else if(document.getElementById('cartModal').classList.contains('open')){
+        closeCart();
+    }
+});
+</script>
+</body>
+</html>
