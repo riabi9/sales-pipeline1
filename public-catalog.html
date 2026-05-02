@@ -7,6 +7,7 @@
 <title>Steel Stock Catalogue — Browse & Enquire</title>
 <meta name="description" content="Browse our live steel stock and submit an enquiry — plates, coils, pipes, profiles and bars in international grades.">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -370,9 +371,161 @@ a:hover{text-decoration:underline}
 /* ── In-CRM badge ── */
 .in-crm-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green);text-transform:uppercase;letter-spacing:.4px;font-family:var(--mono);margin-left:5px}
 
+/* ════════════════════════════════════════════════════════════
+   v10 — MARKETING COMPONENTS
+   ════════════════════════════════════════════════════════════ */
+
+/* Promo banner above header */
+.promo-banner{background:var(--blue);color:#fff;padding:9px 16px;text-align:center;font-size:13px;font-weight:500;display:none;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;line-height:1.4;position:relative}
+.promo-banner.show{display:flex}
+.promo-banner.color-green{background:linear-gradient(90deg,#0c5e42,#15895f)}
+.promo-banner.color-amber{background:linear-gradient(90deg,#a85f00,#c47d00);color:#fff}
+.promo-banner.color-red{background:linear-gradient(90deg,#a02525,#cc3333)}
+.promo-banner.color-blue{background:linear-gradient(90deg,#0d4685,#1456a0)}
+.promo-banner .pb-msg{flex:1 1 auto;text-align:center;max-width:780px}
+.promo-banner .pb-cta{background:rgba(255,255,255,.2);padding:5px 13px;border-radius:99px;color:#fff;font-weight:700;font-size:12px;text-decoration:none;border:1px solid rgba(255,255,255,.3);transition:background .15s;flex-shrink:0}
+.promo-banner .pb-cta:hover{background:rgba(255,255,255,.3);text-decoration:none}
+.promo-banner .pb-close{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;transition:background .15s}
+.promo-banner .pb-close:hover{background:rgba(255,255,255,.28)}
+
+/* Marketing badges on cards */
+.mkt-badge{position:absolute;top:0;right:0;font-size:10px;font-weight:700;padding:5px 10px 5px 12px;border-radius:0 14px 0 12px;font-family:var(--mono);letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;gap:3px;line-height:1;z-index:2}
+.mkt-badge.tag-HOT{background:#cc3333;color:#fff;animation:pulseHot 2s ease-in-out infinite}
+.mkt-badge.tag-URGENT{background:#c47d00;color:#fff}
+.mkt-badge.tag-NEW{background:#15895f;color:#fff}
+.mkt-badge.tag-CLEARANCE{background:#6055c0;color:#fff}
+.mkt-badge.tag-IMMEDIATE{background:#1456a0;color:#fff}
+@keyframes pulseHot{0%,100%{box-shadow:0 0 0 0 rgba(204,51,51,.4)}50%{box-shadow:0 0 0 6px rgba(204,51,51,0)}}
+
+.lead-time{display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--text2);font-weight:500}
+.lead-time.ready{color:var(--green-text);font-weight:600}
+.lead-time .lt-icon{font-size:12px}
+
+.card{position:relative}
+.card.featured-card{border-color:var(--amber);background:linear-gradient(180deg,rgba(196,125,0,.06) 0%,transparent 40%)}
+[data-theme="dark"] .card.featured-card{background:linear-gradient(180deg,rgba(240,168,32,.08) 0%,transparent 40%)}
+
+/* Social proof bar */
+.social-proof{max-width:1280px;margin:0 auto;padding:0 18px 8px}
+.sp-inner{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:9px 14px;display:flex;align-items:center;gap:18px;font-size:12px;color:var(--text2);flex-wrap:wrap;justify-content:center}
+.sp-item{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.sp-item .sp-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.3)}}
+.sp-item b{color:var(--text);font-weight:600;font-family:var(--mono);font-size:12.5px}
+
+/* Activity ticker */
+.ticker-shell{max-width:1280px;margin:0 auto;padding:0 18px 8px;overflow:hidden;display:none}
+.ticker-shell.show{display:block}
+.ticker-inner{background:var(--surface3);border:1px solid var(--border);border-radius:9px;padding:6px 0;overflow:hidden;position:relative}
+.ticker-inner::before{content:"⚡ Live";position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:10px;font-weight:700;color:var(--red);background:var(--surface3);padding:0 8px;z-index:2}
+.ticker-track{display:flex;gap:38px;animation:tickerSlide 40s linear infinite;padding-left:60px;white-space:nowrap}
+.ticker-shell:hover .ticker-track{animation-play-state:paused}
+.ticker-item{font-size:11px;color:var(--text2);font-family:var(--mono);display:inline-flex;align-items:center;gap:4px;flex-shrink:0}
+.ticker-item .tk-time{color:var(--text4)}
+@keyframes tickerSlide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* Featured strip */
+.featured-shell{max-width:1280px;margin:0 auto;padding:18px 18px 0}
+.featured-shell.hidden{display:none}
+.featured-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap}
+.featured-ttl{font-family:var(--serif);font-size:24px;font-weight:600;letter-spacing:-.3px;display:flex;align-items:center;gap:8px}
+.featured-ttl .ft-icon{font-size:24px}
+.featured-sub{font-size:12px;color:var(--text3);font-family:var(--mono)}
+.featured-acts{display:flex;gap:8px}
+.featured-pdf-btn{height:34px;padding:0 14px;border-radius:8px;background:var(--surface);border:1px solid var(--border2);color:var(--text);font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:background .15s,border-color .15s}
+.featured-pdf-btn:hover{background:var(--surface2);border-color:var(--blue)}
+.featured-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+
+/* Notify-me form */
+.notify-shell{max-width:1280px;margin:0 auto;padding:24px 18px}
+.notify-card{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-mid) 100%);border-radius:18px;padding:24px;color:#fff;display:grid;grid-template-columns:1.5fr 2fr;gap:24px;align-items:center;box-shadow:var(--shadow-2)}
+@media(max-width:760px){.notify-card{grid-template-columns:1fr;gap:18px;padding:20px}}
+.notify-card h3{font-family:var(--serif);font-size:24px;font-weight:600;letter-spacing:-.3px;line-height:1.15;margin-bottom:6px}
+.notify-card p{font-size:13px;opacity:.92;line-height:1.55}
+.notify-form{display:grid;grid-template-columns:1fr 1fr auto;gap:8px}
+@media(max-width:520px){.notify-form{grid-template-columns:1fr}}
+.notify-form input,.notify-form select{height:42px;border:none;border-radius:9px;padding:0 13px;font-size:13px;background:rgba(255,255,255,.95);color:var(--text);outline:none}
+.notify-form input::placeholder{color:var(--text3)}
+.notify-form button{height:42px;padding:0 20px;border-radius:9px;background:#fff;color:var(--blue);font-size:13px;font-weight:700;border:none;transition:transform .15s,box-shadow .15s}
+.notify-form button:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.notify-form button:disabled{opacity:.6;cursor:not-allowed;transform:none!important}
+.notify-msg{margin-top:10px;font-size:12px;opacity:.95;display:none}
+.notify-msg.show{display:block}
+
+/* WhatsApp FAB */
+.whatsapp-fab{position:fixed;bottom:20px;right:20px;width:56px;height:56px;border-radius:50%;background:#25d366;color:#fff;font-size:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 20px rgba(37,211,102,.4);z-index:80;transition:transform .2s;border:none;text-decoration:none}
+.whatsapp-fab:hover{transform:scale(1.08)}
+.whatsapp-fab::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid #25d366;animation:waPulse 2.5s ease-out infinite;pointer-events:none}
+@keyframes waPulse{0%{opacity:.6;transform:scale(.9)}100%{opacity:0;transform:scale(1.4)}}
+@media(max-width:600px){.whatsapp-fab{bottom:78px;right:14px;width:48px;height:48px;font-size:24px}}
+
+/* Exit intent toast */
+.exit-toast{position:fixed;bottom:24px;left:24px;width:320px;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:16px;box-shadow:var(--shadow-3);z-index:90;transform:translateY(20px);opacity:0;transition:transform .3s ease-out,opacity .3s;pointer-events:none}
+.exit-toast.show{transform:translateY(0);opacity:1;pointer-events:auto}
+.exit-toast .ex-close{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:var(--surface2);color:var(--text2);font-size:16px;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.exit-toast .ex-close:hover{background:var(--border)}
+.exit-toast h4{font-family:var(--serif);font-size:18px;font-weight:600;margin-bottom:6px;color:var(--text)}
+.exit-toast p{font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.5}
+.exit-toast button{width:100%;height:36px;padding:0 14px;border-radius:8px;background:var(--blue);color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer;transition:background .15s}
+.exit-toast button:hover{background:#0d4685}
+@media(max-width:520px){.exit-toast{left:14px;right:14px;width:auto;bottom:14px}}
+
+/* Marketing modal — admin */
+.mk-tabs{display:flex;gap:4px;background:var(--surface3);padding:4px;border-radius:10px;margin-bottom:14px;flex-wrap:wrap}
+.mk-tab{flex:1;height:34px;font-size:12px;font-weight:600;border-radius:7px;color:var(--text3);transition:background .15s,color .15s;padding:0 10px;border:none;background:none;cursor:pointer;min-width:90px}
+.mk-tab.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow-1)}
+
+.mk-stock-search{display:flex;gap:8px;margin-bottom:12px}
+.mk-stock-search input{flex:1;height:36px;border:1px solid var(--border2);border-radius:8px;padding:0 11px;font-size:13px;background:var(--surface3);color:var(--text);outline:none}
+.mk-stock-search input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+
+.mk-stock-row{padding:10px 12px;border:1px solid var(--border);border-radius:9px;margin-bottom:6px;display:grid;grid-template-columns:1fr auto auto auto auto;gap:10px;align-items:center;font-size:12px;background:var(--surface)}
+.mk-stock-row.featured{border-color:var(--amber);background:var(--amber-bg)}
+.mk-stock-info{min-width:0;overflow:hidden}
+.mk-stock-grade{font-weight:600;color:var(--text);font-size:13px}
+.mk-stock-meta{font-size:10.5px;color:var(--text3);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mk-toggle{width:42px;height:24px;border-radius:99px;background:var(--border);position:relative;cursor:pointer;border:none;transition:background .15s;flex-shrink:0}
+.mk-toggle::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.mk-toggle.on{background:var(--amber)}
+.mk-toggle.on::after{transform:translateX(18px)}
+.mk-tag-select,.mk-lead-input{height:30px;border:1px solid var(--border2);border-radius:6px;padding:0 8px;font-size:11px;background:var(--surface);color:var(--text);outline:none;font-family:var(--mono);width:90px}
+.mk-tag-select:focus,.mk-lead-input:focus{border-color:var(--blue)}
+.mk-lead-input{width:60px;text-align:right}
+@media(max-width:600px){
+    .mk-stock-row{grid-template-columns:1fr;gap:6px}
+    .mk-stock-row > *:not(.mk-stock-info){justify-self:stretch;width:100%}
+    .mk-tag-select,.mk-lead-input{width:100%}
+}
+
+.mk-banner-form{display:flex;flex-direction:column;gap:10px}
+.mk-banner-preview{padding:12px;border-radius:9px;background:var(--blue);color:#fff;text-align:center;font-size:13px;font-weight:500;margin-bottom:12px}
+.mk-banner-preview.color-green{background:linear-gradient(90deg,#0c5e42,#15895f)}
+.mk-banner-preview.color-amber{background:linear-gradient(90deg,#a85f00,#c47d00)}
+.mk-banner-preview.color-red{background:linear-gradient(90deg,#a02525,#cc3333)}
+.mk-banner-preview.color-blue{background:linear-gradient(90deg,#0d4685,#1456a0)}
+
+.mk-sub-row{padding:10px 12px;border:1px solid var(--border);border-radius:9px;margin-bottom:6px;display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;font-size:12px;background:var(--surface)}
+.mk-sub-info{min-width:0}
+.mk-sub-name{font-weight:600;color:var(--text);font-size:13px}
+.mk-sub-email{font-size:11.5px;color:var(--text2);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mk-sub-meta{font-size:10px;color:var(--text3);margin-top:2px}
+.mk-sub-cats{display:flex;gap:3px;flex-wrap:wrap}
+.mk-sub-cat{font-size:10px;padding:2px 6px;border-radius:99px;background:var(--blue-bg);color:var(--blue);font-family:var(--mono)}
+
+.mk-empty-tab{padding:30px 20px;text-align:center;color:var(--text3)}
+.mk-empty-tab .icon{font-size:36px;opacity:.4;margin-bottom:8px}
+.mk-empty-tab h4{font-family:var(--serif);font-weight:600;color:var(--text);margin-bottom:4px;font-size:18px}
+.mk-empty-tab p{font-size:12px;line-height:1.5;max-width:320px;margin:0 auto}
+
+/* PDF gate modal */
+.pdf-gate-icon{width:60px;height:60px;border-radius:50%;background:var(--blue-bg);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px}
+
 </style>
 </head>
 <body>
+
+<!-- ─── PROMO BANNER (client-facing, when active) ─── -->
+<div class="promo-banner" id="promoBanner"></div>
 
 <!-- ─── ADMIN BANNER (shown only when logged in) ─── -->
 <div class="admin-banner" id="adminBanner">
@@ -381,6 +534,7 @@ a:hover{text-decoration:underline}
     <span class="ab-pill" id="adminEnqCount">0 enquiries</span>
     <div class="ab-spacer"></div>
     <button class="ab-inbox-btn" onclick="openInbox()">📬 Open Inbox</button>
+    <button onclick="openMarketing()">🎯 Marketing</button>
     <button onclick="doAdminLogout()">Logout</button>
 </div>
 
@@ -415,6 +569,16 @@ a:hover{text-decoration:underline}
     </div>
 </section>
 
+<!-- ─── SOCIAL PROOF ─── -->
+<div class="social-proof" id="socialProofWrap" style="display:none">
+    <div class="sp-inner">
+        <div class="sp-item"><span class="sp-dot"></span><b id="spLastEnq">—</b> last enquiry</div>
+        <div class="sp-item">📨 <b id="spWeekTotal">—</b> enquiries this week</div>
+        <div class="sp-item">📦 <b id="spStockTotal">—</b> items in stock</div>
+        <div class="sp-item">🏷️ <b id="spGradesTotal">—</b> unique grades</div>
+    </div>
+</div>
+
 <!-- ─── FILTER ─── -->
 <div class="filter-shell">
     <div class="filter-bar">
@@ -432,6 +596,27 @@ a:hover{text-decoration:underline}
         <input id="fLength" class="mono" type="number" placeholder="Length" oninput="onFilterChange()" title="Length in mm (±100mm)">
         <button class="filter-clear" onclick="clearFilters()">Clear</button>
     </div>
+</div>
+
+<!-- ─── ACTIVITY TICKER ─── -->
+<div class="ticker-shell" id="tickerShell">
+    <div class="ticker-inner">
+        <div class="ticker-track" id="tickerTrack"></div>
+    </div>
+</div>
+
+<!-- ─── FEATURED PRODUCTS (visible without search) ─── -->
+<div class="featured-shell hidden" id="featuredShell">
+    <div class="featured-hd">
+        <div>
+            <div class="featured-ttl"><span class="ft-icon">🌟</span>Featured Stock</div>
+            <div class="featured-sub" id="featuredSub">Limited quantities · ready to ship</div>
+        </div>
+        <div class="featured-acts">
+            <button class="featured-pdf-btn" onclick="openPdfGate()">📄 Download PDF Catalog</button>
+        </div>
+    </div>
+    <div class="featured-grid" id="featuredGrid"></div>
 </div>
 
 <!-- ─── RESULTS ─── -->
@@ -453,12 +638,36 @@ a:hover{text-decoration:underline}
     </div>
 </main>
 
+<!-- ─── NOTIFY-ME (subscribe to new stock alerts) ─── -->
+<section class="notify-shell" id="notifyShell">
+    <div class="notify-card">
+        <div>
+            <h3>Don't see what you need?</h3>
+            <p>Get notified when new stock arrives in your category. We'll only email when there's something matching what you're looking for.</p>
+        </div>
+        <div>
+            <div class="notify-form">
+                <input id="ntfEmail" type="email" placeholder="your@company.com" autocomplete="email">
+                <select id="ntfCategory">
+                    <option value="">Any category</option>
+                    <option value="flat">📐 Flat / Plate / Coil</option>
+                    <option value="pipe">⭕ Pipe / Tube</option>
+                    <option value="profile">🔷 Profile / Beam</option>
+                    <option value="bar">🔵 Bar / Rod</option>
+                </select>
+                <button onclick="submitNotifyMe()" id="ntfBtn">Subscribe</button>
+            </div>
+            <div class="notify-msg" id="ntfMsg"></div>
+        </div>
+    </div>
+</section>
+
 <footer class="foot">
     <span>Powered by your sales platform · Submitted enquiries are securely sent to our team only</span>
     <span style="margin:0 6px;color:var(--text4)">·</span>
     <a href="#admin" id="teamLoginLink" onclick="openAdminLogin();return false">Team login</a>
     <span style="margin:0 6px;color:var(--text4)">·</span>
-    <span style="color:var(--text4);font-size:10px" id="versionLabel">v9</span>
+    <span style="color:var(--text4);font-size:10px" id="versionLabel">v10</span>
 </footer>
 
 <!-- ─── FLOATING CART (mobile) ─── -->
@@ -541,6 +750,99 @@ a:hover{text-decoration:underline}
             <button class="btn btn-ghost" id="footCancel" onclick="closeCart()">Close</button>
             <button class="btn btn-blue" id="footNext" onclick="goToContact()" disabled>Continue to contact details →</button>
             <button class="btn btn-green" id="footSubmit" onclick="submitEnquiry()" style="display:none">Send enquiry</button>
+        </div>
+    </div>
+</div>
+
+<!-- ─── WHATSAPP FAB ─── -->
+<a class="whatsapp-fab" id="whatsappFab" target="_blank" rel="noopener" title="Chat on WhatsApp">💬</a>
+
+<!-- ─── EXIT-INTENT TOAST ─── -->
+<div class="exit-toast" id="exitToast">
+    <button class="ex-close" onclick="dismissExitIntent()">×</button>
+    <h4>Wait — let us help</h4>
+    <p>Didn't find what you need? Submit a sourcing request and our team will find it for you.</p>
+    <button onclick="dismissExitIntent();openCart();switchTab('research');showCustomForm();">Submit a sourcing request →</button>
+</div>
+
+<!-- ─── MARKETING MODAL (admin) ─── -->
+<div class="modal-bg" id="marketingModal" onclick="if(event.target===this)closeMarketing()">
+    <div class="modal" style="max-width:900px;width:100%" onclick="event.stopPropagation()">
+        <div class="modal-hd">
+            <h2>🎯 Marketing</h2>
+            <button class="close" onclick="closeMarketing()">×</button>
+        </div>
+        <div class="modal-bd">
+            <div class="mk-tabs">
+                <button class="mk-tab active" onclick="switchMkTab('featured')" id="mkTabFeatured">🌟 Featured & Tags</button>
+                <button class="mk-tab" onclick="switchMkTab('banner')" id="mkTabBanner">📢 Banner</button>
+                <button class="mk-tab" onclick="switchMkTab('subs')" id="mkTabSubs">📧 Subscribers</button>
+            </div>
+
+            <!-- Featured tab -->
+            <div id="mkPaneFeatured">
+                <div class="banner amber" style="margin-bottom:10px"><span>💡</span><div>Toggle <b>Featured</b> to show on the landing page. Set a <b>tag</b> for HOT/URGENT/NEW badges. Set <b>lead-time</b> in days (0 = ready to ship).</div></div>
+                <div class="mk-stock-search">
+                    <input id="mkStockSearch" placeholder="Search stock to manage…" oninput="renderMkStockList()">
+                    <button class="btn btn-sm" onclick="loadMkStock()" title="Refresh">↻</button>
+                </div>
+                <div id="mkStockList"></div>
+            </div>
+
+            <!-- Banner tab -->
+            <div id="mkPaneBanner" style="display:none">
+                <div class="banner amber" style="margin-bottom:10px"><span>📢</span><div>Post a campaign message that shows above the page header. One message at a time — saving creates a new active banner.</div></div>
+                <div class="mk-banner-preview" id="mkBannerPreview">Banner preview</div>
+                <div class="mk-banner-form">
+                    <div class="fld"><label>Message <span class="req">*</span></label><input id="mkBnMsg" placeholder="e.g. Container of S275JR plates landing next week" oninput="updateBannerPreview()"></div>
+                    <div class="form-grid">
+                        <div class="fld"><label>CTA text (optional)</label><input id="mkBnCtaText" placeholder="e.g. Pre-order now" oninput="updateBannerPreview()"></div>
+                        <div class="fld"><label>CTA link (optional)</label><input id="mkBnCtaUrl" placeholder="https://… or mailto:" oninput="updateBannerPreview()"></div>
+                        <div class="fld"><label>Color</label><select id="mkBnColor" onchange="updateBannerPreview()"><option value="blue">🔵 Blue</option><option value="green">🟢 Green</option><option value="amber">🟠 Amber</option><option value="red">🔴 Red</option></select></div>
+                        <div class="fld"><label>Expires (optional)</label><input id="mkBnExpires" type="datetime-local"></div>
+                    </div>
+                </div>
+                <div id="mkBannerMsg" style="margin-top:10px"></div>
+            </div>
+
+            <!-- Subscribers tab -->
+            <div id="mkPaneSubs" style="display:none">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px;flex-wrap:wrap">
+                    <div style="font-size:12px;color:var(--text3)" id="mkSubsCount">— subscribers</div>
+                    <button class="btn btn-sm" onclick="exportSubscribersCsv()">📥 Export CSV</button>
+                </div>
+                <div id="mkSubsList"></div>
+            </div>
+        </div>
+        <div class="modal-ft">
+            <span class="subtle-link" id="mkFootMeta"></span>
+            <div class="spacer"></div>
+            <button class="btn btn-ghost" onclick="closeMarketing()">Close</button>
+            <button class="btn btn-blue" id="mkSaveBtn" onclick="saveBanner()" style="display:none">💾 Save banner & publish</button>
+            <button class="btn btn-ghost" id="mkClearBannerBtn" onclick="clearBanner()" style="display:none;color:var(--red-text)">Hide active banner</button>
+        </div>
+    </div>
+</div>
+
+<!-- ─── PDF GATE MODAL ─── -->
+<div class="modal-bg" id="pdfGateModal" onclick="if(event.target===this)closePdfGate()">
+    <div class="modal login-modal" onclick="event.stopPropagation()">
+        <div class="modal-hd">
+            <h2>📄 PDF Catalog</h2>
+            <button class="close" onclick="closePdfGate()">×</button>
+        </div>
+        <div class="modal-bd">
+            <div class="pdf-gate-icon">📄</div>
+            <p style="text-align:center;font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.5">Get our featured stock catalog as a PDF. Tell us how to reach you and we'll send updates when new featured stock arrives.</p>
+            <div class="fld" style="margin-bottom:8px"><label>Email <span class="req">*</span></label><input id="pdfEmail" type="email" placeholder="you@company.com" autocomplete="email"></div>
+            <div class="fld" style="margin-bottom:8px"><label>Name</label><input id="pdfName" placeholder="Your name" autocomplete="name"></div>
+            <div class="fld" style="margin-bottom:14px"><label>Company</label><input id="pdfCompany" placeholder="Optional" autocomplete="organization"></div>
+            <div id="pdfMsg"></div>
+        </div>
+        <div class="modal-ft">
+            <div class="spacer"></div>
+            <button class="btn btn-ghost" onclick="closePdfGate()">Cancel</button>
+            <button class="btn btn-blue" id="pdfDlBtn" onclick="downloadFeaturedPdf()">📥 Download PDF</button>
         </div>
     </div>
 </div>
@@ -678,7 +980,16 @@ const CONFIG = {
     companyName: 'Steel Trading',                     // ← shown in header
     companySub: 'Live Stock Catalogue',               // ← small subtitle
     supabaseUrl: 'https://fmmfofjkebdsrnkchrfo.supabase.co',
-    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtbWZvZmprZWJkc3Jua2NocmZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDAxNDIsImV4cCI6MjA5MjA3NjE0Mn0.bQQJt06mucLCQCrY1NgN-ed2ngDeRLmITmOfQCAM7ZU'
+    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtbWZvZmprZWJkc3Jua2NocmZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDAxNDIsImV4cCI6MjA5MjA3NjE0Mn0.bQQJt06mucLCQCrY1NgN-ed2ngDeRLmITmOfQCAM7ZU',
+    // ── WhatsApp (set to '' to hide button) ──
+    whatsappNumber: '+213000000000',                  // ← your WhatsApp number (with country code)
+    whatsappMessage: "Hi, I'm interested in your stock catalogue",
+    // ── Featured products on landing ──
+    showFeatured: true,                               // ← set false to hide the featured strip
+    showActivityTicker: true,                         // ← live enquiry ticker
+    showSocialProof: true,                            // ← social proof bar above filter
+    showNotifyMe: true,                               // ← "get notified" form near footer
+    showExitIntent: true,                             // ← exit-intent toast
 };
 
 // Apply branding
@@ -689,7 +1000,7 @@ document.title = CONFIG.companyName + ' — Stock Catalogue & Enquiry';
 const sb = supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
 
 // Version stamp — change every release so you can tell which file is loaded
-const APP_VERSION = 'public-catalog v9 (grades stat + smarter trigger)';
+const APP_VERSION = 'public-catalog v10 (marketing suite)';
 console.log('%c' + APP_VERSION, 'color:#1456a0;font-weight:bold;font-size:13px');
 console.log('If you see a different version after refresh, your browser is caching. Do a hard refresh (Ctrl+Shift+R).');
 
@@ -780,6 +1091,10 @@ function dedupeStock(items){
                 length: s.length,
                 unit: s.unit || 'ton',
                 alternatives: s.alternatives,
+                // marketing fields — propagate from any underlying lot
+                featured: s.featured || false,
+                marketing_tag: s.marketing_tag || null,
+                lead_time_days: s.lead_time_days != null ? s.lead_time_days : null,
                 // aggregated
                 _stock_ids: [s.id],
                 _quantity_total: Number(s.quantity) || 0,
@@ -792,6 +1107,13 @@ function dedupeStock(items){
             g._lot_count += 1;
             // pick the longest "alternatives" string seen, in case lots have different metadata
             if((s.alternatives || '').length > (g.alternatives || '').length) g.alternatives = s.alternatives;
+            // marketing: any lot featured → group featured; first non-null tag wins
+            if(s.featured) g.featured = true;
+            if(!g.marketing_tag && s.marketing_tag) g.marketing_tag = s.marketing_tag;
+            // shortest lead time wins (= fastest delivery)
+            if(s.lead_time_days != null && (g.lead_time_days == null || s.lead_time_days < g.lead_time_days)){
+                g.lead_time_days = s.lead_time_days;
+            }
         }
     }
     return [...groups.values()];
@@ -805,11 +1127,29 @@ function dedupeStock(items){
 // Origin/country deliberately omitted — would hint at supplier location.
 // Supplier, location, buy_price, heat_number, notes, currency are also never fetched.
 const STOCK_COLUMN_TIERS = [
+    'id,product_category,product_type,grade,thickness,width,length,section,quantity,unit,available,alternatives,featured,marketing_tag,lead_time_days',
     'id,product_category,product_type,grade,thickness,width,length,section,quantity,unit,available,alternatives',
     'id,product_type,grade,thickness,width,length,quantity,unit,available,alternatives',
     'id,product_type,grade,thickness,width,length,quantity,unit,available',
     'id,product_type,grade,thickness,width,length,quantity,unit'
 ];
+
+// Marketing tag styling
+const TAG_STYLES = {
+    'HOT':       { icon: '🔥', label: 'HOT DEAL' },
+    'URGENT':    { icon: '⚡', label: 'URGENT' },
+    'NEW':       { icon: '🆕', label: 'NEW' },
+    'CLEARANCE': { icon: '🏷️', label: 'CLEARANCE' },
+    'IMMEDIATE': { icon: '📦', label: 'READY' },
+};
+
+function leadTimeDisplay(days){
+    if(days == null || days === '' || isNaN(Number(days))) return '';
+    const d = Number(days);
+    if(d <= 0) return `<span class="lead-time ready"><span class="lt-icon">✓</span>Ready to ship</span>`;
+    if(d <= 7) return `<span class="lead-time"><span class="lt-icon">📦</span>Ships in ${d}d</span>`;
+    return `<span class="lead-time"><span class="lt-icon">🚚</span>Ships in ${d}d</span>`;
+}
 
 let stockColumns = null;            // which column set works on this DB
 let totalAvailableCount = null;     // for hero stat (fetched once, no row data)
@@ -890,7 +1230,346 @@ async function initStock(){
 
     renderStats();
     renderResults();   // will show the search-prompt empty state
+
+    // v10: load all marketing surfaces (each is independent, failures don't break others)
+    loadPromoBanner();
+    if(CONFIG.showFeatured) loadFeaturedProducts();
+    if(CONFIG.showSocialProof || CONFIG.showActivityTicker) loadRecentActivity();
+    setupWhatsApp();
+    if(CONFIG.showExitIntent) setupExitIntent();
+    if(!CONFIG.showNotifyMe) document.getElementById('notifyShell').style.display = 'none';
 }
+
+// ════════════════════════════════════════════════════════════
+// v10 — PROMO BANNER
+// ════════════════════════════════════════════════════════════
+let activeBanner = null;
+async function loadPromoBanner(){
+    if(localStorage.getItem('pub_banner_dismissed_id')) {
+        // we still fetch so we know whether dismissed banner is the active one
+    }
+    try {
+        const { data, error } = await sb.from('promo_banners')
+            .select('*')
+            .eq('active', true)
+            .order('created_at', { ascending: false })
+            .limit(5);
+        if(error){ console.warn('[loadPromoBanner]', error.message); return; }
+        const now = new Date();
+        const live = (data||[]).find(b => !b.expires_at || new Date(b.expires_at) > now);
+        if(!live) return;
+        // If user dismissed THIS banner, hide
+        const dismissed = localStorage.getItem('pub_banner_dismissed_id');
+        if(dismissed === live.id) return;
+        activeBanner = live;
+        renderPromoBanner(live);
+    } catch(e){ console.warn('[loadPromoBanner]', e); }
+}
+function renderPromoBanner(b){
+    const el = document.getElementById('promoBanner');
+    el.className = 'promo-banner show color-' + (b.color || 'blue');
+    const cta = b.cta_text && b.cta_url
+        ? `<a class="pb-cta" href="${esc(b.cta_url)}" target="_blank" rel="noopener">${esc(b.cta_text)}</a>` : '';
+    el.innerHTML = `<span class="pb-msg">${esc(b.message)}</span>${cta}<button class="pb-close" onclick="dismissBanner('${b.id}')" title="Dismiss">×</button>`;
+}
+function dismissBanner(id){
+    localStorage.setItem('pub_banner_dismissed_id', id);
+    document.getElementById('promoBanner').classList.remove('show');
+}
+
+// ════════════════════════════════════════════════════════════
+// v10 — FEATURED PRODUCTS
+// ════════════════════════════════════════════════════════════
+let featuredItems = [];
+async function loadFeaturedProducts(){
+    if(!stockColumns) return;
+    if(!stockColumns.includes('featured')){
+        // marketing columns not added yet — just hide
+        return;
+    }
+    try {
+        const { data, error } = await sb.from('stock')
+            .select(stockColumns)
+            .eq('featured', true)
+            .or('available.is.null,available.neq.no')
+            .limit(24);
+        if(error){ console.warn('[loadFeatured]', error.message); return; }
+        if(!data || !data.length) return;
+        featuredItems = dedupeStock(data);
+        renderFeatured();
+    } catch(e){ console.warn('[loadFeatured]', e); }
+}
+function renderFeatured(){
+    const f = getFilters();
+    const noSearchInput = !(f.name || f.thick || f.width || f.length);
+    const shell = document.getElementById('featuredShell');
+    if(!noSearchInput || !featuredItems.length){
+        shell.classList.add('hidden');
+        return;
+    }
+    shell.classList.remove('hidden');
+    const cartIds = new Set();
+    cart.stock.forEach(c => { (c.stock_ids || [c.stock_id]).forEach(id => cartIds.add(id)); });
+    document.getElementById('featuredGrid').innerHTML =
+        featuredItems.slice(0, 8).map(s => renderCard(s, s._stock_ids.some(id => cartIds.has(id)))).join('');
+    document.getElementById('featuredSub').textContent =
+        `${featuredItems.length} featured product${featuredItems.length!==1?'s':''} · curated for quick decision`;
+}
+
+// ════════════════════════════════════════════════════════════
+// v10 — RECENT ACTIVITY (ticker + social proof)
+// ════════════════════════════════════════════════════════════
+async function loadRecentActivity(){
+    try {
+        const { data, error } = await sb.from('recent_activity_public')
+            .select('*')
+            .limit(20);
+        if(error){
+            console.warn('[loadActivity]', error.message);
+            return;
+        }
+        if(CONFIG.showActivityTicker) renderActivityTicker(data || []);
+        if(CONFIG.showSocialProof)   renderSocialProof(data || []);
+    } catch(e){ console.warn('[loadActivity]', e); }
+}
+
+function renderActivityTicker(data){
+    if(!data.length) return;
+    const items = data.slice(0, 12).map(d => {
+        const t = fmtRelTime(d.created_at);
+        const country = d.client_country || 'A new client';
+        const cnt = d.item_count || 0;
+        return `<span class="ticker-item"><span class="tk-time">${t}</span> · ${esc(country)} sent enquiry${cnt?` (${cnt} items)`:''}</span>`;
+    }).join('');
+    // duplicate to make seamless loop
+    document.getElementById('tickerTrack').innerHTML = items + items;
+    document.getElementById('tickerShell').classList.add('show');
+}
+
+function renderSocialProof(data){
+    const wrap = document.getElementById('socialProofWrap');
+    wrap.style.display = '';
+    document.getElementById('spLastEnq').textContent = data.length ? fmtRelTime(data[0].created_at) : '—';
+    const weekAgo = Date.now() - 7*86400000;
+    const weekCount = data.filter(d => new Date(d.created_at).getTime() > weekAgo).length;
+    document.getElementById('spWeekTotal').textContent = weekCount;
+    document.getElementById('spStockTotal').textContent =
+        totalAvailableCount != null ? totalAvailableCount.toLocaleString('en-US') : '—';
+    document.getElementById('spGradesTotal').textContent =
+        totalUniqueGrades != null ? totalUniqueGrades.toLocaleString('en-US') : '—';
+}
+
+// ════════════════════════════════════════════════════════════
+// v10 — NOTIFY-ME SUBSCRIBE
+// ════════════════════════════════════════════════════════════
+async function submitNotifyMe(){
+    const email = document.getElementById('ntfEmail').value.trim();
+    const cat = document.getElementById('ntfCategory').value;
+    const msg = document.getElementById('ntfMsg');
+    msg.classList.add('show');
+    if(!email || !validEmail(email)){
+        msg.textContent = '✗ Please enter a valid email address.';
+        msg.style.color = '#ffd0d0';
+        return;
+    }
+    const btn = document.getElementById('ntfBtn');
+    btn.disabled = true; btn.textContent = '…';
+    const { error } = await sb.from('subscribers').insert({
+        email,
+        categories: cat ? [cat] : null,
+        source: 'public_catalogue_notify'
+    });
+    btn.disabled = false; btn.textContent = 'Subscribe';
+    if(error){
+        console.error('[notifyMe]', error);
+        msg.textContent = '✗ Couldn\'t subscribe: ' + error.message;
+        msg.style.color = '#ffd0d0';
+        if(/relation .* does not exist/i.test(error.message||'')){
+            msg.textContent = '✗ Subscribers table not set up yet. Please contact us directly.';
+        }
+        return;
+    }
+    msg.textContent = '✓ You\'re subscribed! We\'ll email you when matching new stock arrives.';
+    msg.style.color = '#d0ffd9';
+    document.getElementById('ntfEmail').value = '';
+}
+
+// ════════════════════════════════════════════════════════════
+// v10 — WHATSAPP FAB
+// ════════════════════════════════════════════════════════════
+function setupWhatsApp(){
+    const fab = document.getElementById('whatsappFab');
+    const num = (CONFIG.whatsappNumber||'').replace(/[^\d]/g,'');
+    if(!num || num === '213000000000'){
+        fab.style.display = 'none';
+        return;
+    }
+    fab.href = `https://wa.me/${num}?text=${encodeURIComponent(CONFIG.whatsappMessage||'Hello')}`;
+}
+
+// ════════════════════════════════════════════════════════════
+// v10 — EXIT-INTENT
+// ════════════════════════════════════════════════════════════
+function setupExitIntent(){
+    if(sessionStorage.getItem('pub_exit_shown')) return;
+    let armed = false;
+    setTimeout(()=>{ armed = true; }, 8000);  // wait at least 8s before arming
+
+    document.addEventListener('mouseout', e => {
+        if(!armed) return;
+        if(e.relatedTarget || e.toElement) return;
+        if(e.clientY > 0) return;  // only top edge
+        if(sessionStorage.getItem('pub_exit_shown')) return;
+        // skip if user has items in cart and is engaged
+        sessionStorage.setItem('pub_exit_shown', '1');
+        document.getElementById('exitToast').classList.add('show');
+    });
+}
+function dismissExitIntent(){
+    document.getElementById('exitToast').classList.remove('show');
+}
+
+// ════════════════════════════════════════════════════════════
+// v10 — PDF CATALOG WITH EMAIL GATE
+// ════════════════════════════════════════════════════════════
+function openPdfGate(){
+    document.getElementById('pdfGateModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(()=>document.getElementById('pdfEmail').focus(), 60);
+}
+function closePdfGate(){
+    document.getElementById('pdfGateModal').classList.remove('open');
+    document.body.style.overflow = '';
+    document.getElementById('pdfMsg').innerHTML = '';
+}
+async function downloadFeaturedPdf(){
+    const email = document.getElementById('pdfEmail').value.trim();
+    const name = document.getElementById('pdfName').value.trim();
+    const company = document.getElementById('pdfCompany').value.trim();
+    const msg = document.getElementById('pdfMsg');
+    if(!email || !validEmail(email)){
+        msg.innerHTML = `<div class="banner red"><span>⚠</span><div>Please enter a valid email.</div></div>`;
+        return;
+    }
+    msg.innerHTML = '';
+    const btn = document.getElementById('pdfDlBtn');
+    btn.disabled = true; btn.textContent = 'Generating…';
+
+    // Capture lead — best effort, don't block PDF if fails
+    try {
+        await sb.from('subscribers').insert({
+            email, name: name||null, company: company||null,
+            source: 'pdf_download',
+            notes: 'Downloaded featured products PDF'
+        });
+    } catch(e){ console.warn('[pdf lead]', e); }
+
+    // Generate PDF
+    try {
+        await generatePDF();
+        closePdfGate();
+        showToast('✓ PDF downloaded. Thanks for your interest!', 'success');
+    } catch(e){
+        msg.innerHTML = `<div class="banner red"><span>⚠</span><div>PDF generation failed: ${esc(e.message||e)}</div></div>`;
+    } finally {
+        btn.disabled = false; btn.textContent = '📥 Download PDF';
+    }
+}
+
+async function generatePDF(){
+    if(!window.jspdf){ throw new Error('PDF library not loaded'); }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageW = 210, pageH = 297, marginX = 15;
+    let y = 18;
+
+    // Header
+    doc.setFillColor(20, 86, 160);
+    doc.rect(0, 0, pageW, 26, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold').setFontSize(18);
+    doc.text(CONFIG.companyName, marginX, 14);
+    doc.setFont('helvetica', 'normal').setFontSize(10);
+    doc.text('Featured Stock Catalogue', marginX, 21);
+    doc.setFontSize(9);
+    doc.text(new Date().toLocaleDateString('en-GB', { year:'numeric', month:'long', day:'numeric' }), pageW - marginX, 14, { align:'right' });
+
+    y = 36;
+    doc.setTextColor(20, 20, 20);
+    doc.setFont('helvetica', 'bold').setFontSize(13);
+    doc.text(`${featuredItems.length} Featured Product${featuredItems.length!==1?'s':''}`, marginX, y);
+    y += 8;
+    doc.setFont('helvetica', 'normal').setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text('All items are currently in stock. Contact us for a tailored offer.', marginX, y);
+    y += 10;
+
+    // Table header
+    doc.setDrawColor(220, 220, 220);
+    doc.setFillColor(245, 245, 243);
+    doc.rect(marginX, y, pageW - 2*marginX, 8, 'F');
+    doc.setFont('helvetica', 'bold').setFontSize(8.5);
+    doc.setTextColor(80, 80, 80);
+    doc.text('GRADE',     marginX + 2, y + 5.5);
+    doc.text('TYPE',      marginX + 38, y + 5.5);
+    doc.text('DIMENSIONS', marginX + 70, y + 5.5);
+    doc.text('AVAILABLE', marginX + 115, y + 5.5);
+    doc.text('LEAD TIME', marginX + 145, y + 5.5);
+    doc.text('TAG',       marginX + 175, y + 5.5);
+    y += 9;
+
+    doc.setFont('helvetica', 'normal').setFontSize(9);
+    doc.setTextColor(40, 40, 40);
+
+    for(const item of featuredItems){
+        if(y > pageH - 25){
+            doc.addPage();
+            y = 20;
+        }
+        const cat = item.product_category || inferCategory(item.product_type||'');
+        let d1 = item.thickness, d2 = item.width, d3 = item.length;
+        if(cat === 'profile' && item.section) d1 = item.section;
+        const dim = [d1,d2,d3].filter(Boolean).join(' × ') || '—';
+        const avail = item._quantity_total != null ? `${fmtNum(item._quantity_total)} ${item.unit||''}` : 'In stock';
+        const lt = item.lead_time_days == null ? '—'
+            : item.lead_time_days <= 0 ? 'Ready'
+            : `${item.lead_time_days}d`;
+        const tag = (item.marketing_tag||'').toUpperCase();
+
+        // Truncate to fit
+        const trunc = (s, max) => { s = String(s||''); return s.length > max ? s.slice(0, max-1)+'…' : s; };
+
+        doc.text(trunc(item.grade, 18), marginX + 2, y);
+        doc.text(trunc(item.product_type, 16), marginX + 38, y);
+        doc.text(trunc(dim, 22), marginX + 70, y);
+        doc.text(trunc(avail, 15), marginX + 115, y);
+        doc.text(trunc(lt, 14), marginX + 145, y);
+        if(tag){
+            doc.setFont('helvetica', 'bold').setFontSize(8);
+            doc.setTextColor(204, 51, 51);
+            doc.text(trunc(tag, 12), marginX + 175, y);
+            doc.setFont('helvetica', 'normal').setFontSize(9);
+            doc.setTextColor(40, 40, 40);
+        }
+        y += 7;
+        // separator line
+        doc.setDrawColor(235, 235, 233);
+        doc.line(marginX, y - 2, pageW - marginX, y - 2);
+    }
+
+    // Footer
+    const totalPages = doc.internal.getNumberOfPages();
+    for(let p = 1; p <= totalPages; p++){
+        doc.setPage(p);
+        doc.setFontSize(8).setTextColor(150, 150, 150);
+        doc.text(`${CONFIG.companyName}  ·  Featured Catalogue  ·  Page ${p} of ${totalPages}`, pageW/2, pageH - 8, { align:'center' });
+    }
+
+    const fname = `${CONFIG.companyName.replace(/[^a-z0-9]+/gi,'_')}_featured_${new Date().toISOString().slice(0,10)}.pdf`;
+    doc.save(fname);
+}
+
+
 
 // Build a server-side search query from the active filters.
 // IMPORTANT: this is what protects against DevTools snooping — only matching rows
@@ -1064,6 +1743,9 @@ function renderResults(){
     const noSearchInput = !(f.name || f.thick || f.width || f.length);
     const area = document.getElementById('resultsArea');
 
+    // v10: featured strip visibility tracks "no search active"
+    if(CONFIG.showFeatured) renderFeatured();
+
     // Loading state
     if(isSearching){
         document.getElementById('resultsCount').textContent = 'Searching…';
@@ -1148,7 +1830,16 @@ function renderCard(s, isInCart){
     const totalQty = s._quantity_total != null ? s._quantity_total : s.quantity;
     const qty = totalQty != null && totalQty !== '' ? `<b>${fmtNum(totalQty)}</b> ${esc(s.unit||'ton')} avail.` : 'In stock';
 
-    return `<div class="card ${isInCart?'in-cart':''}" data-id="${esc(s.id)}">
+    // Marketing badge
+    const tag = (s.marketing_tag || '').toUpperCase();
+    const badge = TAG_STYLES[tag]
+        ? `<div class="mkt-badge tag-${tag}">${TAG_STYLES[tag].icon} ${TAG_STYLES[tag].label}</div>`
+        : '';
+    const ltHtml = leadTimeDisplay(s.lead_time_days);
+    const featuredCls = s.featured ? ' featured-card' : '';
+
+    return `<div class="card${featuredCls} ${isInCart?'in-cart':''}" data-id="${esc(s.id)}">
+        ${badge}
         <div class="card-top">
             <span class="cat-badge ${cat}">${CAT_LABELS[cat]||CAT_LABELS.other}</span>
         </div>
@@ -1158,6 +1849,7 @@ function renderCard(s, isInCart){
             ${s.alternatives ? `<div class="card-alts">≈ ${esc(s.alternatives)}</div>` : ''}
         </div>
         <div class="card-dims">${dims || '<span style="font-size:11px;color:var(--text4)">—</span>'}</div>
+        ${ltHtml ? `<div style="margin-top:-4px">${ltHtml}</div>` : ''}
         <div class="card-foot">
             <span class="qty-info">${qty}</span>
             <button class="add-btn ${isInCart?'added':''}" onclick="toggleStockItem('${esc(s.id)}')">${isInCart ? 'Added' : '+ Add'}</button>
@@ -2079,8 +2771,249 @@ async function pushToCRM(enquiryId){
 }
 
 // ════════════════════════════════════════════════════════════
-// TOAST
+// v10 — ADMIN: MARKETING PANEL
 // ════════════════════════════════════════════════════════════
+let mkStockCache = [];
+let mkSubsCache = [];
+let mkCurrentTab = 'featured';
+
+function openMarketing(){
+    if(!adminUser) return;
+    document.getElementById('marketingModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    switchMkTab('featured');
+}
+function closeMarketing(){
+    document.getElementById('marketingModal').classList.remove('open');
+    document.body.style.overflow = '';
+}
+function switchMkTab(tab){
+    mkCurrentTab = tab;
+    ['featured','banner','subs'].forEach(t => {
+        document.getElementById('mkTab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active', t === tab);
+        document.getElementById('mkPane'+t.charAt(0).toUpperCase()+t.slice(1)).style.display = (t === tab) ? '' : 'none';
+    });
+    document.getElementById('mkSaveBtn').style.display = tab === 'banner' ? '' : 'none';
+    document.getElementById('mkClearBannerBtn').style.display = tab === 'banner' ? '' : 'none';
+
+    if(tab === 'featured') loadMkStock();
+    if(tab === 'banner') loadMkBanner();
+    if(tab === 'subs') loadMkSubscribers();
+}
+
+// ── Featured & Tags tab ──
+async function loadMkStock(){
+    const list = document.getElementById('mkStockList');
+    list.innerHTML = `<div class="loading"><div class="spinner"></div><div>Loading stock…</div></div>`;
+    try {
+        // Fetch all stock (admin has full read access). Limit to recent 1000 for perf.
+        const cols = (stockColumns || 'id,grade,product_type,thickness,width,length,quantity,unit') + ',created_at';
+        const safeCols = cols.split(',').filter(c => c.trim()).join(',');
+        const { data, error } = await sb.from('stock')
+            .select(safeCols)
+            .order('created_at', { ascending: false })
+            .limit(1000);
+        if(error){
+            // try without created_at
+            const { data: d2, error: e2 } = await sb.from('stock').select(stockColumns||'id,grade,product_type,thickness,width,length').limit(1000);
+            if(e2){ list.innerHTML = `<div style="padding:20px;color:var(--red-text);font-size:12px">${esc(e2.message)}</div>`; return; }
+            mkStockCache = d2 || [];
+        } else {
+            mkStockCache = data || [];
+        }
+        renderMkStockList();
+    } catch(e){
+        list.innerHTML = `<div style="padding:20px;color:var(--red-text);font-size:12px">${esc(e.message||e)}</div>`;
+    }
+}
+function renderMkStockList(){
+    const q = (document.getElementById('mkStockSearch').value||'').toLowerCase().trim();
+    let items = mkStockCache;
+    if(q){
+        items = items.filter(s => {
+            const blob = [s.grade, s.product_type, s.thickness, s.width, s.length].map(x => String(x||'').toLowerCase()).join(' ');
+            return blob.includes(q);
+        });
+    }
+    items = items.slice(0, 250); // cap render
+
+    const list = document.getElementById('mkStockList');
+    if(!items.length){
+        list.innerHTML = `<div class="mk-empty-tab"><div class="icon">🔍</div><h4>No stock found</h4><p>${q?'Try a different search term.':'No items in your stock table yet.'}</p></div>`;
+        return;
+    }
+
+    list.innerHTML = items.map(s => {
+        const dim = [s.thickness, s.width, s.length].filter(Boolean).join(' × ') || '—';
+        const tag = s.marketing_tag || '';
+        const lt = s.lead_time_days != null ? s.lead_time_days : '';
+        return `<div class="mk-stock-row ${s.featured?'featured':''}" data-id="${esc(s.id)}">
+            <div class="mk-stock-info">
+                <div class="mk-stock-grade">${esc(s.grade||'(no grade)')}</div>
+                <div class="mk-stock-meta">${esc(s.product_type||'')} · ${esc(dim)} · ${fmtNum(s.quantity)} ${esc(s.unit||'')}</div>
+            </div>
+            <button class="mk-toggle ${s.featured?'on':''}" onclick="toggleFeatured('${esc(s.id)}')" title="Show on landing page">${s.featured?'★':'☆'}</button>
+            <select class="mk-tag-select" onchange="setMkTag('${esc(s.id)}',this.value)" title="Marketing tag">
+                <option value="">No tag</option>
+                <option ${tag==='HOT'?'selected':''}>HOT</option>
+                <option ${tag==='URGENT'?'selected':''}>URGENT</option>
+                <option ${tag==='NEW'?'selected':''}>NEW</option>
+                <option ${tag==='CLEARANCE'?'selected':''}>CLEARANCE</option>
+                <option ${tag==='IMMEDIATE'?'selected':''}>IMMEDIATE</option>
+            </select>
+            <input class="mk-lead-input" type="number" min="0" max="999" placeholder="Days" value="${esc(lt)}" onchange="setMkLeadTime('${esc(s.id)}',this.value)" title="Lead time in days (0 = ready)">
+        </div>`;
+    }).join('');
+}
+async function toggleFeatured(id){
+    const item = mkStockCache.find(s => s.id === id);
+    if(!item) return;
+    const newVal = !item.featured;
+    const { error } = await sb.from('stock').update({ featured: newVal }).eq('id', id);
+    if(error){ showToast('Update failed: ' + error.message, 'error'); return; }
+    item.featured = newVal;
+    renderMkStockList();
+    showToast(newVal ? '✓ Added to featured' : '✓ Removed from featured', 'success');
+    // refresh public-side featured list
+    if(CONFIG.showFeatured) loadFeaturedProducts();
+}
+async function setMkTag(id, tag){
+    const val = tag || null;
+    const { error } = await sb.from('stock').update({ marketing_tag: val }).eq('id', id);
+    if(error){ showToast('Update failed: ' + error.message, 'error'); return; }
+    const item = mkStockCache.find(s => s.id === id);
+    if(item) item.marketing_tag = val;
+    showToast(val ? `✓ Tagged ${val}` : '✓ Tag removed', 'success');
+    if(CONFIG.showFeatured) loadFeaturedProducts();
+}
+async function setMkLeadTime(id, val){
+    const num = val === '' ? null : Math.max(0, Math.min(999, Math.floor(Number(val))));
+    if(val !== '' && isNaN(num)){ showToast('Enter a number 0–999', 'error'); return; }
+    const { error } = await sb.from('stock').update({ lead_time_days: num }).eq('id', id);
+    if(error){ showToast('Update failed: ' + error.message, 'error'); return; }
+    const item = mkStockCache.find(s => s.id === id);
+    if(item) item.lead_time_days = num;
+    showToast('✓ Lead time updated', 'success');
+    if(CONFIG.showFeatured) loadFeaturedProducts();
+}
+
+// ── Banner tab ──
+async function loadMkBanner(){
+    updateBannerPreview();
+    const { data, error } = await sb.from('promo_banners')
+        .select('*').eq('active', true)
+        .order('created_at', { ascending: false }).limit(1);
+    if(error){
+        document.getElementById('mkBannerMsg').innerHTML = `<div class="banner red"><span>⚠</span><div>${esc(error.message)}</div></div>`;
+        return;
+    }
+    const b = (data||[])[0];
+    if(b){
+        document.getElementById('mkBnMsg').value = b.message || '';
+        document.getElementById('mkBnCtaText').value = b.cta_text || '';
+        document.getElementById('mkBnCtaUrl').value = b.cta_url || '';
+        document.getElementById('mkBnColor').value = b.color || 'blue';
+        if(b.expires_at){
+            const dt = new Date(b.expires_at);
+            const tzo = dt.getTimezoneOffset() * 60000;
+            document.getElementById('mkBnExpires').value = new Date(dt - tzo).toISOString().slice(0,16);
+        }
+        updateBannerPreview();
+    }
+}
+function updateBannerPreview(){
+    const msg = document.getElementById('mkBnMsg').value.trim();
+    const ctaT = document.getElementById('mkBnCtaText').value.trim();
+    const color = document.getElementById('mkBnColor').value;
+    const prev = document.getElementById('mkBannerPreview');
+    prev.className = 'mk-banner-preview color-' + color;
+    prev.innerHTML = msg
+        ? `<span>${esc(msg)}</span>${ctaT?` <span style="background:rgba(255,255,255,.2);padding:3px 10px;border-radius:99px;margin-left:8px;font-size:11px;font-weight:700">${esc(ctaT)}</span>`:''}`
+        : '<span style="opacity:.5">Banner preview will appear here</span>';
+}
+async function saveBanner(){
+    const message = document.getElementById('mkBnMsg').value.trim();
+    if(!message){ showToast('Banner message is required', 'error'); return; }
+    const cta_text = document.getElementById('mkBnCtaText').value.trim() || null;
+    const cta_url = document.getElementById('mkBnCtaUrl').value.trim() || null;
+    const color = document.getElementById('mkBnColor').value || 'blue';
+    const expRaw = document.getElementById('mkBnExpires').value;
+    const expires_at = expRaw ? new Date(expRaw).toISOString() : null;
+
+    // Deactivate any existing active banners
+    await sb.from('promo_banners').update({ active: false }).eq('active', true);
+    const { error } = await sb.from('promo_banners').insert({ message, cta_text, cta_url, color, active: true, expires_at });
+    if(error){ showToast('Save failed: ' + error.message, 'error'); return; }
+    showToast('✓ Banner published', 'success');
+    // Reload public banner so admin sees it live
+    localStorage.removeItem('pub_banner_dismissed_id');
+    loadPromoBanner();
+}
+async function clearBanner(){
+    if(!confirm('Hide the active banner?')) return;
+    const { error } = await sb.from('promo_banners').update({ active: false }).eq('active', true);
+    if(error){ showToast('Failed: ' + error.message, 'error'); return; }
+    document.getElementById('promoBanner').classList.remove('show');
+    activeBanner = null;
+    ['mkBnMsg','mkBnCtaText','mkBnCtaUrl','mkBnExpires'].forEach(id => document.getElementById(id).value = '');
+    updateBannerPreview();
+    showToast('✓ Banner hidden', 'success');
+}
+
+// ── Subscribers tab ──
+async function loadMkSubscribers(){
+    const list = document.getElementById('mkSubsList');
+    list.innerHTML = `<div class="loading"><div class="spinner"></div><div>Loading…</div></div>`;
+    const { data, error } = await sb.from('subscribers')
+        .select('*').order('created_at', { ascending: false }).limit(500);
+    if(error){
+        list.innerHTML = `<div style="padding:20px;color:var(--red-text);font-size:12px">${esc(error.message)}</div>`;
+        return;
+    }
+    mkSubsCache = data || [];
+    document.getElementById('mkSubsCount').textContent = `${mkSubsCache.length} subscriber${mkSubsCache.length!==1?'s':''}`;
+    if(!mkSubsCache.length){
+        list.innerHTML = `<div class="mk-empty-tab"><div class="icon">📭</div><h4>No subscribers yet</h4><p>People who sign up via the "notify me" form or download the PDF catalog will appear here.</p></div>`;
+        return;
+    }
+    list.innerHTML = mkSubsCache.map(s => {
+        const cats = (s.categories || []).map(c => `<span class="mk-sub-cat">${esc(c)}</span>`).join('');
+        return `<div class="mk-sub-row">
+            <div class="mk-sub-info">
+                <div class="mk-sub-name">${esc(s.name||s.email)}</div>
+                <div class="mk-sub-email">${esc(s.email)}${s.company?` · ${esc(s.company)}`:''}</div>
+                <div class="mk-sub-meta">${fmtRelTime(s.created_at)} · ${esc(s.source||'')}${s.notes?` · ${esc(s.notes)}`:''}</div>
+            </div>
+            <div class="mk-sub-cats">${cats}</div>
+            <button class="ci-rm" onclick="deleteSubscriber('${s.id}')" title="Delete">×</button>
+        </div>`;
+    }).join('');
+}
+async function deleteSubscriber(id){
+    if(!confirm('Delete this subscriber?')) return;
+    const { error } = await sb.from('subscribers').delete().eq('id', id);
+    if(error){ showToast('Failed: ' + error.message, 'error'); return; }
+    mkSubsCache = mkSubsCache.filter(s => s.id !== id);
+    loadMkSubscribers();
+}
+function exportSubscribersCsv(){
+    if(!mkSubsCache.length){ showToast('No subscribers to export', 'info'); return; }
+    const rows = [['date','email','name','company','categories','grades_of_interest','notes','source']];
+    mkSubsCache.forEach(s => rows.push([
+        s.created_at, s.email, s.name||'', s.company||'',
+        (s.categories||[]).join('|'), s.grades_of_interest||'', s.notes||'', s.source||''
+    ]));
+    const csv = rows.map(r => r.map(c => `"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `subscribers_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('✓ CSV downloaded', 'success');
+}
+
+
 function showToast(msg, kind){
     const wrap = document.getElementById('toastWrap');
     const t = document.createElement('div');
@@ -2118,6 +3051,10 @@ document.addEventListener('keydown', e => {
     if(e.key !== 'Escape') return;
     if(document.getElementById('sqlModal').classList.contains('open')){
         document.getElementById('sqlModal').classList.remove('open');
+    } else if(document.getElementById('pdfGateModal').classList.contains('open')){
+        closePdfGate();
+    } else if(document.getElementById('marketingModal').classList.contains('open')){
+        closeMarketing();
     } else if(document.getElementById('loginModal').classList.contains('open')){
         closeAdminLogin();
     } else if(document.getElementById('inboxModal').classList.contains('open')){
