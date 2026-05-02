@@ -358,6 +358,18 @@ a:hover{text-decoration:underline}
 .login-modal{max-width:380px}
 .login-modal .modal-bd{padding:22px 22px 4px}
 
+/* ── Toast ── */
+.toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:300;pointer-events:none;max-width:calc(100vw - 48px)}
+.toast{background:var(--green);color:#fff;padding:11px 16px;border-radius:9px;font-size:13px;font-weight:600;box-shadow:var(--shadow-3);display:flex;align-items:center;gap:8px;animation:toastIn .3s ease-out,toastOut .35s 3.5s forwards;pointer-events:auto;max-width:380px;line-height:1.4}
+.toast.error{background:var(--red)}
+.toast.info{background:var(--blue)}
+.toast a{color:#fff;text-decoration:underline;font-weight:700}
+@keyframes toastIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateY(16px)}}
+
+/* ── In-CRM badge ── */
+.in-crm-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green);text-transform:uppercase;letter-spacing:.4px;font-family:var(--mono);margin-left:5px}
+
 </style>
 </head>
 <body>
@@ -398,8 +410,8 @@ a:hover{text-decoration:underline}
     <p>Browse our live stock of plates, coils, pipes, profiles and bars. Add what you need to your enquiry — including items you're sourcing — and we'll get back to you with a tailored offer.</p>
     <div class="hero-stats">
         <div><b id="statTotal">—</b>items in stock</div>
-        <div><b id="statCats">—</b>product categories</div>
         <div><b id="statGrades">—</b>unique grades</div>
+        <div style="font-family:var(--sans);font-size:13px;color:var(--text2);font-weight:500">— search to see them</div>
     </div>
 </section>
 
@@ -446,7 +458,7 @@ a:hover{text-decoration:underline}
     <span style="margin:0 6px;color:var(--text4)">·</span>
     <a href="#admin" id="teamLoginLink" onclick="openAdminLogin();return false">Team login</a>
     <span style="margin:0 6px;color:var(--text4)">·</span>
-    <span style="color:var(--text4);font-size:10px" id="versionLabel">v5</span>
+    <span style="color:var(--text4);font-size:10px" id="versionLabel">v9</span>
 </footer>
 
 <!-- ─── FLOATING CART (mobile) ─── -->
@@ -655,6 +667,9 @@ WHERE tablename = 'client_enquiries' ORDER BY policyname;</pre>
     </div>
 </div>
 
+<!-- Toast container -->
+<div class="toast-wrap" id="toastWrap"></div>
+
 <script>
 // ════════════════════════════════════════════════════════════
 // ⚙️ CONFIG — edit these to brand the page
@@ -674,14 +689,15 @@ document.title = CONFIG.companyName + ' — Stock Catalogue & Enquiry';
 const sb = supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
 
 // Version stamp — change every release so you can tell which file is loaded
-const APP_VERSION = 'public-catalog v5 (fixed insert + stock probe)';
+const APP_VERSION = 'public-catalog v9 (grades stat + smarter trigger)';
 console.log('%c' + APP_VERSION, 'color:#1456a0;font-weight:bold;font-size:13px');
 console.log('If you see a different version after refresh, your browser is caching. Do a hard refresh (Ctrl+Shift+R).');
 
 // ════════════════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════════════════
-let allItems = [];
+let allItems = [];           // raw stock rows (one per lot)
+let dedupedItems = [];       // grouped by spec — one entry per unique product
 let cart = { stock: [], custom: [] };   // stock = items from catalogue, custom = client-added items
 let currentStep = 1;
 let currentTab = 'stock';
@@ -734,6 +750,53 @@ function inferCategory(productType){
     return 'other';
 }
 
+// Group physical lots into one card per unique product spec.
+// Clients see one entry; admin can later see the underlying lots/heat numbers.
+function dedupeStock(items){
+    const norm = v => (v == null ? '' : String(v).trim().toLowerCase());
+    const groups = new Map();
+    for(const s of items){
+        const cat = s.product_category || inferCategory(s.product_type || '');
+        const key = [
+            norm(s.grade),
+            norm(s.product_type),
+            cat,
+            norm(cat === 'profile' ? (s.section || s.thickness) : s.thickness),
+            norm(s.width),
+            norm(s.length),
+            norm(s.unit || 'ton')
+        ].join('|');
+
+        if(!groups.has(key)){
+            groups.set(key, {
+                // representative card data
+                id: s.id, // first underlying id (kept for backwards-compat with single stock_id)
+                grade: s.grade,
+                product_type: s.product_type,
+                product_category: cat,
+                thickness: s.thickness,
+                section: s.section,
+                width: s.width,
+                length: s.length,
+                unit: s.unit || 'ton',
+                alternatives: s.alternatives,
+                // aggregated
+                _stock_ids: [s.id],
+                _quantity_total: Number(s.quantity) || 0,
+                _lot_count: 1
+            });
+        } else {
+            const g = groups.get(key);
+            g._stock_ids.push(s.id);
+            g._quantity_total += Number(s.quantity) || 0;
+            g._lot_count += 1;
+            // pick the longest "alternatives" string seen, in case lots have different metadata
+            if((s.alternatives || '').length > (g.alternatives || '').length) g.alternatives = s.alternatives;
+        }
+    }
+    return [...groups.values()];
+}
+
 // ════════════════════════════════════════════════════════════
 // LOAD STOCK
 // ════════════════════════════════════════════════════════════
@@ -748,25 +811,30 @@ const STOCK_COLUMN_TIERS = [
     'id,product_type,grade,thickness,width,length,quantity,unit'
 ];
 
-async function loadStock(){
-    let lastError = null;
-    let columnsUsed = null;
+let stockColumns = null;            // which column set works on this DB
+let totalAvailableCount = null;     // for hero stat (fetched once, no row data)
+let totalUniqueGrades = null;       // for hero stat
+let hasSearched = false;            // becomes true after the first non-empty search
+let isSearching = false;
 
-    // Probe each tier — try ALL of them, log every attempt, never give up early
+// On page load: probe columns + get total count. Do NOT fetch row data.
+async function initStock(){
+    let lastError = null;
+
+    // Probe each tier — small head request, no row data exposed
     for(let i = 0; i < STOCK_COLUMN_TIERS.length; i++){
         const cols = STOCK_COLUMN_TIERS[i];
-        const { data, error } = await sb.from('stock').select(cols).limit(1);
+        const { error } = await sb.from('stock').select(cols).limit(1);
         if(!error){
-            columnsUsed = cols;
-            console.log('[loadStock] ✓ tier ' + (i+1) + ' works with columns:', cols);
+            stockColumns = cols;
+            console.log('[initStock] ✓ tier ' + (i+1) + ' columns:', cols);
             break;
         }
         lastError = error;
-        console.warn('[loadStock] tier ' + (i+1) + ' failed:', error.message || error, '(code:', error.code+')');
+        console.warn('[initStock] tier ' + (i+1) + ' failed:', error.message || error, '(code:', error.code+')');
     }
 
-    if(!columnsUsed){
-        // Could be RLS blocking, table missing, or something else — show what we know
+    if(!stockColumns){
         const e = lastError || { message:'Unknown error' };
         const msg = [e.message, e.details, e.hint, e.code].filter(Boolean).join(' · ');
         const isPerms = /permission|policy|denied|jwt|rls/i.test(msg);
@@ -774,52 +842,155 @@ async function loadStock(){
         document.getElementById('resultsArea').innerHTML = `
             <div class="empty">
                 <div class="icon">${isPerms ? '🔒' : isMissing ? '📭' : '⚠'}</div>
-                <h3>${isPerms ? 'Stock not yet readable' : isMissing ? 'Stock table not found' : "Couldn't load stock"}</h3>
+                <h3>${isPerms ? 'Stock not yet readable' : isMissing ? 'Stock table not found' : "Couldn't connect"}</h3>
                 <p>${isPerms
                     ? 'Anonymous read access on the <code>stock</code> table needs to be enabled in Supabase. <a href="#" onclick="document.getElementById(\'sqlModal\').classList.add(\'open\');return false">Show setup SQL</a>.'
-                    : isMissing
-                    ? 'The <code>stock</code> table doesn\'t exist in this Supabase project.'
-                    : 'There was a problem fetching the catalogue.'}</p>
+                    : 'There was a problem connecting to the catalogue.'}</p>
                 <p style="font-family:var(--mono);font-size:11px;color:var(--text4);margin-top:14px;word-break:break-word">${esc(msg)}</p>
             </div>`;
-        console.error('Stock load failed:', e);
         return;
     }
 
-    // Now paginate the full load with the working column set
+    // Fetch only the count, no row data (head:true means no rows returned)
     try {
-        let all = [], page = 0, size = 1000;
-        while(true){
-            const from = page * size, to = from + size - 1;
-            const { data, error } = await sb.from('stock').select(columnsUsed).range(from, to);
-            if(error) throw error;
+        const { count } = await sb.from('stock')
+            .select('id', { count: 'exact', head: true })
+            .or('available.is.null,available.neq.no');
+        totalAvailableCount = count || 0;
+        console.log('[initStock] total available:', totalAvailableCount);
+    } catch(e) {
+        console.warn('[initStock] count failed:', e);
+        totalAvailableCount = 0;
+    }
+
+    // Fetch only the grade column to count distinct grades.
+    // This is a marketing stat — exposing the names of standard steel grades
+    // we stock doesn't reveal anything sensitive (no suppliers, prices, or qty).
+    try {
+        const grades = new Set();
+        let page = 0;
+        const size = 1000;
+        while(page < 25){  // safety cap
+            const { data, error } = await sb.from('stock')
+                .select('grade')
+                .or('available.is.null,available.neq.no')
+                .range(page * size, page * size + size - 1);
+            if(error) break;
             if(!data || !data.length) break;
-            all = all.concat(data);
+            data.forEach(r => { if(r.grade) grades.add(r.grade.trim()); });
             if(data.length < size) break;
             page++;
         }
-        // Only show items that are explicitly available (or have no flag, i.e. assumed available)
-        allItems = all.filter(s => (s.available || 'yes') !== 'no');
-        renderStats();
+        totalUniqueGrades = grades.size;
+        console.log('[initStock] unique grades:', totalUniqueGrades);
+    } catch(e) {
+        console.warn('[initStock] grades failed:', e);
+        totalUniqueGrades = null;
+    }
+
+    renderStats();
+    renderResults();   // will show the search-prompt empty state
+}
+
+// Build a server-side search query from the active filters.
+// IMPORTANT: this is what protects against DevTools snooping — only matching rows
+// ever leave the database, so visitors can't dump the whole catalog.
+async function searchStock(){
+    if(!stockColumns){ return; }
+
+    const f = getFilters();
+    // Category alone is just a refinement layer — searching requires at least
+    // a grade/text input or dimensions to actually fire a query.
+    const noSearchInput = !(f.name || f.thick || f.width || f.length);
+
+    if(noSearchInput){
+        allItems = [];
+        dedupedItems = [];
+        hasSearched = false;
         renderResults();
-    } catch(e){
-        console.error(e);
-        const msg = [e.message, e.details, e.hint].filter(Boolean).join(' · ');
+        return;
+    }
+
+    isSearching = true;
+    renderResults();
+
+    const hasCategory = stockColumns.includes('product_category');
+    const hasAlternatives = stockColumns.includes('alternatives');
+    const hasSection = stockColumns.includes('section');
+
+    let q = sb.from('stock').select(stockColumns);
+
+    // Text search across grade + product_type (+ alternatives if available, + section if available)
+    if(f.name){
+        const safe = f.name.replace(/[%_,()]/g, ' ').trim();
+        if(safe){
+            const like = '*' + safe + '*';
+            const orParts = [`grade.ilike.${like}`, `product_type.ilike.${like}`];
+            if(hasAlternatives) orParts.push(`alternatives.ilike.${like}`);
+            if(hasSection)      orParts.push(`section.ilike.${like}`);
+            q = q.or(orParts.join(','));
+        }
+    }
+
+    // Category filter — server-side if column exists, otherwise we'll filter client-side after fetch
+    if(f.cat && hasCategory){
+        q = q.eq('product_category', f.cat);
+    }
+
+    // Dimension filters with the same tolerances as before
+    if(f.thick){
+        const t = Number(f.thick);
+        if(!isNaN(t)) q = q.gte('thickness', t - 1).lte('thickness', t + 1);
+    }
+    if(f.width){
+        const w = Number(f.width);
+        if(!isNaN(w)) q = q.gte('width', w - 50).lte('width', w + 50);
+    }
+    if(f.length){
+        const l = Number(f.length);
+        if(!isNaN(l)) q = q.gte('length', l - 100).lte('length', l + 100);
+    }
+
+    // Only available items (treat NULL as available)
+    q = q.or('available.is.null,available.neq.no');
+
+    // Cap result size — searches stay snappy and scope-limited
+    q = q.limit(500);
+
+    const { data, error } = await q;
+    isSearching = false;
+    hasSearched = true;
+
+    if(error){
+        console.error('[searchStock] error:', error);
+        const msg = [error.message, error.details, error.hint, error.code].filter(Boolean).join(' · ');
         document.getElementById('resultsArea').innerHTML = `
             <div class="empty">
                 <div class="icon">⚠</div>
-                <h3>Couldn't load stock</h3>
-                <p style="font-family:var(--mono);font-size:11px;word-break:break-word">${esc(msg||e)}</p>
+                <h3>Search failed</h3>
+                <p style="font-family:var(--mono);font-size:11px;word-break:break-word">${esc(msg)}</p>
             </div>`;
+        return;
     }
+
+    let rows = data || [];
+
+    // Client-side category fallback if DB has no product_category column
+    if(f.cat && !hasCategory){
+        rows = rows.filter(s => inferCategory(s.product_type||'') === f.cat);
+    }
+
+    allItems = rows;
+    dedupedItems = dedupeStock(rows);
+    console.log('[searchStock] ' + rows.length + ' lots → ' + dedupedItems.length + ' products');
+    renderResults();
 }
 
 function renderStats(){
-    document.getElementById('statTotal').textContent = allItems.length.toLocaleString('en-US');
-    const cats = new Set(allItems.map(s => s.product_category || inferCategory(s.product_type||'')));
-    document.getElementById('statCats').textContent = cats.size || '—';
-    const grades = new Set(allItems.map(s => (s.grade||'').trim()).filter(Boolean));
-    document.getElementById('statGrades').textContent = grades.size || '—';
+    document.getElementById('statTotal').textContent =
+        totalAvailableCount != null ? totalAvailableCount.toLocaleString('en-US') : '—';
+    document.getElementById('statGrades').textContent =
+        totalUniqueGrades != null ? totalUniqueGrades.toLocaleString('en-US') : '—';
 }
 
 // ════════════════════════════════════════════════════════════
@@ -839,7 +1010,7 @@ function clearFilters(){
     ['fName','fThick','fWidth','fLength'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('fCategory').value = '';
     updateDimLabels();
-    renderResults();
+    searchStock();
 }
 function updateDimLabels(){
     const cat = document.getElementById('fCategory').value || 'flat';
@@ -852,14 +1023,14 @@ function updateDimLabels(){
 let filterDebounce = null;
 function onFilterChange(){
     clearTimeout(filterDebounce);
-    filterDebounce = setTimeout(renderResults, 120);
+    filterDebounce = setTimeout(searchStock, 280);
 }
 
 function filterItems(){
     const f = getFilters();
     const n = f.name.toLowerCase();
     const nNorm = n.replace(/[-\s]/g,'');
-    return allItems.filter(s => {
+    return dedupedItems.filter(s => {
         if(f.cat){
             const sCat = s.product_category || inferCategory(s.product_type||'');
             if(sCat !== f.cat) return false;
@@ -890,28 +1061,66 @@ function sortItems(items, sortKey){
 // ════════════════════════════════════════════════════════════
 function renderResults(){
     const f = getFilters();
+    const noSearchInput = !(f.name || f.thick || f.width || f.length);
+    const area = document.getElementById('resultsArea');
+
+    // Loading state
+    if(isSearching){
+        document.getElementById('resultsCount').textContent = 'Searching…';
+        area.innerHTML = `<div class="loading"><div class="spinner"></div><div>Searching…</div></div>`;
+        return;
+    }
+
+    // No grade/dimension input yet — show the search prompt
+    if(noSearchInput){
+        const catLabels = {
+            flat: '📐 Flat / Plate / Coil', pipe: '⭕ Pipe / Tube',
+            profile: '🔷 Profile / Beam', bar: '🔵 Bar / Rod', other: '📦 Other'
+        };
+        const hasCatOnly = !!f.cat;
+        document.getElementById('resultsCount').textContent = hasCatOnly
+            ? 'Filter set — now enter a grade or dimensions'
+            : 'Type a grade, type, or dimensions';
+
+        area.innerHTML = `
+            <div class="empty">
+                <div class="icon">🔎</div>
+                <h3>${hasCatOnly ? `You're looking at <span style="color:var(--blue)">${catLabels[f.cat]||f.cat}</span>` : "Tell us what you're looking for"}</h3>
+                <p>${hasCatOnly
+                    ? 'Now enter a <b>grade</b> (e.g. <span style="font-family:var(--mono)">S235JR</span>) or <b>dimensions</b> to see matching items.'
+                    : 'Search by grade (e.g. <span style="font-family:var(--mono)">S235JR</span>, <span style="font-family:var(--mono)">API 5L X52</span>), product type (<span style="font-family:var(--mono)">plate</span>, <span style="font-family:var(--mono)">pipe</span>, <span style="font-family:var(--mono)">beam</span>), or enter dimensions to find matching items.'}</p>
+                <p style="font-size:12px;color:var(--text4);margin-top:14px">Don't see what you need? <a href="#" onclick="openCart();switchTab('research');showCustomForm();return false">Submit a sourcing request →</a></p>
+            </div>`;
+        return;
+    }
+
     let items = filterItems();
-    items = sortItems(items, f.sort);
+    items = [...items].sort((a,b) => {
+        let av, bv;
+        if(f.sort === 'quantity'){ av = a._quantity_total||0; bv = b._quantity_total||0; return bv - av; }
+        av = a[f.sort] ?? ''; bv = b[f.sort] ?? '';
+        if(!isNaN(Number(av)) && !isNaN(Number(bv)) && av !== '' && bv !== '') return Number(bv) - Number(av);
+        return String(av).localeCompare(String(bv));
+    });
 
     document.getElementById('resultsCount').textContent =
-        items.length === allItems.length
-            ? `${items.length} items`
-            : `${items.length} of ${allItems.length} items`;
+        items.length ? `${items.length} product${items.length!==1?'s':''} match` : 'No matches';
 
-    const area = document.getElementById('resultsArea');
     if(!items.length){
         area.innerHTML = `
             <div class="empty">
                 <div class="icon">🔍</div>
                 <h3>No matches</h3>
-                <p>Try widening your dimensions or clearing filters. You can also list the item in your enquiry as a sourcing request.</p>
+                <p>Try widening your dimensions, simplifying the search term, or clearing filters. You can also list the item in your enquiry as a sourcing request.</p>
                 <button class="btn btn-purple btn-sm" style="margin-top:14px" onclick="openCart();switchTab('research');showCustomForm();">+ Add as sourcing request</button>
             </div>`;
         return;
     }
 
-    const inCart = new Set(cart.stock.map(c => c.stock_id));
-    area.innerHTML = `<div class="grid">${items.map(s => renderCard(s, inCart.has(s.id))).join('')}</div>`;
+    // A card is "in cart" if any of its underlying lot ids are referenced by cart items
+    const cartIds = new Set();
+    cart.stock.forEach(c => { (c.stock_ids || [c.stock_id]).forEach(id => cartIds.add(id)); });
+    area.innerHTML = `<div class="grid">${items.map(s => renderCard(s, s._stock_ids.some(id => cartIds.has(id)))).join('')}</div>`;
 }
 
 function renderCard(s, isInCart){
@@ -936,7 +1145,8 @@ function renderCard(s, isInCart){
         d3 ? `<span class="dim-chip"><span class="lbl">${lbls[2]}</span><span class="val">${esc(d3)}</span></span>` : '',
     ].filter(Boolean).join('');
 
-    const qty = s.quantity != null && s.quantity !== '' ? `<b>${fmtNum(s.quantity)}</b> ${esc(s.unit||'ton')} avail.` : 'In stock';
+    const totalQty = s._quantity_total != null ? s._quantity_total : s.quantity;
+    const qty = totalQty != null && totalQty !== '' ? `<b>${fmtNum(totalQty)}</b> ${esc(s.unit||'ton')} avail.` : 'In stock';
 
     return `<div class="card ${isInCart?'in-cart':''}" data-id="${esc(s.id)}">
         <div class="card-top">
@@ -986,11 +1196,13 @@ function toggleStockItem(id){
     if(idx >= 0){
         cart.stock.splice(idx, 1);
     } else {
-        const item = allItems.find(s => s.id === id);
+        const item = dedupedItems.find(s => s.id === id);
         if(!item) return;
         const cat = item.product_category || inferCategory(item.product_type||'');
         cart.stock.push({
-            stock_id: id,
+            stock_id: id,                            // primary lot id (kept for backwards-compat)
+            stock_ids: item._stock_ids.slice(),      // ALL underlying lot ids — admin uses these to look up heat numbers
+            lot_count: item._lot_count || 1,
             cart_id: uid(),
             grade: item.grade || '',
             product_type: item.product_type || '',
@@ -1000,7 +1212,7 @@ function toggleStockItem(id){
             width: item.width ?? '',
             length: item.length ?? '',
             unit: item.unit || 'ton',
-            avail_qty: item.quantity,
+            avail_qty: item._quantity_total,
             requested_qty: '',
         });
     }
@@ -1272,6 +1484,8 @@ async function submitEnquiry(){
         ...cart.stock.map(c => ({
             source: 'stock',
             stock_id: c.stock_id,
+            stock_ids: c.stock_ids || [c.stock_id],   // all underlying lot IDs
+            lot_count: c.lot_count || 1,
             grade: c.grade,
             product_type: c.product_type,
             product_category: c.product_category,
@@ -1502,6 +1716,7 @@ function renderInboxList(){
         const status = e.status || 'new';
         const isUnread = status === 'new';
         const itct = e.item_count || (e.items ? e.items.length : 0);
+        const inCRM = !!e.lead_id;
         return `<div class="inbox-row ${isUnread?'unread':''} ${selectedEnqId===e.id?'active':''}" onclick="openEnquiry('${e.id}')">
             <div class="ir-line1">
                 <span class="ir-name">${esc(e.client_name||'(no name)')}</span>
@@ -1511,12 +1726,13 @@ function renderInboxList(){
             <div class="ir-line3">
                 <span class="ir-status ${status}">${status}</span>
                 <span class="ir-itct">${itct} item${itct!==1?'s':''}</span>
+                ${inCRM ? `<span class="in-crm-badge">📊 In CRM</span>` : ''}
             </div>
         </div>`;
     }).join('');
 }
 
-function openEnquiry(id){
+async function openEnquiry(id){
     selectedEnqId = id;
     const e = enquiries.find(x => x.id === id);
     renderInboxList();
@@ -1524,6 +1740,29 @@ function openEnquiry(id){
     const items = Array.isArray(e.items) ? e.items : [];
     const stockItems = items.filter(i => i.source !== 'sourcing');
     const sourceItems = items.filter(i => i.source === 'sourcing');
+
+    // Show a quick "loading heat numbers…" placeholder while we fetch
+    document.getElementById('inboxDetail').innerHTML = `<div class="inbox-empty"><div class="spinner"></div><p>Loading enquiry details…</p></div>`;
+
+    // Collect all underlying stock IDs we need to look up
+    const allStockIds = new Set();
+    stockItems.forEach(it => {
+        const ids = it.stock_ids || (it.stock_id ? [it.stock_id] : []);
+        ids.forEach(x => x && allStockIds.add(x));
+    });
+
+    // Fetch heat numbers + remaining qty per lot (best effort — if column missing, just skip)
+    const lotInfo = new Map();   // id → { heat_number, quantity, unit, supplier? }
+    if(allStockIds.size){
+        const probeCols = ['id,heat_number,quantity,unit', 'id,heat_number,quantity', 'id,heat_number', 'id'];
+        let lots = null;
+        for(const cols of probeCols){
+            const { data, error } = await sb.from('stock').select(cols).in('id', [...allStockIds]);
+            if(!error){ lots = data; break; }
+            console.warn('[heat lookup] cols failed:', cols, error.message);
+        }
+        if(lots){ lots.forEach(r => lotInfo.set(r.id, r)); }
+    }
 
     const itemRow = (it, isSrc) => {
         const cat = it.product_category || inferCategory(it.product_type||'');
@@ -1534,19 +1773,37 @@ function openEnquiry(id){
                 it.width,
                 it.length
             ].filter(Boolean).join(' × ');
+
+        // Build the heat-numbers cell for stock items
+        let heatCell = '';
+        if(!isSrc){
+            const ids = it.stock_ids || (it.stock_id ? [it.stock_id] : []);
+            const lotsForItem = ids.map(id => lotInfo.get(id)).filter(Boolean);
+            if(lotsForItem.length){
+                const heats = lotsForItem.map(l => {
+                    const h = l.heat_number || '—';
+                    const q = l.quantity != null ? ` (${fmtNum(l.quantity)} ${l.unit || it.unit || ''})` : '';
+                    return `<span style="display:inline-block;padding:1px 6px;margin:1px 2px 1px 0;background:var(--surface2);border-radius:4px;font-size:10.5px">${esc(h)}${q}</span>`;
+                }).join('');
+                heatCell = heats;
+            } else {
+                heatCell = `<span style="color:var(--text4);font-size:11px">${ids.length ? 'no heat data' : '—'}</span>`;
+            }
+        }
+
         return `<tr class="${isSrc?'sourcing':''}">
             <td class="grade">${esc(it.grade||'—')}</td>
             <td>${esc(it.product_type||'')} ${cat?`<span style="font-size:9px;color:var(--text4);text-transform:uppercase">[${cat}]</span>`:''}</td>
             <td>${esc(dim||'—')}</td>
             <td class="qty">${esc(it.requested_qty||'?')} ${esc(it.unit||'')}</td>
-            ${isSrc ? `<td>${esc(it.notes||'')}</td>` : ''}
+            ${isSrc ? `<td>${esc(it.notes||'')}</td>` : `<td>${heatCell}</td>`}
         </tr>`;
     };
 
     const stockTbl = stockItems.length ? `
         <div class="det-section-ttl">📦 From stock (${stockItems.length})</div>
         <table class="itm-tbl"><thead><tr>
-            <th>Grade</th><th>Type</th><th>Dimensions</th><th>Qty needed</th>
+            <th>Grade</th><th>Type</th><th>Dimensions</th><th>Qty needed</th><th>Heat / Lots</th>
         </tr></thead><tbody>${stockItems.map(i => itemRow(i,false)).join('')}</tbody></table>` : '';
 
     const srcTbl = sourceItems.length ? `
@@ -1557,16 +1814,20 @@ function openEnquiry(id){
 
     const status = e.status || 'new';
     const mailto = e.client_email ? `mailto:${e.client_email}?subject=${encodeURIComponent('Re: Your enquiry '+(e.ref||''))}` : '#';
-    const fullClient = [e.client_name, e.client_company].filter(Boolean).join(' — ');
+    const inCRM = !!e.lead_id;
+    const crmBtn = inCRM
+        ? `<button class="btn btn-sm" style="background:var(--green-bg);color:var(--green-text);border-color:var(--green)" onclick="pushToCRM('${e.id}')" title="Already pushed — click to push as a new lead">✓ In CRM</button>`
+        : `<button class="btn btn-sm btn-green" onclick="pushToCRM('${e.id}')" title="Create a new lead in your CRM with this enquiry's data">→ Push to CRM</button>`;
 
     document.getElementById('inboxDetail').innerHTML = `
         <div class="det-hd">
             <div class="det-hd-main">
-                <div class="det-hd-ref">${esc(e.ref||'(no ref)')} · ${fmtFullTime(e.created_at)}</div>
+                <div class="det-hd-ref">${esc(e.ref||'(no ref)')} · ${fmtFullTime(e.created_at)} ${inCRM?`<span class="in-crm-badge">📊 In CRM</span>`:''}</div>
                 <div class="det-hd-name">${esc(e.client_name||'(no name)')}</div>
                 ${e.client_company ? `<div class="det-hd-co">${esc(e.client_company)}</div>` : ''}
             </div>
             <div class="det-hd-acts">
+                ${crmBtn}
                 <select class="status-select" onchange="updateStatus('${e.id}',this.value)" title="Status">
                     ${['new','contacted','quoted','closed'].map(s => `<option value="${s}"${s===status?' selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}
                 </select>
@@ -1617,10 +1878,26 @@ async function deleteEnquiry(id){
     renderInboxList();
 }
 
-function copyEnquiry(id){
+async function copyEnquiry(id){
     const e = enquiries.find(x => x.id === id);
     if(!e) return;
     const items = Array.isArray(e.items) ? e.items : [];
+
+    // Look up heat numbers for stock items
+    const allStockIds = new Set();
+    items.filter(i => i.source !== 'sourcing').forEach(it => {
+        const ids = it.stock_ids || (it.stock_id ? [it.stock_id] : []);
+        ids.forEach(x => x && allStockIds.add(x));
+    });
+    const lotInfo = new Map();
+    if(allStockIds.size){
+        const probeCols = ['id,heat_number,quantity,unit', 'id,heat_number,quantity', 'id,heat_number', 'id'];
+        for(const cols of probeCols){
+            const { data, error } = await sb.from('stock').select(cols).in('id', [...allStockIds]);
+            if(!error){ data.forEach(r => lotInfo.set(r.id, r)); break; }
+        }
+    }
+
     const lines = [
         `Enquiry: ${e.ref||''}`,
         `Date: ${fmtFullTime(e.created_at)}`,
@@ -1639,14 +1916,22 @@ function copyEnquiry(id){
             const dim = i.source === 'sourcing'
                 ? [i.dim1, i.dim2, i.dim3].filter(Boolean).join(' × ')
                 : [cat==='profile' && i.section ? i.section : i.thickness, i.width, i.length].filter(Boolean).join(' × ');
-            return `  ${idx+1}. [${i.source==='sourcing'?'SOURCING':'STOCK'}] ${i.grade||'?'} ${i.product_type||''} — ${dim||'—'} — ${i.requested_qty||'?'} ${i.unit||''}${i.notes?' — '+i.notes:''}`;
+            let heatStr = '';
+            if(i.source !== 'sourcing'){
+                const ids = i.stock_ids || (i.stock_id ? [i.stock_id] : []);
+                const lots = ids.map(id => lotInfo.get(id)).filter(Boolean);
+                if(lots.length){
+                    heatStr = '  Heat/Lots: ' + lots.map(l => `${l.heat_number||'—'}${l.quantity!=null?' ('+fmtNum(l.quantity)+' '+(l.unit||'')+')':''}`).join(', ');
+                }
+            }
+            const tag = i.source==='sourcing' ? 'SOURCING' : 'STOCK';
+            const main = `  ${idx+1}. [${tag}] ${i.grade||'?'} ${i.product_type||''} — ${dim||'—'} — ${i.requested_qty||'?'} ${i.unit||''}${i.notes?' — '+i.notes:''}`;
+            return heatStr ? main + '\n' + heatStr : main;
         })
     ].filter(x => x !== null).join('\n');
+
     navigator.clipboard.writeText(lines).then(()=>{
-        const btn = event.target;
-        const old = btn.innerHTML;
-        btn.innerHTML = '✓';
-        setTimeout(()=>btn.innerHTML = old, 1200);
+        showToast('✓ Enquiry copied to clipboard', 'info');
     });
 }
 
@@ -1662,12 +1947,156 @@ function closeInbox(){
 }
 
 // ════════════════════════════════════════════════════════════
+// PUSH TO CRM — copy enquiry into the leads table
+// ════════════════════════════════════════════════════════════
+async function pushToCRM(enquiryId){
+    if(!adminUser){ showToast('You need to be logged in', 'error'); return; }
+    const e = enquiries.find(x => x.id === enquiryId);
+    if(!e) return;
+
+    if(e.lead_id){
+        if(!confirm('This enquiry has already been pushed to CRM as a lead.\n\nPush again as a brand-new lead?')) return;
+    }
+
+    const items = Array.isArray(e.items) ? e.items : [];
+
+    // Look up heat numbers for stock items so we can record them on the CRM lead
+    const allStockIds = new Set();
+    items.filter(i => i.source !== 'sourcing').forEach(it => {
+        const ids = it.stock_ids || (it.stock_id ? [it.stock_id] : []);
+        ids.forEach(x => x && allStockIds.add(x));
+    });
+    const lotInfo = new Map();
+    if(allStockIds.size){
+        const probeCols = ['id,heat_number,quantity,unit', 'id,heat_number,quantity', 'id,heat_number', 'id'];
+        for(const cols of probeCols){
+            const { data, error } = await sb.from('stock').select(cols).in('id', [...allStockIds]);
+            if(!error){ data.forEach(r => lotInfo.set(r.id, r)); break; }
+        }
+    }
+
+    // Map enquiry items → CRM products array (matching the index.html shape)
+    const products = items.map(it => {
+        const cat = it.product_category || inferCategory(it.product_type||'');
+        const isSrc = it.source === 'sourcing';
+        return {
+            type: it.product_type || '',
+            grade: it.grade || '',
+            name: it.grade || it.product_type || '',
+            thick: isSrc ? (it.dim1 || '') : (cat === 'profile' ? (it.section || '') : (it.thickness ?? '')),
+            width: isSrc ? (it.dim2 || '') : (it.width ?? ''),
+            length: isSrc ? (it.dim3 || '') : (it.length ?? ''),
+            reqQty: it.requested_qty || '',
+            unit: it.unit || 'ton',
+        };
+    });
+
+    // Build a contextual auto-note so the salesperson sees the full enquiry context
+    const stockCount = items.filter(i => i.source !== 'sourcing').length;
+    const sourcingCount = items.filter(i => i.source === 'sourcing').length;
+    const noteLines = [
+        `📨 Auto-imported from public catalogue`,
+        `Reference: ${e.ref || '—'}`,
+        `Items: ${items.length} total (${stockCount} from stock, ${sourcingCount} sourcing requests)`,
+    ];
+    if(e.client_country) noteLines.push(`Country: ${e.client_country}`);
+    if(e.project_ref) noteLines.push(`Project: ${e.project_ref}`);
+    if(e.message){ noteLines.push('', '📝 Client message:', e.message); }
+
+    // Add heat-numbers/lot info for stock items (so the salesperson knows which exact lot the client picked)
+    const stockSubItems = items.filter(i => i.source !== 'sourcing');
+    if(stockSubItems.length && lotInfo.size){
+        noteLines.push('', '🏷️ Stock lots referenced:');
+        stockSubItems.forEach((i, idx) => {
+            const ids = i.stock_ids || (i.stock_id ? [i.stock_id] : []);
+            const lots = ids.map(id => lotInfo.get(id)).filter(Boolean);
+            if(!lots.length) return;
+            const lotStr = lots.map(l => `Heat ${l.heat_number||'—'}${l.quantity!=null?' ('+fmtNum(l.quantity)+' '+(l.unit||'')+')':''}`).join(', ');
+            noteLines.push(`  ${idx+1}. ${i.grade||'?'} ${i.product_type||''} — ${lotStr}`);
+        });
+    }
+
+    // Also list sourcing items inline so they're visible in CRM notes
+    const srcItems = items.filter(i => i.source === 'sourcing');
+    if(srcItems.length){
+        noteLines.push('', '🔮 Sourcing requests:');
+        srcItems.forEach((i, idx) => {
+            const dim = [i.dim1, i.dim2, i.dim3].filter(Boolean).join(' × ') || '—';
+            noteLines.push(`  ${idx+1}. ${i.grade||'?'} ${i.product_type||''} — ${dim} — ${i.requested_qty||'?'} ${i.unit||''}${i.notes?' ('+i.notes+')':''}`);
+        });
+    }
+    const now = new Date();
+    const ts = now.toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    const notesArr = [{ ts, text: noteLines.join('\n') }];
+
+    const lead = {
+        name: e.client_name || 'Unnamed',
+        company: e.client_company || '—',
+        email: e.client_email || '',
+        phone: e.client_phone || '',
+        products: products,
+        value: 0,
+        stage: 'Lead / Prospect',
+        priority: 'Medium',
+        owner: (adminUser.email||'').split('@')[0] || '—',
+        deadline: null,
+        notes: JSON.stringify(notesArr),
+        user_id: adminUser.id,
+        user_email: adminUser.email,
+        created_by: adminUser.id,
+        created_by_email: adminUser.email,
+        assigned_to_email: null,
+    };
+
+    console.log('[pushToCRM] inserting lead:', lead);
+    const { data: inserted, error } = await sb.from('leads').insert(lead).select('id').single();
+
+    if(error){
+        console.error('[pushToCRM] failed:', error);
+        const fullMsg = [error.message, error.details, error.hint, error.code].filter(Boolean).join(' · ');
+        showToast('Couldn\'t create lead: ' + fullMsg, 'error');
+        return;
+    }
+    const leadId = inserted?.id;
+    console.log('[pushToCRM] ✓ created lead:', leadId);
+
+    // Link the enquiry → lead and bump status
+    const updates = { lead_id: leadId };
+    if((e.status||'new') === 'new') updates.status = 'contacted';
+    const { error: upErr } = await sb.from('client_enquiries').update(updates).eq('id', enquiryId);
+    if(upErr){
+        console.warn('[pushToCRM] enquiry update failed:', upErr);
+        // Lead was still created — don't fail the operation
+    }
+
+    // Update local state & re-render
+    e.lead_id = leadId;
+    if(updates.status) e.status = updates.status;
+    renderInboxList();
+    openEnquiry(enquiryId);
+
+    showToast('✓ Lead created in CRM — open your sales pipeline to see it', 'success');
+}
+
+// ════════════════════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════════════════════
+function showToast(msg, kind){
+    const wrap = document.getElementById('toastWrap');
+    const t = document.createElement('div');
+    t.className = 'toast' + (kind === 'error' ? ' error' : kind === 'info' ? ' info' : '');
+    t.textContent = msg;
+    wrap.appendChild(t);
+    setTimeout(() => t.remove(), 4000);
+}
+
+// ════════════════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════════════════
 loadCart();
 updateCartUI();
 updateDimLabels();
-loadStock();
+initStock();
 
 // Re-validate on contact field changes
 ['cName','cEmail'].forEach(id => {
