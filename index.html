@@ -453,6 +453,7 @@ const STAGES=[
 ];
 const STALE_DAYS=5;
 let leads=[],stockList=[],editingId=null,currentUser=null,userProfile=null;
+let lastMatchResults=[], lastMatchProducts=[];
 let isAdmin=false,teamView=false,chartMode='count',chartInstance=null;
 let notesArr=[];
 
@@ -544,15 +545,30 @@ sb.auth.getSession().then(({data:{session}})=>{if(session)onSignedIn(session.use
 
 // ── Load stock ──
 async function loadStock(){
-  const {data}=await sb.from('stock').select('*');
-  const cloudItems=data||[];
-  // Also merge in any local lists saved by stock.html (stored in localStorage)
+  // 1) Pull list metadata so we can label each cloud item with its list name
+  const listMap={};
+  try{
+    const {data:lists}=await sb.from('stock_lists').select('id,name');
+    (lists||[]).forEach(l=>{ listMap[l.id]=l.name; });
+  }catch(e){ /* table may not exist yet — ignore */ }
+  // 2) Pull ALL rows from the stock table (across every list_id including null = Main Stock)
+  const cloudItems=[]; let page=0; const size=1000;
+  while(true){
+    const from=page*size, to=from+size-1;
+    const {data,error}=await sb.from('stock').select('*').range(from,to);
+    if(error||!data||!data.length)break;
+    data.forEach(it=>{
+      const listName=it.list_id?(listMap[it.list_id]||'Cloud list'):'Main Stock';
+      cloudItems.push({...it, _listName:listName, _isCloud:true});
+    });
+    if(data.length<size)break; page++;
+  }
+  // 3) Merge in local lists (browser-only, saved by stock.html)
   let localItems=[];
   try{
     const localLists=JSON.parse(localStorage.getItem('sp_local_lists')||'[]');
     localLists.forEach(list=>{
       (list.items||[]).forEach(item=>{
-        // Tag with list name and a stable id so matching works
         localItems.push({...item, id: item._lid||('local_'+Math.random()), _listName: list.name, _isLocal: true});
       });
     });
@@ -581,7 +597,7 @@ function matchStock(products){
       if(score>0){
         seen.add(itemKey);
         const type=score>=100?'strong':score>=70?'close':'alternative';
-        const source=s._isLocal?` · ${s._listName||'Local list'}`:'';
+        const source=s._listName?` · ${s._listName}`:'';
         results.push({...s,score,reasons,matchType:type,enquiredProduct:prod.grade||prod.name,_source:source});
       }
     });
@@ -596,14 +612,34 @@ async function runStockMatch(){
   const body=document.getElementById('smpBody');
   const sub=document.getElementById('smpSub');
   panel.classList.add('visible');
-  if(!prods.length){body.innerHTML='<div class="smp-loading">Add at least one product above first</div>';sub.textContent='';return;}
-  // Refresh stock list (cloud + local) every time so newly added items are visible
+  if(!prods.length){body.innerHTML='<div class="smp-loading">Add at least one product above first</div>';sub.textContent='';lastMatchResults=[];lastMatchProducts=[];return;}
   body.innerHTML='<div class="smp-loading">Searching stock…</div>';
   await loadStock();
-  if(!stockList.length){body.innerHTML='<div class="smp-nostock">No stock loaded</div>';sub.textContent='';return;}
+  if(!stockList.length){body.innerHTML='<div class="smp-nostock">No stock loaded</div>';sub.textContent='';lastMatchResults=[];lastMatchProducts=[];return;}
   const res=matchStock(prods);
+  lastMatchResults=res; lastMatchProducts=prods;
   sub.textContent=res.length?`${res.length} match${res.length>1?'es':''} found`:'No matches';
-  if(!res.length){body.innerHTML='<div class="smp-nostock">No stock matches found</div>';return;}
+  if(!res.length){
+    body.innerHTML=`<div class="smp-nostock">No stock matches found</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+        <button onclick="proceedFromMatchPanel()" style="background:var(--amber-bg);border:1px solid var(--amber);color:var(--amber-text);padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">📄 Send Enquiry → (no stock — RFQ)</button>
+      </div>`;
+    return;
+  }
+  // Routing decision: every requested product must have at least one priced match → "Make Offer"
+  const norm=s=>(s||'').toLowerCase().replace(/[-\s]+/g,'');
+  const allPriced=prods.every(p=>{
+    const gk=norm(p.grade||p.name);
+    return res.some(m=>{
+      const mg=norm(m.grade), eg=norm(m.enquiredProduct);
+      return (mg===gk||eg===gk||mg.includes(gk)||gk.includes(mg)) && Number(m.buy_price)>0;
+    });
+  });
+  const btnLabel=allPriced?'💰 Make Offer →':'📄 Send Enquiry →';
+  const btnHint=allPriced?'All items priced':'Some items missing prices — using enquiry view (handles PO + RFQ)';
+  const btnStyle=allPriced
+    ?'background:var(--green-bg);border:1px solid var(--green);color:var(--green-text)'
+    :'background:var(--amber-bg);border:1px solid var(--amber);color:var(--amber-text)';
   body.innerHTML=res.map(s=>`
     <div class="smp-item ${s.matchType}">
       <div style="flex:1;min-width:0">
@@ -617,9 +653,13 @@ async function runStockMatch(){
         <div style="font-size:10px;color:var(--text4);margin-top:2px">${s.reasons.join(' · ')}</div>
         ${s.alternatives?`<div style="font-size:10px;color:var(--amber-text);margin-top:1px">Alternatives: ${s.alternatives}</div>`:''}
       </div>
-      <div class="smp-price">${s.buy_price?'$'+Number(s.buy_price).toLocaleString()+'/t':''}</div>
+      <div class="smp-price">${s.buy_price?'$'+Number(s.buy_price).toLocaleString()+'/t':'<span style="color:var(--amber-text);font-size:10px">no price</span>'}</div>
     </div>
-  `).join('');
+  `).join('')+`
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+      <button onclick="proceedFromMatchPanel()" style="${btnStyle};padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">${btnLabel}</button>
+      <span style="font-size:11px;color:var(--text3)">${btnHint}</span>
+    </div>`;
 }
 
 // ── Data ──
@@ -1036,7 +1076,51 @@ function exportOffer(){
   XLSX.utils.book_append_sheet(wb,ws,'Offer');
   XLSX.writeFile(wb,'offer_'+lead.company.replace(/[^a-zA-Z0-9]/g,'_')+'.xlsx');
 }
-
+function proceedFromMatchPanel(){
+  if(!lastMatchProducts.length){ alert('Add products and match stock first.'); return; }
+  // Build one handoff line per requested product. If a stock match exists, attach it.
+  const norm=s=>(s||'').toLowerCase().replace(/[-\s]+/g,'');
+  const lines=lastMatchProducts.map(p=>{
+    const gk=norm(p.grade||p.name);
+    const best=lastMatchResults.find(m=>{
+      const mg=norm(m.grade), eg=norm(m.enquiredProduct);
+      return mg===gk || eg===gk || mg.includes(gk) || gk.includes(mg);
+    });
+   return {
+      grade:p.grade||p.name||'', type:p.type||best?.product_type||'',
+      thick:p.thick||'', width:p.width||'', length:p.length||'',
+      reqQty:p.reqQty||'', unit:p.unit||'ton',
+      heat_number: p.heat_number || p.heat || best?.heat_number || '',
+      matched: best ? {
+        buy_price: Number(best.buy_price)||0,
+        supplier: best.supplier||'',
+        origin:   best.origin||'',
+        product_type: best.product_type||'',
+        product_category: best.product_category||'',
+        listName: best._listName||'',
+        stock_quantity: best.quantity||0,
+        heat_number: best.heat_number||''
+      } : null
+    };
+  });
+  // Routing: every product needs a priced match → Offer; otherwise → Enquiry (which handles mixed PO/RFQ)
+  const allPriced = lines.length>0 && lines.every(l=>l.matched && l.matched.buy_price>0);
+  const handoff={
+    source:'crm', type: allPriced?'offer':'enquiry',
+    leadId: editingId,
+    leadName: document.getElementById('fName').value.trim()||'',
+    client:{
+      name:    document.getElementById('fName').value.trim(),
+      company: document.getElementById('fCompany').value.trim(),
+      email:   document.getElementById('fEmail').value.trim(),
+      phone:   document.getElementById('fPhone').value.trim()
+    },
+    lines: lines,
+    createdAt: Date.now()
+  };
+  localStorage.setItem('sp_pending_handoff', JSON.stringify(handoff));
+  window.location.href = 'stock.html';
+}
 document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
 </script>
 

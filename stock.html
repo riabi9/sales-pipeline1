@@ -1931,6 +1931,7 @@ header {
                                 <th style="width:86px">Buy Ref</th>
                                 <th style="width:62px">Type</th>
                                 <th style="min-width:100px">Supplier</th>
+                                <th style="width:90px">Heat #</th>
                                 <th style="width:30px"></th>
                             </tr></thead>
                             <tbody id="enquiryLinesBody"></tbody>
@@ -2190,6 +2191,7 @@ async function onSignedIn(user){
     await initLists();
     initOffer();
     initEnquiry();
+    handlePendingHandoff();
 }
 sb.auth.getSession().then(({data:{session}})=>{ if(session)onSignedIn(session.user); });
 
@@ -2216,7 +2218,84 @@ async function initLists(){
     await loadCloudStock();
     renderAll();
 }
+// ══════════════════════════════════
+// CRM HANDOFF (offer / enquiry prefill from index.html)
+// ══════════════════════════════════
+function handlePendingHandoff(){
+    let h;
+    try{ h=JSON.parse(localStorage.getItem('sp_pending_handoff')||'null'); }catch(e){ return; }
+    if(!h||!h.lines||!h.lines.length)return;
+    // Stale guard — ignore handoffs older than 5 minutes (prevents accidental refresh re-fills)
+    if(h.createdAt && (Date.now()-h.createdAt) > 5*60*1000){
+        localStorage.removeItem('sp_pending_handoff'); return;
+    }
+    localStorage.removeItem('sp_pending_handoff');
 
+    if(h.type==='offer'){
+        offerLines=[];
+        h.lines.forEach(l=>{
+            const cat=(l.matched&&l.matched.product_category)||inferCategory(l.type||'');
+            offerLines.push({
+                id: lineId++,
+                fromStock: !!(l.matched && l.matched.buy_price>0),
+                grade: l.grade||'',
+                type:  l.type || (l.matched&&l.matched.product_type) || '',
+                category: cat,
+                dim1: l.thick||'', dim2: l.width||'', dim3: l.length||'',
+                qty:  Number(l.reqQty)||0,
+                unit: l.unit||'ton',
+                buy_price: (l.matched && Number(l.matched.buy_price))||0,
+                fixed_add: 0, margin_mode:'pct', margin_val:15
+            });
+        });
+        // Pre-fill client header
+        if(h.client){
+            const set=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.value=v;};
+            set('clientCompany',h.client.company);
+            set('clientContact',h.client.name);
+            set('clientEmail',h.client.email);
+            set('clientPhone',h.client.phone);
+        }
+        renderOfferLines(); recalcOffer();
+        showView('offer');
+        // Toast
+        const n=h.lines.length;
+        try{ alert('✓ Imported '+n+' line'+(n!==1?'s':'')+' from CRM lead'+(h.leadName?' ('+h.leadName+')':'')); }catch(e){}
+    } else {
+        // enquiry view — supports mixed PO + RFQ lines
+        enquiryLines=[];
+        h.lines.forEach(l=>{
+            const cat=(l.matched&&l.matched.product_category)||inferCategory(l.type||'');
+            const buy=(l.matched && Number(l.matched.buy_price))||0;
+        addEnquiryLine({
+                grade: l.grade||'',
+                type:  l.type || (l.matched&&l.matched.product_type) || '',
+                category: cat,
+                dim1: l.thick||'', dim2: l.width||'', dim3: l.length||'',
+                qty:  Number(l.reqQty)||0,
+                unit: l.unit||'ton',
+                buy_price: buy,
+                supplier: (l.matched && l.matched.supplier)||'',
+                heat_number: l.heat_number || (l.matched && l.matched.heat_number) || '',
+                lineType: buy>0?'po':'rfq',
+                fromStock: !!l.matched
+            });
+        });
+        // Pre-fill enquiry client header if those inputs exist
+        if(h.client){
+            const set=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.value=v;};
+            ['enqClientCompany','enqClientContact','enqClientEmail','enqClientPhone'].forEach(id=>{});
+            set('enqClientCompany',h.client.company);
+            set('enqClientContact',h.client.name);
+            set('enqClientEmail',h.client.email);
+            set('enqClientPhone',h.client.phone);
+        }
+        renderEnquiryLines();
+        showView('enquiry');
+        const n=h.lines.length;
+        try{ alert('✓ Imported '+n+' line'+(n!==1?'s':'')+' from CRM lead'+(h.leadName?' ('+h.leadName+')':'')); }catch(e){}
+    }
+}
 async function loadCloudStock(){
     const list=stockLists.find(l=>l.id===activeListId);
     if(!list||list.type!=='cloud')return;
@@ -3367,12 +3446,13 @@ function addEnquiryLine(p={}){
     const hasPrice=(Number(p.buy_price)||0)>0;
     const lineType=p.lineType||(hasPrice?'po':'rfq');
     const cat=p.category||'flat';
-    enquiryLines.push({
+   enquiryLines.push({
         id,grade:p.grade||'',type:p.type||'',category:cat,
         dim1:p.dim1||'',dim2:p.dim2||'',dim3:p.dim3||'',
         qty:p.qty||0,unit:p.unit||'ton',
         buy_price:p.buy_price||0,
         supplier:p.supplier||'',
+        heat_number:p.heat_number||'',
         lineType:lineType,
         fromStock:!!p.fromStock,
         weight_kg:p.weight_kg||null
@@ -3392,7 +3472,7 @@ function calcPcsFromTons(lid){
 }
 function renderEnquiryLines(){
     const tbody=document.getElementById('enquiryLinesBody');
-    if(!enquiryLines.length){tbody.innerHTML=`<tr><td colspan="12" class="empty">No lines yet</td></tr>`;return;}
+    if(!enquiryLines.length){tbody.innerHTML=`<tr><td colspan="13" class="empty">No lines yet</td></tr>`;return;}
     tbody.innerHTML=enquiryLines.map((l,i)=>{
         const cfg=getCatConfig(l.category||'flat');
         const [d1lbl,d2lbl,d3lbl]=cfg.dims;
@@ -3411,6 +3491,7 @@ function renderEnquiryLines(){
             <td><input class="oi mono" id="enql_b_${l.id}" type="number" value="${l.buy_price||''}" placeholder="0.00" ${l.lineType==='rfq'?'style="color:var(--text4)"':''}></td>
             <td><span class="line-type-badge ${l.lineType}">${l.lineType==='po'?'PO':'RFQ'}</span></td>
             <td><input class="oi" id="enql_sup_${l.id}" value="${esc(l.supplier)}" placeholder="Supplier"></td>
+            <td><input class="oi mono" id="enql_heat_${l.id}" value="${esc(l.heat_number||'')}" placeholder="Heat #" title="Heat / lot reference"></td>
             <td><button class="del-line-btn" onclick="removeEnquiryLine(${l.id})">×</button></td>
         </tr>`;
     }).join('');
@@ -3445,6 +3526,7 @@ function readEnquiryLines(){
             unit:document.getElementById(`enql_u_${l.id}`)?.value||l.unit,
             buy_price:Number(document.getElementById(`enql_b_${l.id}`)?.value)||0,
             supplier:document.getElementById(`enql_sup_${l.id}`)?.value||l.supplier,
+            heat_number:document.getElementById(`enql_heat_${l.id}`)?.value||l.heat_number||'',
             lineType:(Number(document.getElementById(`enql_b_${l.id}`)?.value)||0)>0?'po':'rfq'
         };
     }).filter(l=>l.grade||l.qty);
@@ -3470,7 +3552,8 @@ function buildEnquiryPreview(){
     }else{
         html+=`<div class="pi-hdr"><div><div class="pi-co">${esc(currentProfile.company_name)}</div><div class="pi-co-sub">${esc(currentProfile.company_subtitle)}</div><div class="pi-co-sub">${esc(document.getElementById('enqBy').value)} · ${currentUser?.email||''}</div></div><div style="text-align:right"><div style="font-size:20px;font-weight:800">${title}</div><div style="font-size:13px;color:#888">${esc(document.getElementById('enqRefNum').value)||'—'}</div></div></div>`;
         html+=`<div class="pi-info"><div class="pi-block"><strong>Supplier</strong>${esc(supplier)}<br>${esc(document.getElementById('enqContact').value)||''}<br>${esc(document.getElementById('enqEmail').value)||''}<br>${esc(document.getElementById('enqPhone').value)||''}<br>${esc(document.getElementById('enqAddress').value)||''}</div><div class="pi-block"><strong>Document details</strong>Date: ${document.getElementById('enqDate').value||'—'}<br>Valid: ${document.getElementById('enqValid').value||'—'}<br>Currency: ${cur}<br>By: ${esc(document.getElementById('enqBy').value)||'—'}</div></div>`;
-        html+=`<table class="pi-tbl"><thead><tr><th>#</th><th>Grade</th><th>Type</th><th>Dim 1</th><th>Dim 2</th><th>Dim 3</th><th>Qty</th><th>Unit</th><th>Buy Ref</th><th>Type</th><th>Supplier</th></tr></thead><tbody>${lines.map((l,i)=>{const cfg=getCatConfig(l.category||'flat');return`<tr><td>${i+1}</td><td><strong>${esc(l.grade)}</strong></td><td>${esc(l.type)||'—'}</td><td>${l.dim1||'—'} <small>${cfg.dims[0].split(' ')[0]}</small></td><td>${l.dim2||'—'}</td><td>${l.dim3||'—'}</td><td>${l.qty}</td><td>${l.unit}</td><td>${l.buy_price?cur+' '+fmtNum(l.buy_price):'—'}</td><td><span class="line-type-badge ${l.lineType}">${l.lineType==='po'?'PO':'RFQ'}</span></td><td>${esc(l.supplier)||'—'}</td></tr>`;}).join('')}</tbody></table>`;
+                html+=`<table class="pi-tbl"><thead><tr><th>#</th><th>Grade</th><th>Type</th><th>Dim 1</th><th>Dim 2</th><th>Dim 3</th><th>Qty</th><th>Unit</th><th>Buy Ref</th><th>Type</th><th>Supplier</th><th>Heat #</th></tr></thead><tbody>${lines.map((l,i)=>{const cfg=getCatConfig(l.category||'flat');return`<tr><td>${i+1}</td><td><strong>${esc(l.grade)}</strong></td><td>${esc(l.type)||'—'}</td><td>${l.dim1||'—'} <small>${cfg.dims[0].split(' ')[0]}</small></td><td>${l.dim2||'—'}</td><td>${l.dim3||'—'}</td><td>${l.qty}</td><td>${l.unit}</td><td>${l.buy_price?cur+' '+fmtNum(l.buy_price):'—'}</td><td><span class="line-type-badge ${l.lineType}">${l.lineType==='po'?'PO':'RFQ'}</span></td><td>${esc(l.supplier)||'—'}</td><td class="mono">${esc(l.heat_number)||'—'}</td></tr>`;}).join('')}</tbody></table>`;
+
     }
     html+=`<div class="pi-terms">${document.getElementById('enqTermPayment').value?`<strong>Payment:</strong> ${esc(document.getElementById('enqTermPayment').value)}<br>`:''}${document.getElementById('enqTermDelivery').value?`<strong>Delivery:</strong> ${esc(document.getElementById('enqTermDelivery').value)}<br>`:''}${document.getElementById('enqTermIncoterms').value?`<strong>Incoterms:</strong> ${esc(document.getElementById('enqTermIncoterms').value)}<br>`:''}${document.getElementById('enqTermOrigin').value?`<strong>Origin:</strong> ${esc(document.getElementById('enqTermOrigin').value)}<br>`:''}${document.getElementById('enqTermNotes').value?`<strong>Notes:</strong> ${esc(document.getElementById('enqTermNotes').value)}`:''}</div>`;
     html+=`<div class="pi-footer">Valid until ${document.getElementById('enqValid').value||'—'} · Generated by Steel Platform</div>`;
@@ -3495,18 +3578,18 @@ function exportEnquiryExcel(){
         const groups=getEnquirySupplierGroups();
         const wb=XLSX.utils.book_new();
         Object.entries(groups).forEach(([sup,supLines])=>{
-            const rows=[[title,'','','','','','','','',''],['','','','','','','','','',''],['Supplier:',sup,'','','','Ref #:',document.getElementById('enqRefNum').value,'',''],['Contact:',document.getElementById('enqContact').value,'','','Date:',document.getElementById('enqDate').value,'',''],['','','','','','','','','',''],['#','Grade','Type / Section','Dim 1','Dim 2','Dim 3','Qty','Unit','Line Type','Supplier']];
-            supLines.forEach((l,i)=>{const cfg=getCatConfig(l.category||'flat');rows.push([i+1,l.grade,l.type||'',`${l.dim1||''} (${cfg.dims[0]})`,l.dim2||'',l.dim3||'',l.qty,l.unit,l.lineType==='po'?'PO':'RFQ',l.supplier||sup]);});
-            const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:4},{wch:14},{wch:12},{wch:10},{wch:10},{wch:10},{wch:7},{wch:6},{wch:10},{wch:14}];
+            const rows=[[title,'','','','','','','','','',''],['','','','','','','','','','',''],['Supplier:',sup,'','','','Ref #:',document.getElementById('enqRefNum').value,'','',''],['Contact:',document.getElementById('enqContact').value,'','','Date:',document.getElementById('enqDate').value,'','',''],['','','','','','','','','','',''],['#','Grade','Type / Section','Dim 1','Dim 2','Dim 3','Qty','Unit','Line Type','Supplier','Heat #']];
+            supLines.forEach((l,i)=>{const cfg=getCatConfig(l.category||'flat');rows.push([i+1,l.grade,l.type||'',`${l.dim1||''} (${cfg.dims[0]})`,l.dim2||'',l.dim3||'',l.qty,l.unit,l.lineType==='po'?'PO':'RFQ',l.supplier||sup,l.heat_number||'']);});
+            const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:4},{wch:14},{wch:12},{wch:10},{wch:10},{wch:10},{wch:7},{wch:6},{wch:10},{wch:14},{wch:14}];
             const safeName=sup.replace(/[^a-zA-Z0-9]/g,'_').substring(0,28);
             XLSX.utils.book_append_sheet(wb,ws,safeName||'Sheet');
         });
         XLSX.writeFile(wb,'enquiry_'+(document.getElementById('enqCompany').value||'export').replace(/[^a-zA-Z0-9]/g,'_')+'.xlsx');
     }else{
         const lines=readEnquiryLines();
-        const rows=[[title,'','','','','','','','',''],['','','','','','','','','',''],['Supplier:',document.getElementById('enqCompany').value,'','','','Ref #:',document.getElementById('enqRefNum').value,'',''],['Contact:',document.getElementById('enqContact').value,'','','','Date:',document.getElementById('enqDate').value,'',''],['','','','','','','','','',''],['#','Grade','Type / Section','Dim 1','Dim 2','Dim 3','Qty','Unit','Line Type','Supplier']];
-        lines.forEach((l,i)=>{const cfg=getCatConfig(l.category||'flat');rows.push([i+1,l.grade,l.type||'',`${l.dim1||''} (${cfg.dims[0]})`,l.dim2||'',l.dim3||'',l.qty,l.unit,l.lineType==='po'?'PO':'RFQ',l.supplier||'']);});
-        const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:4},{wch:14},{wch:12},{wch:10},{wch:10},{wch:10},{wch:7},{wch:6},{wch:10},{wch:14}];XLSX.utils.book_append_sheet(wb,ws,'Enquiry');XLSX.writeFile(wb,'enquiry_'+(document.getElementById('enqCompany').value||'export').replace(/[^a-zA-Z0-9]/g,'_')+'.xlsx');
+        const rows=[[title,'','','','','','','','','',''],['','','','','','','','','','',''],['Supplier:',document.getElementById('enqCompany').value,'','','','Ref #:',document.getElementById('enqRefNum').value,'','',''],['Contact:',document.getElementById('enqContact').value,'','','','Date:',document.getElementById('enqDate').value,'','',''],['','','','','','','','','','',''],['#','Grade','Type / Section','Dim 1','Dim 2','Dim 3','Qty','Unit','Line Type','Supplier','Heat #']];
+        lines.forEach((l,i)=>{const cfg=getCatConfig(l.category||'flat');rows.push([i+1,l.grade,l.type||'',`${l.dim1||''} (${cfg.dims[0]})`,l.dim2||'',l.dim3||'',l.qty,l.unit,l.lineType==='po'?'PO':'RFQ',l.supplier||'',l.heat_number||'']);});
+        const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:4},{wch:14},{wch:12},{wch:10},{wch:10},{wch:10},{wch:7},{wch:6},{wch:10},{wch:14},{wch:14}];XLSX.utils.book_append_sheet(wb,ws,'Enquiry');XLSX.writeFile(wb,'enquiry_'+(document.getElementById('enqCompany').value||'export').replace(/[^a-zA-Z0-9]/g,'_')+'.xlsx');
     }
 }
 
