@@ -296,88 +296,6 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
           <div class="print-doc" id="printDoc"></div>
         </div>
 
-        <!-- ══ SALES OFFER ══ -->
-        <div class="doc-section" id="sec-offer">
-          <div class="g2">
-            <div class="card">
-              <div class="card-title">Client Information</div>
-              <div class="form-row"><label class="lbl">Company name</label><input class="inp" id="of-clientCo" placeholder="Client company"></div>
-              <div class="form-row"><label class="lbl">Contact person</label><input class="inp" id="of-clientContact" placeholder="Full name"></div>
-              <div class="g2">
-                <div class="form-row"><label class="lbl">Email</label><input class="inp" type="email" id="of-clientEmail" placeholder="email@co.com"></div>
-                <div class="form-row"><label class="lbl">Phone</label><input class="inp" id="of-clientPhone" placeholder="+1 555…"></div>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-title">Offer Details</div>
-              <div class="g2">
-                <div class="form-row"><label class="lbl">Offer #</label><input class="inp" id="of-num" placeholder="OFF-001"></div>
-                <div class="form-row"><label class="lbl">Date</label><input class="inp" type="date" id="of-date"></div>
-              </div>
-              <div class="g2">
-                <div class="form-row"><label class="lbl">Valid until</label><input class="inp" type="date" id="of-valid"></div>
-                <div class="form-row"><label class="lbl">Currency</label>
-                  <select class="inp" id="of-cur" onchange="recalcOffer()"><option>USD</option><option>EUR</option><option>GBP</option><option>TRY</option></select>
-                </div>
-              </div>
-              <div class="form-row"><label class="lbl">Prepared by</label><input class="inp" id="of-by"></div>
-            </div>
-          </div>
-          <!-- Stock suggest -->
-          <div class="stock-suggest" id="offerSuggest">
-            <div style="font-size:11px;font-weight:700;color:var(--blue);margin-bottom:8px">🔍 Stock matches — click to apply</div>
-            <div id="offerSuggestBody"></div>
-          </div>
-          <div class="card">
-            <div class="card-title">
-              <span>Products</span>
-              <button class="btn btn-sm" style="border-color:var(--blue);color:var(--blue);background:var(--blue-bg)" onclick="matchOfferStock()">🔍 Match stock</button>
-            </div>
-            <div class="tbl-wrap">
-              <table class="ltbl" style="min-width:900px">
-                <thead><tr>
-                  <th style="width:26px">#</th><th style="min-width:100px">Grade</th><th style="min-width:80px">Type</th>
-                  <th style="width:72px">Thick</th><th style="width:72px">Width</th><th style="width:72px">Length</th>
-                  <th style="width:64px">Qty</th><th style="width:52px">Unit</th>
-                  <th style="width:90px">Price/unit</th><th style="width:80px">Total</th>
-                  <th style="width:28px"></th>
-                </tr></thead>
-                <tbody id="offerLines"></tbody>
-              </table>
-            </div>
-            <button class="add-row-btn" onclick="addOfferLine()">+ Add product line</button>
-            <div class="totals-box">
-              <div class="tot-row">
-                <span style="display:flex;align-items:center;gap:8px">
-                  Margin
-                  <input type="number" id="of-margin" value="15" min="0" max="200" step="0.5" oninput="recalcOffer()" style="width:60px;height:26px;border:1px solid var(--border2);border-radius:5px;padding:0 6px;font-size:12px;background:var(--surface);color:var(--text);outline:none;font-family:var(--mono)">%
-                </span>
-                <span id="of-marginAmt" style="font-family:var(--mono)">$0</span>
-              </div>
-              <div class="tot-row">
-                <span style="display:flex;align-items:center;gap:8px">
-                  Shipping
-                  <label style="font-size:11px;color:var(--text3);cursor:pointer;display:flex;align-items:center;gap:4px"><input type="checkbox" id="of-shipInc" onchange="recalcOffer()" style="accent-color:var(--blue)"> Included</label>
-                </span>
-                <input type="number" id="of-ship" value="0" min="0" oninput="recalcOffer()" style="width:90px;height:26px;border:1px solid var(--border2);border-radius:5px;padding:0 6px;font-size:12px;background:var(--surface);color:var(--text);outline:none;font-family:var(--mono);text-align:right">
-              </div>
-              <div class="tot-row grand"><span>Total Offer Price</span><span id="of-total" style="font-family:var(--mono)">$0</span></div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-title">Terms &amp; Conditions</div>
-            <div class="g2">
-              <div class="form-row"><label class="lbl">Payment terms</label><input class="inp" id="of-termPay" placeholder="e.g. 30% advance, 70% on BL"></div>
-              <div class="form-row"><label class="lbl">Delivery</label><input class="inp" id="of-termDel" placeholder="e.g. 3–4 weeks"></div>
-            </div>
-            <div class="g2">
-              <div class="form-row"><label class="lbl">Incoterms</label><input class="inp" id="of-termInco" placeholder="e.g. CIF Mersin"></div>
-              <div class="form-row"><label class="lbl">Origin</label><input class="inp" id="of-termOrigin" placeholder="e.g. Turkey, Ukraine"></div>
-            </div>
-            <div class="form-row"><label class="lbl">Notes</label><textarea class="inp" id="of-notes" style="height:52px"></textarea></div>
-          </div>
-        </div><!-- /offer -->
-
         <!-- ══ PROFORMA INVOICE ══ -->
         <div class="doc-section" id="sec-proforma">
           <div class="g2">
@@ -863,6 +781,269 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
           </div>
         </div><!-- /lc -->
 
+        <!-- ══ PURCHASE ORDER ══ -->
+        <div class="doc-section" id="sec-po">
+          <div class="g2">
+            <div class="card">
+              <div class="card-title">Buyer / Purchaser</div>
+              <div class="form-row"><label class="lbl">Company name</label><input class="inp" id="po-buyerCo" placeholder="Your company"></div>
+              <div class="form-row"><label class="lbl">Address</label><textarea class="inp" id="po-buyerAddr" style="height:52px" placeholder="Street, City, Country"></textarea></div>
+              <div class="g2">
+                <div class="form-row"><label class="lbl">Contact person</label><input class="inp" id="po-buyerContact" placeholder="Full name"></div>
+                <div class="form-row"><label class="lbl">Email</label><input class="inp" type="email" id="po-buyerEmail"></div>
+              </div>
+              <div class="form-row"><label class="lbl">Bank / IBAN / SWIFT</label><textarea class="inp" id="po-buyerBank" style="height:44px"></textarea></div>
+            </div>
+            <div class="card">
+              <div class="card-title">PO Details</div>
+              <div class="g2">
+                <div class="form-row"><label class="lbl">PO Number</label><input class="inp" id="po-num" placeholder="PO-2026-001"></div>
+                <div class="form-row"><label class="lbl">Date</label><input class="inp" type="date" id="po-date"></div>
+              </div>
+              <div class="g2">
+                <div class="form-row"><label class="lbl">Valid until</label><input class="inp" type="date" id="po-valid"></div>
+                <div class="form-row"><label class="lbl">Currency</label>
+                  <select class="inp" id="po-cur" onchange="recalcPO()"><option>USD</option><option>EUR</option><option>GBP</option><option>TRY</option></select>
+                </div>
+              </div>
+              <div class="form-row"><label class="lbl">Supplier / Seller</label><input class="inp" id="po-supplierCo" placeholder="Supplier company name"></div>
+              <div class="form-row"><label class="lbl">Supplier address</label><textarea class="inp" id="po-supplierAddr" style="height:44px"></textarea></div>
+              <div class="g2">
+                <div class="form-row"><label class="lbl">Incoterms</label><input class="inp" id="po-inco" placeholder="CIF Mersin"></div>
+                <div class="form-row"><label class="lbl">Delivery port / place</label><input class="inp" id="po-delivery" placeholder="e.g. Algiers, Algeria"></div>
+              </div>
+              <div class="form-row"><label class="lbl">Payment terms</label><input class="inp" id="po-pay" placeholder="e.g. 30% advance, 70% on BL copy"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Line Items</div>
+            <div class="tbl-wrap">
+              <table class="ltbl" style="min-width:860px">
+                <thead><tr><th>#</th><th>Description / Grade</th><th>HS Code</th><th>Thickness</th><th>Width</th><th>Length</th><th>Qty</th><th>Unit</th><th>Unit Price</th><th>Amount</th><th></th></tr></thead>
+                <tbody id="poItems"></tbody>
+              </table>
+            </div>
+            <button class="add-row-btn" onclick="addPOItem()">+ Add line</button>
+            <div class="totals-box">
+              <div class="tot-row"><span>Subtotal</span><span id="po-sub" style="font-family:var(--mono)">$0</span></div>
+              <div class="tot-row"><span style="display:flex;align-items:center;gap:8px">Tax / VAT <input type="number" id="po-tax" value="0" min="0" max="100" oninput="recalcPO()" style="width:50px;height:26px;border:1px solid var(--border2);border-radius:5px;padding:0 6px;font-size:12px;background:var(--surface);color:var(--text);outline:none">%</span><span id="po-taxAmt" style="font-family:var(--mono)">$0</span></div>
+              <div class="tot-row grand"><span>Total</span><span id="po-total" style="font-family:var(--mono)">$0</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Shipping &amp; Quality Requirements</div>
+            <div class="g3">
+              <div class="form-row"><label class="lbl">Origin</label><input class="inp" id="po-origin" placeholder="Turkey"></div>
+              <div class="form-row"><label class="lbl">Delivery deadline</label><input class="inp" type="date" id="po-deadline"></div>
+              <div class="form-row"><label class="lbl">Lead time (days)</label><input class="inp" type="number" id="po-leadtime" placeholder="30"></div>
+            </div>
+            <div class="form-row"><label class="lbl">Quality / standards required</label><input class="inp" id="po-quality" placeholder="EN 10025, ASTM A36, mill test cert required…"></div>
+            <div class="form-row"><label class="lbl">Special instructions / notes</label><textarea class="inp" id="po-notes" style="height:52px"></textarea></div>
+          </div>
+        </div><!-- /po -->
+
+        <!-- ══ MILL TEST CERTIFICATE (MTC / EN 10204) ══ -->
+        <div class="doc-section" id="sec-mtc">
+          <div class="g2">
+            <div class="card">
+              <div class="card-title">Issuing Mill / Manufacturer</div>
+              <div class="form-row"><label class="lbl">Mill / Company name</label><input class="inp" id="mtc-issuerCo" placeholder="Steel mill name"></div>
+              <div class="form-row"><label class="lbl">Address</label><textarea class="inp" id="mtc-issuerAddr" style="height:44px"></textarea></div>
+              <div class="g2">
+                <div class="form-row"><label class="lbl">Certificate No.</label><input class="inp" id="mtc-num" placeholder="MTC-2026-001" style="font-family:var(--mono)"></div>
+                <div class="form-row"><label class="lbl">Date</label><input class="inp" type="date" id="mtc-date"></div>
+              </div>
+              <div class="g2">
+                <div class="form-row"><label class="lbl">EN 10204 type</label>
+                  <select class="inp" id="mtc-type"><option>3.1</option><option>3.2</option><option>2.2</option><option>2.1</option></select>
+                </div>
+                <div class="form-row"><label class="lbl">Order / Heat No.</label><input class="inp" id="mtc-heatNo" placeholder="HT-2026-001" style="font-family:var(--mono)"></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">Buyer &amp; Order Reference</div>
+              <div class="form-row"><label class="lbl">Buyer / Consignee</label><input class="inp" id="mtc-buyer" placeholder="Buyer company"></div>
+              <div class="form-row"><label class="lbl">Order / PO reference</label><input class="inp" id="mtc-poRef" placeholder="PO-2026-001" style="font-family:var(--mono)"></div>
+              <div class="form-row"><label class="lbl">Invoice reference</label><input class="inp" id="mtc-invRef" placeholder="INV-2026-001" style="font-family:var(--mono)"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Product Identification</div>
+            <div class="g3">
+              <div class="form-row"><label class="lbl">Product / Type</label><input class="inp" id="mtc-product" placeholder="Hot Rolled Plate, ERW Pipe…"></div>
+              <div class="form-row"><label class="lbl">Grade / Standard</label><input class="inp" id="mtc-grade" placeholder="S355J2+N, API 5L X52…"></div>
+              <div class="form-row"><label class="lbl">Dimensions</label><input class="inp" id="mtc-dims" placeholder="12 × 1500 × 6000 mm"></div>
+            </div>
+            <div class="g3">
+              <div class="form-row"><label class="lbl">Quantity</label><input class="inp" id="mtc-qty" placeholder="25 plates"></div>
+              <div class="form-row"><label class="lbl">Net weight (kg)</label><input class="inp" type="number" id="mtc-netkg" oninput="recalcMTC()"></div>
+              <div class="form-row"><label class="lbl">Gross weight (kg)</label><input class="inp" type="number" id="mtc-grosskg" oninput="recalcMTC()"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Chemical Composition (%)</div>
+            <div class="tbl-wrap">
+              <table class="ltbl" style="min-width:600px">
+                <thead><tr><th>Element</th><th>Specified Min</th><th>Specified Max</th><th>Actual (Heat)</th><th>Actual (Product)</th><th></th></tr></thead>
+                <tbody id="mtcItems"></tbody>
+              </table>
+            </div>
+            <button class="add-row-btn" onclick="addMTCItem()">+ Add element</button>
+          </div>
+          <div class="card">
+            <div class="card-title">Mechanical Properties</div>
+            <div class="g3">
+              <div class="form-row"><label class="lbl">Yield strength Re (MPa)</label><input class="inp" type="number" id="mtc-ys" placeholder="355"></div>
+              <div class="form-row"><label class="lbl">Tensile strength Rm (MPa)</label><input class="inp" type="number" id="mtc-ts" placeholder="490–630"></div>
+              <div class="form-row"><label class="lbl">Elongation A5 (%)</label><input class="inp" type="number" id="mtc-elong" placeholder="22"></div>
+            </div>
+            <div class="g3">
+              <div class="form-row"><label class="lbl">Charpy impact KV (J)</label><input class="inp" type="number" id="mtc-charpy" placeholder="27"></div>
+              <div class="form-row"><label class="lbl">Test temperature (°C)</label><input class="inp" type="number" id="mtc-temp" placeholder="-20"></div>
+              <div class="form-row"><label class="lbl">Hardness (HB/HV)</label><input class="inp" id="mtc-hardness" placeholder="e.g. 150 HB"></div>
+            </div>
+            <div class="g2">
+              <div class="form-row"><label class="lbl">Surface condition</label><input class="inp" id="mtc-surface" placeholder="Mill scale, Sandblasted Sa 2.5…"></div>
+              <div class="form-row"><label class="lbl">Test standard</label><input class="inp" id="mtc-standard" placeholder="EN 10025-2, ASTM A6…"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Certification &amp; Declaration</div>
+            <div class="form-row"><label class="lbl">Declaration text</label><textarea class="inp" id="mtc-declaration" style="height:52px" placeholder="We hereby certify that the products described above have been manufactured and tested in accordance with the specification stated and the results meet the requirements…"></textarea></div>
+            <div class="g2">
+              <div class="form-row"><label class="lbl">Inspector / Signatory name</label><input class="inp" id="mtc-inspector"></div>
+              <div class="form-row"><label class="lbl">Position / Authority</label><input class="inp" id="mtc-position" placeholder="Quality Manager"></div>
+            </div>
+          </div>
+        </div><!-- /mtc -->
+
+        <!-- ══ INSURANCE CERTIFICATE ══ -->
+        <div class="doc-section" id="sec-ins">
+          <div class="g2">
+            <div class="card">
+              <div class="card-title">Insurer / Underwriter</div>
+              <div class="form-row"><label class="lbl">Insurance company</label><input class="inp" id="ins-insurerCo" placeholder="Zurich, Allianz, AXA…"></div>
+              <div class="form-row"><label class="lbl">Address</label><textarea class="inp" id="ins-insurerAddr" style="height:44px"></textarea></div>
+              <div class="g2">
+                <div class="form-row"><label class="lbl">Policy No.</label><input class="inp" id="ins-policy" placeholder="POL-2026-00123" style="font-family:var(--mono)"></div>
+                <div class="form-row"><label class="lbl">Certificate No.</label><input class="inp" id="ins-num" placeholder="INS-2026-001" style="font-family:var(--mono)"></div>
+              </div>
+              <div class="form-row"><label class="lbl">Date of issue</label><input class="inp" type="date" id="ins-date"></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Insured &amp; Beneficiary</div>
+              <div class="form-row"><label class="lbl">Insured / Assured</label><input class="inp" id="ins-insuredCo" placeholder="Your company / as per LC"></div>
+              <div class="form-row"><label class="lbl">Insured address</label><textarea class="inp" id="ins-insuredAddr" style="height:44px"></textarea></div>
+              <div class="form-row"><label class="lbl">Beneficiary (if different)</label><input class="inp" id="ins-beneficiary" placeholder="Bank name / buyer / as per BL"></div>
+              <div class="form-row"><label class="lbl">Claims payable at</label><input class="inp" id="ins-claimsAt" placeholder="Country / city of destination"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Shipment &amp; Cargo Details</div>
+            <div class="g2">
+              <div class="form-row"><label class="lbl">Vessel / Transport</label><input class="inp" id="ins-vessel" placeholder="Vessel name or truck plate"></div>
+              <div class="form-row"><label class="lbl">Voyage / Route</label><input class="inp" id="ins-voyage" placeholder="e.g. Istanbul → Oran"></div>
+            </div>
+            <div class="g2">
+              <div class="form-row"><label class="lbl">Port / Place of loading</label><input class="inp" id="ins-pol" placeholder="Istanbul, Turkey"></div>
+              <div class="form-row"><label class="lbl">Port / Place of discharge</label><input class="inp" id="ins-pod" placeholder="Oran, Algeria"></div>
+            </div>
+            <div class="g2">
+              <div class="form-row"><label class="lbl">Sailing / Departure date</label><input class="inp" type="date" id="ins-depDate"></div>
+              <div class="form-row"><label class="lbl">Invoice reference</label><input class="inp" id="ins-invRef" placeholder="INV-2026-001" style="font-family:var(--mono)"></div>
+            </div>
+            <div class="form-row"><label class="lbl">Description of goods</label><textarea class="inp" id="ins-goods" style="height:52px" placeholder="Steel plates S355J2, 500 MT, packed in bundles…"></textarea></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Coverage &amp; Conditions</div>
+            <div class="g3">
+              <div class="form-row"><label class="lbl">Currency</label>
+                <select class="inp" id="ins-cur"><option>USD</option><option>EUR</option><option>GBP</option></select>
+              </div>
+              <div class="form-row"><label class="lbl">Invoice value</label><input class="inp" type="number" id="ins-invValue" placeholder="0.00" oninput="recalcIns()"></div>
+              <div class="form-row"><label class="lbl">Insured value (110%)</label><input class="inp" type="number" id="ins-covValue" placeholder="0.00" style="font-family:var(--mono);background:var(--surface2)" readonly></div>
+            </div>
+            <div class="g2">
+              <div class="form-row"><label class="lbl">Conditions / clauses</label>
+                <select class="inp" id="ins-conditions"><option>Institute Cargo Clauses (A) — All Risks</option><option>Institute Cargo Clauses (B)</option><option>Institute Cargo Clauses (C) — Basic</option><option>Institute War Clauses</option><option>Institute Strikes Clauses</option></select>
+              </div>
+              <div class="form-row"><label class="lbl">Deductible</label><input class="inp" id="ins-deductible" placeholder="None / 0.5%…"></div>
+            </div>
+            <div class="form-row"><label class="lbl">Additional notes / exclusions</label><textarea class="inp" id="ins-notes" style="height:44px"></textarea></div>
+          </div>
+        </div><!-- /ins -->
+
+        <!-- ══ EUR.1 MOVEMENT CERTIFICATE ══ -->
+        <div class="doc-section" id="sec-eur1">
+          <div class="g2">
+            <div class="card">
+              <div class="card-title">1. Exporter</div>
+              <div class="form-row"><label class="lbl">Name &amp; address</label><textarea class="inp" id="eur1-exporterCo" style="height:64px" placeholder="Company name, street, city, country"></textarea></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Document Details</div>
+              <div class="g2">
+                <div class="form-row"><label class="lbl">Certificate No.</label><input class="inp" id="eur1-num" placeholder="EUR1-2026-001" style="font-family:var(--mono)"></div>
+                <div class="form-row"><label class="lbl">Date</label><input class="inp" type="date" id="eur1-date"></div>
+              </div>
+              <div class="form-row"><label class="lbl">Agreement / Protocol</label>
+                <select class="inp" id="eur1-agreement">
+                  <option>EU–Algeria Association Agreement (Barcelona)</option>
+                  <option>EU–Morocco Association Agreement</option>
+                  <option>EU–Tunisia Association Agreement</option>
+                  <option>EU–Egypt Association Agreement</option>
+                  <option>EU–Turkey Customs Union</option>
+                  <option>EU–UK Trade and Cooperation Agreement</option>
+                  <option>Pan-Euro-Mediterranean (PEM) Convention</option>
+                  <option>Other preferential agreement</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="g2">
+            <div class="card">
+              <div class="card-title">2. Consignee</div>
+              <div class="form-row"><label class="lbl">Name &amp; address</label><textarea class="inp" id="eur1-consignee" style="height:64px" placeholder="Buyer company, address, country"></textarea></div>
+            </div>
+            <div class="card">
+              <div class="card-title">3. Country of Origin</div>
+              <div class="form-row"><label class="lbl">Exporting country</label><input class="inp" id="eur1-originCountry" placeholder="Turkey"></div>
+              <div class="form-row"><label class="lbl">Importing country / group</label><input class="inp" id="eur1-importCountry" placeholder="Algeria / EU"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">4. Transport Details</div>
+            <div class="g3">
+              <div class="form-row"><label class="lbl">Means of transport</label><input class="inp" id="eur1-transport" placeholder="Road / Sea / Air"></div>
+              <div class="form-row"><label class="lbl">Loading place</label><input class="inp" id="eur1-pol" placeholder="Istanbul, Turkey"></div>
+              <div class="form-row"><label class="lbl">Discharge place</label><input class="inp" id="eur1-pod" placeholder="Oran, Algeria"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">5. Goods Description</div>
+            <div class="tbl-wrap">
+              <table class="ltbl" style="min-width:700px">
+                <thead><tr><th>#</th><th>Marks &amp; Nos.</th><th>Packages</th><th>Description of Goods</th><th>HS Code</th><th>Gross (kg)</th><th>Invoice No.</th><th></th></tr></thead>
+                <tbody id="eur1Items"></tbody>
+              </table>
+            </div>
+            <button class="add-row-btn" onclick="addEUR1Item()">+ Add line</button>
+            <div class="totals-box">
+              <div class="tot-row grand"><span>Total Gross Weight</span><span id="eur1-totGross" style="font-family:var(--mono)">0 kg</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">6. Customs Endorsement</div>
+            <div class="g2">
+              <div class="form-row"><label class="lbl">Customs office</label><input class="inp" id="eur1-customsOffice" placeholder="Istanbul Customs Office"></div>
+              <div class="form-row"><label class="lbl">Endorsement date</label><input class="inp" type="date" id="eur1-endorseDate"></div>
+            </div>
+            <div class="form-row"><label class="lbl">Stamp / reference no.</label><input class="inp" id="eur1-stamp" placeholder="Customs stamp reference number"></div>
+            <div class="form-row"><label class="lbl">Exporter declaration / place &amp; date</label><input class="inp" id="eur1-declPlace" placeholder="Istanbul, Turkey"></div>
+            <div class="form-row"><label class="lbl">Remarks</label><textarea class="inp" id="eur1-remarks" style="height:44px"></textarea></div>
+          </div>
+        </div><!-- /eur1 -->
+
       </div><!-- /docs-main -->
     </div><!-- /docs-layout -->
   </div><!-- /main-wrap -->
@@ -969,22 +1150,25 @@ const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
 let currentUser=null, userProfile=null, isAdmin=false;
-let activeDocType='offer', activeDraftId=null;
+let activeDocType='proforma', activeDraftId=null;
 let logoDataUrl=null, sigDataUrl=null;
-let ofLineId=0, pfItemId=0, invItemId=0, pkItemId=0, cooItemId=0, bolItemId=0, wtItemId=0;
+let ofLineId=0, pfItemId=0, invItemId=0, pkItemId=0, cooItemId=0, bolItemId=0, wtItemId=0, poItemId=0, mtcItemId=0;
 let stockList=[];
 let drafts=[];
 
 const DOC_TYPES=[
-  {id:'offer',    icon:'📋', label:'Sales Offer',              xls:true},
-  {id:'proforma', icon:'📄', label:'Proforma Invoice',         xls:true},
-  {id:'invoice',  icon:'🧾', label:'Commercial Invoice',       xls:true},
-  {id:'packing',  icon:'📦', label:'Packing List',             xls:false},
-  {id:'coo',      icon:'🌍', label:'Certificate of Origin',    xls:false},
-  {id:'bol',      icon:'🚢', label:'Bill of Lading',           xls:false},
-  {id:'cmr',      icon:'🚛', label:'CMR Consignment Note',     xls:false},
-  {id:'weight',   icon:'⚖️', label:'Weight / Inspection Cert.',xls:false},
-  {id:'lc',       icon:'🏦', label:'LC Checklist',             xls:false},
+  {id:'proforma', icon:'📄', label:'Proforma Invoice',           xls:true},
+  {id:'po',       icon:'🛒', label:'Purchase Order',             xls:true},
+  {id:'invoice',  icon:'🧾', label:'Commercial Invoice',         xls:true},
+  {id:'packing',  icon:'📦', label:'Packing List',               xls:false},
+  {id:'coo',      icon:'🌍', label:'Certificate of Origin',      xls:false},
+  {id:'eur1',     icon:'🇪🇺', label:'EUR.1 Movement Certificate', xls:false},
+  {id:'bol',      icon:'🚢', label:'Bill of Lading',             xls:false},
+  {id:'cmr',      icon:'🚛', label:'CMR Consignment Note',       xls:false},
+  {id:'weight',   icon:'⚖️', label:'Weight / Inspection Cert.',  xls:false},
+  {id:'mtc',      icon:'📋', label:'Mill Test Certificate',       xls:false},
+  {id:'ins',      icon:'🛡️', label:'Insurance Certificate',       xls:false},
+  {id:'lc',       icon:'🏦', label:'LC Checklist',               xls:false},
 ];
 
 // ══════════════════════════════════
@@ -1038,7 +1222,7 @@ async function onSignedIn(user){
   buildDocTypeList();
   renderDraftRail();
   // Init first doc type
-  setDocType('offer');
+  setDocType('proforma');
   // Auto-fill seller/shipper from profile
   autoFillProfile();
 }
@@ -1056,7 +1240,7 @@ function autoFillProfile(){
   // Offer
   if(document.getElementById('of-by'))document.getElementById('of-by').value=fn;
   // Proforma seller
-  if(co){['pf-sellerCo','inv-sellerName','pk-shipperName','co-exporterCo','bl-shipperCo','wt-issuerCo'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=co;});}
+  if(co){['pf-sellerCo','inv-sellerName','pk-shipperName','co-exporterCo','bl-shipperCo','wt-issuerCo','po-sellerCo','mtc-issuerCo','ins-insuredCo','eur1-exporterCo'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=co;});}
   if(email){['pf-sellerEmail','inv-sellerEmail','pk-shipperEmail','bl-shipperEmail'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=email;});}
   if(phone){['pf-sellerPhone','inv-sellerPhone','pk-shipperPhone','bl-shipperPhone'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=phone;});}
   // LC beneficiary
@@ -1064,15 +1248,15 @@ function autoFillProfile(){
   // Dates
   const today=new Date().toISOString().slice(0,10);
   const in30=new Date(Date.now()+30*864e5).toISOString().slice(0,10);
-  ['of-date','pf-date','inv-date','pk-date','co-date','bl-date','cmr-date','wt-date','wt-inspDate','lc-issueDate'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=today;});
-  ['of-valid','pf-valid'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=in30;});
+  ['of-date','pf-date','inv-date','pk-date','co-date','bl-date','cmr-date','wt-date','wt-inspDate','lc-issueDate','po-date','mtc-date','ins-date','eur1-date'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=today;});
+  ['of-valid','pf-valid','po-valid'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=in30;});
   // Doc numbers
   const ts=Date.now().toString().slice(-4);
   const init=(id,val)=>{const el=document.getElementById(id);if(el&&!el.value)el.value=val;};
   init('of-num','OFF-'+ts);init('pf-num','PI-'+ts);init('inv-num','INV-'+ts);
   init('pk-num','PL-'+ts);init('co-num','COO-'+ts);init('bl-num','BL-'+ts);
-  init('cmr-num','CMR-'+ts);
-  init('wt-num','CERT-'+ts);init('lc-num','LC-'+ts);
+  init('cmr-num','CMR-'+ts);init('wt-num','CERT-'+ts);init('lc-num','LC-'+ts);
+  init('po-num','PO-'+ts);init('mtc-num','MTC-'+ts);init('ins-num','INS-'+ts);init('eur1-num','EUR1-'+ts);
   // Add initial line items
   if(!document.querySelector('#offerLines tr'))for(let i=0;i<3;i++)addOfferLine();
   if(!document.querySelector('#pfItems tr'))for(let i=0;i<3;i++)addPFItem();
@@ -1082,6 +1266,9 @@ function autoFillProfile(){
   if(!document.querySelector('#bolItems tr'))addBOLItem();
   if(!document.querySelector('#cmrItems tr'))addCMRItem();
   if(!document.querySelector('#wtItems tr'))addWTItem();
+  if(!document.querySelector('#poItems tr'))for(let i=0;i<3;i++)addPOItem();
+  if(!document.querySelector('#mtcItems tr'))addMTCItem();
+  if(!document.querySelector('#eur1Items tr'))addEUR1Item();
 }
 
 // ══════════════════════════════════
@@ -1256,6 +1443,8 @@ function saveDraft(){
     coo:['co-num','co-consigneeCo'], bol:['bl-num','bl-consignee'],
     cmr:['cmr-num','cmr-consigneeCo'],
     weight:['wt-num','wt-client'], lc:['lc-num','lc-applicant'],
+    po:['po-num','po-supplierCo'], mtc:['mtc-num','mtc-buyer'],
+    ins:['ins-num','ins-insuredCo'], eur1:['eur1-num','eur1-exporterCo'],
   };
   const ids=labelMap[activeDocType]||[];
   const parts=ids.map(id=>document.getElementById(id)?.value||'').filter(Boolean);
@@ -1305,8 +1494,8 @@ function newDoc(){
   activeDraftId=null;
   document.getElementById('hdrDraftLabel').textContent='';
   // Clear dynamic line items
-  ['offerLines','pfItems','invItems','pkItems','cooItems','bolItems','cmrItems','wtItems'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
-  ofLineId=0;pfItemId=0;invItemId=0;pkItemId=0;cooItemId=0;bolItemId=0;cmrItemId=0;wtItemId=0;
+  ['offerLines','pfItems','invItems','pkItems','cooItems','bolItems','cmrItems','wtItems','poItems','mtcItems','eur1Items'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+  ofLineId=0;pfItemId=0;invItemId=0;pkItemId=0;cooItemId=0;bolItemId=0;cmrItemId=0;wtItemId=0;poItemId=0;mtcItemId=0;
   // Re-init section fields
   const section=document.getElementById('sec-'+activeDocType);
   if(section){section.querySelectorAll('input:not([type=checkbox]),select,textarea').forEach(el=>{if(!el.id?.includes('-date')&&!el.id?.includes('-cur'))el.value='';});}
@@ -1338,7 +1527,7 @@ function deserializeDoc(type,fields,lines){
   recalcForType(type);
 }
 function serializeLines(type){
-  const bodyMap={offer:'offerLines',proforma:'pfItems',invoice:'invItems',packing:'pkItems',coo:'cooItems',bol:'bolItems',cmr:'cmrItems',weight:'wtItems'};
+  const bodyMap={offer:'offerLines',proforma:'pfItems',invoice:'invItems',packing:'pkItems',coo:'cooItems',bol:'bolItems',cmr:'cmrItems',weight:'wtItems',po:'poItems',mtc:'mtcItems',eur1:'eur1Items'};
   const tbody=document.getElementById(bodyMap[type]);
   if(!tbody)return[];
   return[...tbody.querySelectorAll('tr')].map(tr=>{
@@ -1357,6 +1546,9 @@ function deserializeLines(type,lines){
     bol:()=>{document.getElementById('bolItems').innerHTML='';bolItemId=0;lines.forEach(l=>addBOLItem(l));},
     cmr:()=>{document.getElementById('cmrItems').innerHTML='';cmrItemId=0;lines.forEach(l=>addCMRItem(l));},
     weight:()=>{document.getElementById('wtItems').innerHTML='';wtItemId=0;lines.forEach(l=>addWTItem(l));},
+    po:()=>{document.getElementById('poItems').innerHTML='';poItemId=0;lines.forEach(l=>addPOItem(l));},
+    mtc:()=>{document.getElementById('mtcItems').innerHTML='';mtcItemId=0;lines.forEach(l=>addMTCItem(l));},
+    eur1:()=>{document.getElementById('eur1Items').innerHTML='';lines.forEach(l=>addEUR1Item(l));},
   };
   clearAdd[type]?.();
   // Restore values from serialized line data
@@ -1375,6 +1567,8 @@ function recalcForType(t){
   else if(t==='bol')recalcBOL();
   else if(t==='cmr')recalcCMR();
   else if(t==='weight')recalcWT();
+  else if(t==='po')recalcPO();
+  else if(t==='mtc')recalcMTC();
 }
 
 // ══════════════════════════════════
@@ -1673,7 +1867,7 @@ function togglePreview(){
 }
 function g(id){return(document.getElementById(id)||{}).value||'';}
 function buildPreview(){
-  const builders={offer:buildOfferPreview,proforma:buildProformaPreview,invoice:buildInvoicePreview,packing:buildPackingPreview,coo:buildCOOPreview,bol:buildBOLPreview,cmr:buildCMRPreview,weight:buildWeightPreview,lc:buildLCPreview};
+  const builders={offer:buildOfferPreview,proforma:buildProformaPreview,invoice:buildInvoicePreview,packing:buildPackingPreview,coo:buildCOOPreview,bol:buildBOLPreview,cmr:buildCMRPreview,weight:buildWeightPreview,lc:buildLCPreview,po:buildPOPreview,mtc:buildMTCPreview,ins:buildInsPreview,eur1:buildEUR1Preview};
   builders[activeDocType]?.();
 }
 function logoHtml(){return logoDataUrl?`<img src="${logoDataUrl}" class="p-logo">`:''; }
@@ -1988,6 +2182,7 @@ function exportExcel(){
   if(activeDocType==='offer')exportOfferExcel();
   else if(activeDocType==='proforma')exportPFExcel();
   else if(activeDocType==='invoice')exportInvExcel();
+  else if(activeDocType==='po')exportPOExcel();
 }
 function exportOfferExcel(){
   const rows=[...document.querySelectorAll('#offerLines tr')];
@@ -2042,8 +2237,276 @@ function recalcCMR(){
 }
 
 // ══════════════════════════════════
-// SIDEBAR
+// PURCHASE ORDER — LINE ITEMS
 // ══════════════════════════════════
+function addPOItem(p={}){
+  const id=++poItemId;
+  const tr=document.createElement('tr');tr.id='poi-'+id;
+  tr.innerHTML=`
+    <td style="font-size:10px;color:var(--text4);text-align:center;width:24px">${id}</td>
+    <td><input class="li" id="pod-${id}" value="${p['pod-'+id]||''}" placeholder="Grade / Description" style="min-width:140px"></td>
+    <td><input class="li" id="pohs-${id}" value="${p['pohs-'+id]||''}" placeholder="7216.50" style="width:80px"></td>
+    <td><input class="li" id="poth-${id}" type="number" value="${p['poth-'+id]||''}" placeholder="mm" style="width:70px"></td>
+    <td><input class="li" id="pow-${id}" type="number" value="${p['pow-'+id]||''}" placeholder="mm" style="width:70px"></td>
+    <td><input class="li" id="pol-${id}" type="number" value="${p['pol-'+id]||''}" placeholder="mm" style="width:70px"></td>
+    <td><input class="li" id="poq-${id}" type="number" value="${p['poq-${id}']||p['poq-'+id]||''}" placeholder="0" oninput="recalcPO()" style="width:70px"></td>
+    <td><select class="li" id="pou-${id}" style="width:60px"><option>ton</option><option>kg</option><option>pcs</option><option>m</option></select></td>
+    <td><input class="li" id="pop-${id}" type="number" value="${p['pop-'+id]||''}" placeholder="0.00" oninput="recalcPO()" style="width:80px"></td>
+    <td style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green-text);white-space:nowrap;padding:5px 8px" id="pot-${id}">—</td>
+    <td><button class="del-row-btn" onclick="document.getElementById('poi-${id}').remove();recalcPO()">×</button></td>
+  `;
+  document.getElementById('poItems').appendChild(tr);recalcPO();
+}
+function recalcPO(){
+  let sub=0;
+  document.querySelectorAll('#poItems tr').forEach(tr=>{
+    const id=tr.id?.replace('poi-','');if(!id)return;
+    const q=Number(document.getElementById('poq-'+id)?.value)||0;
+    const p=Number(document.getElementById('pop-'+id)?.value)||0;
+    const t=q*p;sub+=t;
+    const el=document.getElementById('pot-'+id);if(el)el.textContent=t?fmt2(t):'—';
+  });
+  const tax=Number(document.getElementById('po-tax')?.value||0);
+  const taxAmt=sub*tax/100;
+  document.getElementById('po-sub').textContent=fmtCur('po-cur',sub);
+  document.getElementById('po-taxAmt').textContent=fmtCur('po-cur',taxAmt);
+  document.getElementById('po-total').textContent=fmtCur('po-cur',sub+taxAmt);
+}
+function buildPOPreview(){
+  const rows=[...document.querySelectorAll('#poItems tr')];
+  const lines=rows.map(tr=>{
+    const id=tr.id?.replace('poi-','');if(!id)return null;
+    const q=Number(document.getElementById('poq-'+id)?.value)||0;
+    const p=Number(document.getElementById('pop-'+id)?.value)||0;
+    return{desc:document.getElementById('pod-'+id)?.value||'',hs:document.getElementById('pohs-'+id)?.value||'',thick:document.getElementById('poth-'+id)?.value||'',width:document.getElementById('pow-'+id)?.value||'',length:document.getElementById('pol-'+id)?.value||'',qty:q,unit:document.getElementById('pou-'+id)?.value||'ton',price:p,total:q*p};
+  }).filter(l=>l&&(l.desc||l.qty));
+  const cur=g('po-cur');
+  const sub=lines.reduce((s,l)=>s+l.total,0);
+  const tax=Number(g('po-tax')||0);
+  const taxAmt=sub*tax/100;
+  document.getElementById('printDoc').innerHTML=`
+    <div class="pdoc-hdr">
+      <div>${logoHtml()}<div class="pdoc-co">${esc(g('po-buyerCo'))}</div><div class="pdoc-co-sub">${esc(g('po-buyerAddr').split('\n')[0])}</div></div>
+      <div style="text-align:right"><div class="pdoc-title">PURCHASE ORDER</div><div class="pdoc-num">${esc(g('po-num'))} · ${g('po-date')}</div></div>
+    </div>
+    <div class="pdoc-info">
+      <div class="pdoc-block"><strong>Buyer</strong>${esc(g('po-buyerCo'))}<br>${esc(g('po-buyerContact'))}<br>${esc(g('po-buyerEmail'))}</div>
+      <div class="pdoc-block"><strong>Supplier</strong>${esc(g('po-supplierCo'))}<br>${esc(g('po-supplierAddr'))}</div>
+      <div class="pdoc-block"><strong>PO Details</strong>Date: ${g('po-date')}<br>Valid until: ${g('po-valid')}<br>Currency: ${cur}</div>
+      <div class="pdoc-block"><strong>Shipping</strong>Incoterms: ${esc(g('po-inco'))}<br>Delivery: ${esc(g('po-delivery'))}<br>Payment: ${esc(g('po-pay'))}</div>
+    </div>
+    <table class="pdoc-tbl"><thead><tr><th>#</th><th>Description / Grade</th><th>HS Code</th><th>Thick</th><th>Width</th><th>Length</th><th>Qty</th><th>Unit</th><th>Unit Price (${cur})</th><th>Amount</th></tr></thead>
+    <tbody>${lines.map((l,i)=>`<tr><td>${i+1}</td><td><strong>${esc(l.desc)}</strong></td><td>${esc(l.hs)||'—'}</td><td>${l.thick||'—'}</td><td>${l.width||'—'}</td><td>${l.length||'—'}</td><td>${l.qty}</td><td>${l.unit}</td><td>${fmtN(l.price)}</td><td><strong>${fmtN(l.total)}</strong></td></tr>`).join('')}</tbody>
+    </table>
+    <div class="pdoc-totals">
+      <div class="pdoc-tot-row"><span>Subtotal</span><span>${cur} ${fmtN(sub)}</span></div>
+      ${tax?`<div class="pdoc-tot-row"><span>Tax/VAT (${tax}%)</span><span>${cur} ${fmtN(taxAmt)}</span></div>`:''}
+      <div class="pdoc-tot-row pdoc-grand"><span>Total</span><span>${cur} ${fmtN(sub+taxAmt)}</span></div>
+    </div>
+    ${g('po-quality')?`<div class="pdoc-terms"><b>Quality requirements:</b> ${esc(g('po-quality'))}</div>`:''}
+    ${g('po-notes')?`<div class="pdoc-terms"><b>Notes:</b> ${esc(g('po-notes'))}</div>`:''}
+    ${g('po-buyerBank')?`<div class="pdoc-bank"><strong>Buyer banking details:</strong><br>${esc(g('po-buyerBank')).replace(/\n/g,'<br>')}</div>`:''}
+    ${sigHtml()}
+    <div class="pdoc-footer">Purchase Order ${esc(g('po-num'))} · Valid until ${g('po-valid')} · Generated by Steel Platform</div>`;
+}
+function exportPOExcel(){
+  const rows=[...document.querySelectorAll('#poItems tr')];
+  const lines=rows.map(tr=>{
+    const id=tr.id?.replace('poi-','');if(!id)return null;
+    const q=Number(document.getElementById('poq-'+id)?.value)||0;
+    const p=Number(document.getElementById('pop-'+id)?.value)||0;
+    return[document.getElementById('pod-'+id)?.value||'',document.getElementById('pohs-'+id)?.value||'',document.getElementById('poth-'+id)?.value||'',document.getElementById('pow-'+id)?.value||'',document.getElementById('pol-'+id)?.value||'',q,document.getElementById('pou-'+id)?.value||'ton',p,q*p];
+  }).filter(l=>l&&(l[0]||l[5]));
+  const cur=g('po-cur');
+  const sub=lines.reduce((s,l)=>s+(l[8]||0),0);
+  const tax=Number(g('po-tax')||0);
+  const data=[['PURCHASE ORDER',g('po-num'),'','','','','','',''],['Buyer:',g('po-buyerCo'),'','Date:',g('po-date'),'','','',''],['Supplier:',g('po-supplierCo'),'','Valid:',g('po-valid'),'','','',''],[''],['Description','HS Code','Thick','Width','Length','Qty','Unit',`Price(${cur})`,'Total'],...lines,[''],['','','','','','','','Subtotal',sub],['','','','','','','',`Tax(${tax}%)`,sub*tax/100],['','','','','','','','TOTAL',sub+sub*tax/100],[''],['Payment:',g('po-pay')],['Incoterms:',g('po-inco')],['Delivery:',g('po-delivery')],['Quality:',g('po-quality')]];
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  XLSX.utils.book_append_sheet(wb,ws,'Purchase Order');
+  XLSX.writeFile(wb,'PO_'+g('po-supplierCo').replace(/[^a-z0-9]/gi,'_')+'_'+g('po-num')+'.xlsx');
+}
+
+// ══════════════════════════════════
+// MILL TEST CERTIFICATE — ITEMS
+// ══════════════════════════════════
+const MTC_ELEMENTS=['C','Si','Mn','P','S','Al','Cu','Ni','Cr','Mo','V','Nb','Ti','N','B','CEV'];
+function addMTCItem(p={}){
+  const id=++mtcItemId;
+  const elem=MTC_ELEMENTS[id-1]||'';
+  const tr=document.createElement('tr');tr.id='mtci-'+id;
+  tr.innerHTML=`
+    <td><input class="li" id="mtce-${id}" value="${p['mtce-'+id]||elem}" placeholder="Element" style="width:60px;font-family:var(--mono);font-weight:700"></td>
+    <td><input class="li" id="mtcmin-${id}" value="${p['mtcmin-'+id]||''}" placeholder="—" style="width:80px;font-family:var(--mono)"></td>
+    <td><input class="li" id="mtcmax-${id}" value="${p['mtcmax-'+id]||''}" placeholder="0.25" style="width:80px;font-family:var(--mono)"></td>
+    <td><input class="li" id="mtcah-${id}" value="${p['mtcah-'+id]||''}" placeholder="0.18" style="width:80px;font-family:var(--mono)"></td>
+    <td><input class="li" id="mtcap-${id}" value="${p['mtcap-'+id]||''}" placeholder="0.19" style="width:80px;font-family:var(--mono)"></td>
+    <td><button class="del-row-btn" onclick="document.getElementById('mtci-${id}').remove()">×</button></td>
+  `;
+  document.getElementById('mtcItems').appendChild(tr);
+}
+function recalcMTC(){
+  const net=Number(document.getElementById('mtc-netkg')?.value)||0;
+  const gross=Number(document.getElementById('mtc-grosskg')?.value)||0;
+  // no live totals needed, weights shown in fields
+}
+function buildMTCPreview(){
+  const rows=[...document.querySelectorAll('#mtcItems tr')];
+  const chem=rows.map(tr=>{
+    const id=tr.id?.replace('mtci-','');if(!id)return null;
+    return{elem:document.getElementById('mtce-'+id)?.value||'',min:document.getElementById('mtcmin-'+id)?.value||'',max:document.getElementById('mtcmax-'+id)?.value||'',ah:document.getElementById('mtcah-'+id)?.value||'',ap:document.getElementById('mtcap-'+id)?.value||''};
+  }).filter(l=>l&&l.elem);
+  document.getElementById('printDoc').innerHTML=`
+    <div class="pdoc-hdr">
+      <div>${logoHtml()}<div class="pdoc-co">${esc(g('mtc-issuerCo'))}</div><div class="pdoc-co-sub">${esc(g('mtc-issuerAddr').split('\n')[0])}</div></div>
+      <div style="text-align:right"><div class="pdoc-title">MILL TEST CERTIFICATE</div><div style="font-size:12px;font-weight:700;color:#1456a0">EN 10204 Type ${esc(g('mtc-type'))}</div><div class="pdoc-num">${esc(g('mtc-num'))} · ${g('mtc-date')}</div></div>
+    </div>
+    <div class="pdoc-info">
+      <div class="pdoc-block"><strong>Issuing Mill</strong>${esc(g('mtc-issuerCo'))}<br>${esc(g('mtc-issuerAddr'))}</div>
+      <div class="pdoc-block"><strong>Buyer / Order</strong>${esc(g('mtc-buyer'))}<br>PO Ref: ${esc(g('mtc-poRef'))}<br>Invoice Ref: ${esc(g('mtc-invRef'))}</div>
+      <div class="pdoc-block"><strong>Heat / Order No.</strong><strong style="font-size:14px;font-family:monospace">${esc(g('mtc-heatNo'))}</strong></div>
+      <div class="pdoc-block"><strong>Product</strong>${esc(g('mtc-product'))}<br>Grade: <strong>${esc(g('mtc-grade'))}</strong><br>Dims: ${esc(g('mtc-dims'))}<br>Qty: ${esc(g('mtc-qty'))} · Net: ${g('mtc-netkg')} kg · Gross: ${g('mtc-grosskg')} kg</div>
+    </div>
+    <div style="font-size:11px;font-weight:700;margin:10px 0 6px;text-transform:uppercase;letter-spacing:.4px;color:#888">Chemical Composition (%)</div>
+    <table class="pdoc-tbl"><thead><tr><th>Element</th><th>Spec. Min</th><th>Spec. Max</th><th>Actual (Heat)</th><th>Actual (Product)</th></tr></thead>
+    <tbody>${chem.map(c=>`<tr><td><strong>${esc(c.elem)}</strong></td><td>${c.min||'—'}</td><td>${c.max||'—'}</td><td style="font-weight:700">${c.ah||'—'}</td><td style="font-weight:700">${c.ap||'—'}</td></tr>`).join('')}</tbody>
+    </table>
+    <div style="font-size:11px;font-weight:700;margin:10px 0 6px;text-transform:uppercase;letter-spacing:.4px;color:#888">Mechanical Properties</div>
+    <table class="pdoc-tbl"><thead><tr><th>Property</th><th>Specified</th><th>Actual</th></tr></thead>
+    <tbody>
+      ${g('mtc-ys')?`<tr><td>Yield strength Re (MPa)</td><td>≥ ${esc(g('mtc-ys'))}</td><td><strong>${esc(g('mtc-ys'))}</strong></td></tr>`:''}
+      ${g('mtc-ts')?`<tr><td>Tensile strength Rm (MPa)</td><td>${esc(g('mtc-ts'))}</td><td><strong>${esc(g('mtc-ts'))}</strong></td></tr>`:''}
+      ${g('mtc-elong')?`<tr><td>Elongation A5 (%)</td><td>≥ ${esc(g('mtc-elong'))}</td><td><strong>${esc(g('mtc-elong'))}</strong></td></tr>`:''}
+      ${g('mtc-charpy')?`<tr><td>Charpy impact KV (J) @ ${g('mtc-temp')}°C</td><td>≥ ${esc(g('mtc-charpy'))}</td><td><strong>${esc(g('mtc-charpy'))}</strong></td></tr>`:''}
+      ${g('mtc-hardness')?`<tr><td>Hardness</td><td>—</td><td><strong>${esc(g('mtc-hardness'))}</strong></td></tr>`:''}
+    </tbody>
+    </table>
+    ${g('mtc-standard')?`<div class="pdoc-terms"><b>Test standard:</b> ${esc(g('mtc-standard'))} &nbsp;|&nbsp; <b>Surface:</b> ${esc(g('mtc-surface'))}</div>`:''}
+    ${g('mtc-declaration')?`<div class="pdoc-terms" style="margin-top:10px"><b>Declaration:</b> ${esc(g('mtc-declaration'))}</div>`:''}
+    <div class="pdoc-sig" style="margin-top:20px">
+      <div><div style="font-size:10px;color:#888;margin-bottom:4px">Inspector / Quality Manager</div><strong>${esc(g('mtc-inspector'))}</strong><br><span style="font-size:10px;color:#888">${esc(g('mtc-position'))}</span></div>
+      ${sigHtml()?`<div>${sigHtml()}</div>`:'<div style="border-top:1px solid #ddd;width:160px;padding-top:6px;font-size:10px;color:#aaa">Authorized Signature</div>'}
+    </div>
+    <div class="pdoc-footer">Mill Test Certificate · EN 10204 Type ${esc(g('mtc-type'))} · ${esc(g('mtc-num'))} · Generated by Steel Platform</div>`;
+}
+
+// ══════════════════════════════════
+// INSURANCE CERTIFICATE
+// ══════════════════════════════════
+function recalcIns(){
+  const v=Number(document.getElementById('ins-invValue')?.value)||0;
+  const covered=v*1.1;
+  const el=document.getElementById('ins-covValue');
+  if(el)el.value=covered.toFixed(2);
+}
+function buildInsPreview(){
+  const cur=g('ins-cur');
+  const invVal=Number(g('ins-invValue'))||0;
+  const covVal=(invVal*1.1);
+  document.getElementById('printDoc').innerHTML=`
+    <div class="pdoc-hdr">
+      <div style="text-align:left"><div class="pdoc-title" style="font-size:16px">INSURANCE CERTIFICATE</div><div class="pdoc-num">Certificate No: ${esc(g('ins-num'))} &nbsp;|&nbsp; Policy: ${esc(g('ins-policy'))}</div></div>
+      <div style="text-align:right">${logoHtml()}</div>
+    </div>
+    <div class="pdoc-info">
+      <div class="pdoc-block"><strong>Insurer / Underwriter</strong>${esc(g('ins-insurerCo'))}<br>${esc(g('ins-insurerAddr'))}</div>
+      <div class="pdoc-block"><strong>Insured / Assured</strong>${esc(g('ins-insuredCo'))}<br>${esc(g('ins-insuredAddr'))}</div>
+      <div class="pdoc-block"><strong>Beneficiary</strong>${esc(g('ins-beneficiary')||g('ins-insuredCo'))}<br>Claims payable at:<br><strong>${esc(g('ins-claimsAt'))}</strong></div>
+      <div class="pdoc-block"><strong>Date of Issue</strong>${g('ins-date')}<br>Inv. Ref: ${esc(g('ins-invRef'))}</div>
+    </div>
+    <div style="background:#f8f8f6;border:1px solid #e0e0de;border-radius:6px;padding:12px;margin-bottom:14px;font-size:11px">
+      <strong style="display:block;color:#888;text-transform:uppercase;font-size:9px;letter-spacing:.4px;margin-bottom:6px">Shipment Details</strong>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><b>Vessel / Transport:</b> ${esc(g('ins-vessel'))}</div><div><b>Voyage:</b> ${esc(g('ins-voyage'))}</div>
+        <div><b>Port of Loading:</b> ${esc(g('ins-pol'))}</div><div><b>Port of Discharge:</b> ${esc(g('ins-pod'))}</div>
+        <div><b>Departure date:</b> ${g('ins-depDate')}</div><div></div>
+      </div>
+    </div>
+    <div class="pdoc-terms"><b>Description of Goods:</b> ${esc(g('ins-goods'))}</div>
+    <div style="margin:14px 0;padding:12px 16px;background:#e8f1fb;border-radius:8px;border:1px solid #c0d8f8">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:12px">
+        <div><span style="font-size:9px;color:#888;text-transform:uppercase;display:block;margin-bottom:3px">Invoice Value</span><strong style="font-size:15px">${cur} ${fmtN(invVal)}</strong></div>
+        <div><span style="font-size:9px;color:#888;text-transform:uppercase;display:block;margin-bottom:3px">Insured Value (110%)</span><strong style="font-size:15px;color:#1456a0">${cur} ${fmtN(covVal)}</strong></div>
+        <div><span style="font-size:9px;color:#888;text-transform:uppercase;display:block;margin-bottom:3px">Conditions</span><strong style="font-size:11px">${esc(g('ins-conditions'))}</strong></div>
+      </div>
+    </div>
+    ${g('ins-deductible')?`<div class="pdoc-terms"><b>Deductible:</b> ${esc(g('ins-deductible'))}</div>`:''}
+    ${g('ins-notes')?`<div class="pdoc-terms" style="margin-top:6px"><b>Notes / Exclusions:</b> ${esc(g('ins-notes'))}</div>`:''}
+    ${sigHtml()}
+    <div class="pdoc-footer">Insurance Certificate ${esc(g('ins-num'))} · ${esc(g('ins-insurerCo'))} · Generated by Steel Platform</div>`;
+}
+
+// ══════════════════════════════════
+// EUR.1 MOVEMENT CERTIFICATE
+// ══════════════════════════════════
+let eur1ItemId=0;
+function addEUR1Item(p={}){
+  const id=++eur1ItemId;
+  const tr=document.createElement('tr');tr.id='e1i-'+id;
+  tr.innerHTML=`
+    <td style="font-size:10px;color:var(--text4);text-align:center;width:24px">${id}</td>
+    <td><input class="li" id="e1m-${id}" value="${p['e1m-'+id]||''}" placeholder="Marks…" style="width:90px"></td>
+    <td><input class="li" id="e1p-${id}" value="${p['e1p-'+id]||''}" placeholder="1 bundle" style="width:90px"></td>
+    <td><input class="li" id="e1d-${id}" value="${p['e1d-'+id]||''}" placeholder="Steel plates S355J2…" style="min-width:160px"></td>
+    <td><input class="li" id="e1h-${id}" value="${p['e1h-'+id]||''}" placeholder="7208.51" style="width:80px"></td>
+    <td><input class="li" id="e1g-${id}" type="number" value="${p['e1g-'+id]||''}" placeholder="kg" oninput="recalcEUR1()" style="width:80px"></td>
+    <td><input class="li" id="e1r-${id}" value="${p['e1r-'+id]||''}" placeholder="INV-001" style="width:90px"></td>
+    <td><button class="del-row-btn" onclick="document.getElementById('e1i-${id}').remove();recalcEUR1()">×</button></td>
+  `;
+  document.getElementById('eur1Items').appendChild(tr);recalcEUR1();
+}
+function recalcEUR1(){
+  let totG=0;
+  document.querySelectorAll('#eur1Items tr').forEach(tr=>{
+    const id=tr.id?.replace('e1i-','');if(!id)return;
+    totG+=Number(document.getElementById('e1g-'+id)?.value)||0;
+  });
+  document.getElementById('eur1-totGross').textContent=totG.toLocaleString()+' kg';
+}
+function buildEUR1Preview(){
+  const rows=[...document.querySelectorAll('#eur1Items tr')];
+  const lines=rows.map(tr=>{
+    const id=tr.id?.replace('e1i-','');if(!id)return null;
+    return{marks:document.getElementById('e1m-'+id)?.value||'',packs:document.getElementById('e1p-'+id)?.value||'',desc:document.getElementById('e1d-'+id)?.value||'',hs:document.getElementById('e1h-'+id)?.value||'',gross:document.getElementById('e1g-'+id)?.value||0,inv:document.getElementById('e1r-'+id)?.value||''};
+  }).filter(l=>l&&l.desc);
+  const totGross=lines.reduce((s,l)=>s+Number(l.gross),0);
+  document.getElementById('printDoc').innerHTML=`
+    <div class="pdoc-hdr">
+      <div>${logoHtml()}<div class="pdoc-co" style="font-size:14px">MOVEMENT CERTIFICATE</div><div class="pdoc-co-sub" style="font-size:12px;font-weight:700;color:#1456a0">EUR.1</div></div>
+      <div style="text-align:right"><div class="pdoc-num" style="font-size:12px">No: <strong>${esc(g('eur1-num'))}</strong></div><div class="pdoc-num">${g('eur1-date')}</div></div>
+    </div>
+    <div style="font-size:10px;color:#888;margin-bottom:6px;font-style:italic">${esc(g('eur1-agreement'))}</div>
+    <div class="pdoc-info">
+      <div class="pdoc-block"><strong>1. Exporter</strong>${esc(g('eur1-exporterCo'))}</div>
+      <div class="pdoc-block"><strong>2. Consignee</strong>${esc(g('eur1-consignee'))}</div>
+      <div class="pdoc-block"><strong>3. Country of Origin</strong><strong style="font-size:14px">${esc(g('eur1-originCountry'))}</strong><br>Importing country: ${esc(g('eur1-importCountry'))}</div>
+      <div class="pdoc-block"><strong>4. Transport</strong>${esc(g('eur1-transport'))}<br>Loading: ${esc(g('eur1-pol'))}<br>Discharge: ${esc(g('eur1-pod'))}</div>
+    </div>
+    <div style="font-size:11px;font-weight:700;margin:8px 0 5px;text-transform:uppercase;letter-spacing:.4px;color:#888">5. Item Description</div>
+    <table class="pdoc-tbl"><thead><tr><th>Marks &amp; Nos.</th><th>Packages</th><th>Description of Goods</th><th>HS Code</th><th>Gross (kg)</th><th>Invoice No.</th></tr></thead>
+    <tbody>${lines.map(l=>`<tr><td>${esc(l.marks)}</td><td>${esc(l.packs)}</td><td>${esc(l.desc)}</td><td>${esc(l.hs)}</td><td>${fmtN(l.gross)}</td><td>${esc(l.inv)}</td></tr>`).join('')}</tbody>
+    </table>
+    <div class="pdoc-totals"><div class="pdoc-tot-row pdoc-grand"><span>Total Gross Weight</span><span>${fmtN(totGross)} kg</span></div></div>
+    <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:10px">
+      <div style="border:1px solid #ddd;padding:12px;border-radius:4px">
+        <strong style="display:block;margin-bottom:6px">6. Customs Endorsement</strong>
+        Office: ${esc(g('eur1-customsOffice'))}<br>
+        Date: ${g('eur1-endorseDate')}<br>
+        Stamp/Ref: ${esc(g('eur1-stamp'))}<br><br>
+        <div style="border-top:1px solid #ddd;padding-top:8px;color:#aaa">Official stamp &amp; signature</div>
+      </div>
+      <div style="border:1px solid #ddd;padding:12px;border-radius:4px">
+        <strong style="display:block;margin-bottom:6px">7. Exporter Declaration</strong>
+        I, the undersigned, declare that the goods described above originate in the country shown in box 3 and comply with the origin requirements specified for these goods in the ${esc(g('eur1-agreement'))}.<br><br>
+        Place &amp; date: ${esc(g('eur1-declPlace'))}<br><br>
+        ${sigDataUrl?`<img src="${sigDataUrl}" class="p-sig-img">`:'_______________________'}
+      </div>
+    </div>
+    ${g('eur1-remarks')?`<div class="pdoc-terms"><b>Remarks:</b> ${esc(g('eur1-remarks'))}</div>`:''}
+    <div class="pdoc-footer">EUR.1 Movement Certificate · ${esc(g('eur1-num'))} · Generated by Steel Platform</div>`;
+}
+
+
 function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sbOverlay').classList.add('open');}
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbOverlay').classList.remove('open');}
 
