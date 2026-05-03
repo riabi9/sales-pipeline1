@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Settings — Steel Platform</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="ai-client.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f0f0ee;--surface:#fff;--surface2:#ebebea;--surface3:#f6f6f4;
+  --border:#e0e0de;--border2:#cacac6;
+  --text:#111110;--text2:#4a4a48;--text3:#888884;--text4:#bbbbb6;
+  --blue:#1456a0;--blue-bg:#e8f1fb;--blue-mid:#4a8fd4;
+  --green:#15895f;--green-bg:#e2f4ee;--green-text:#0c5e42;
+  --red:#cc3333;--red-bg:#fdeaea;--red-text:#922020;
+  --amber:#c47d00;--amber-bg:#fdf2de;--amber-text:#764900;
+  --purple:#6055c0;--purple-bg:#eeedfb;--purple-text:#3f36a0;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+  --sidebar-w:210px;
+}
+[data-theme="dark"]{
+  --bg:#0d0d0c;--surface:#181817;--surface2:#202020;--surface3:#1b1b1a;
+  --border:#282826;--border2:#343432;
+  --text:#edecea;--text2:#b4b4b0;--text3:#727270;--text4:#424240;
+  --blue:#4a90d9;--blue-bg:#0a1f3a;--blue-mid:#2468b0;
+  --green:#28b488;--green-bg:#082a1e;--green-text:#50c8a0;
+  --red:#e04848;--red-bg:#280c0c;--red-text:#ee8888;
+  --amber:#f0a820;--amber-bg:#281a00;--amber-text:#f8c860;
+  --purple:#9088e0;--purple-bg:#181538;--purple-text:#b0a8f4;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;font-size:13px}
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.auth-card{background:var(--surface);border-radius:18px;border:1px solid var(--border);padding:32px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.08)}
+.auth-logo{font-size:20px;font-weight:700;color:var(--blue)}.auth-logo-sub{font-size:10px;font-family:var(--mono);color:var(--text4);margin-top:3px;margin-bottom:22px;text-transform:uppercase;letter-spacing:.8px}
+.lbl{font-size:10px;font-weight:700;color:var(--text3);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.inp{width:100%;height:40px;border:1px solid var(--border2);border-radius:8px;padding:0 12px;font-size:13px;background:var(--surface);color:var(--text);font-family:var(--sans);outline:none;transition:border-color .15s,box-shadow .15s}
+.inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+.inp-sm{height:34px;font-size:12px}
+textarea.inp{min-height:80px;padding:10px 12px;line-height:1.4;resize:vertical;font-family:var(--sans)}
+.form-row{margin-bottom:11px}
+.auth-btn{width:100%;height:42px;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--sans);background:var(--blue);color:#fff;margin-top:6px;transition:opacity .15s}
+.auth-btn:hover{opacity:.88}.auth-btn:disabled{opacity:.45;cursor:not-allowed}
+.auth-msg{font-size:12px;margin-top:12px;padding:9px;border-radius:7px;text-align:center;background:var(--red-bg);color:var(--red-text)}
+#app{display:none}
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:140}.sb-overlay.open{display:block}
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:150;transition:transform .25s}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main-wrap{margin-left:0!important}.menu-btn{display:flex!important}}
+.sb-logo{padding:18px 16px 13px;border-bottom:1px solid var(--border)}
+.sb-logo-name{font-size:14px;font-weight:700;color:var(--blue)}.sb-logo-sub{font-size:9px;font-family:var(--mono);color:var(--text4);margin-top:2px;text-transform:uppercase;letter-spacing:.8px}
+.sb-nav{flex:1;overflow-y:auto;padding:8px 0}
+.nav-sec{font-size:9px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.8px;padding:12px 16px 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 16px;font-size:13px;color:var(--text2);cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:var(--sans);transition:background .12s,color .12s;text-decoration:none}
+.nav-item:hover{background:var(--surface2);color:var(--text)}.nav-item.active{background:var(--blue-bg);color:var(--blue);font-weight:600}
+.nav-icon{font-size:14px;width:20px;text-align:center;flex-shrink:0}
+.sb-footer{padding:12px 16px;border-top:1px solid var(--border)}
+.sb-user{font-size:11px;color:var(--text3);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admin-badge{font-size:9px;font-weight:700;background:var(--amber-bg);color:var(--amber-text);padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px;border:1px solid var(--amber)}
+.main-wrap{margin-left:var(--sidebar-w);flex:1;min-width:0}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 14px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:8px}
+.h-left{display:flex;align-items:center;gap:10px}.h-title{font-size:14px;font-weight:600;color:var(--text)}
+.h-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.menu-btn{width:34px;height:34px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:16px;display:none;align-items:center;justify-content:center;flex-shrink:0}
+.page-body{padding:16px;max-width:1100px;margin:0 auto}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:34px;padding:0 13px;border:1px solid var(--border2);border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--sans);background:var(--surface);color:var(--text);white-space:nowrap;transition:background .12s,color .12s,border-color .12s;text-decoration:none}
+.btn:hover{background:var(--surface2)}.btn-blue{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}.btn-blue:hover{opacity:.88}
+.btn-green{background:var(--green);color:#fff;border-color:var(--green);font-weight:600}.btn-green:hover{opacity:.88}
+.btn-red{background:var(--red);color:#fff;border-color:var(--red);font-weight:600}.btn-red:hover{opacity:.88}
+.btn-ghost{background:transparent;border-color:var(--border);color:var(--text3)}.btn-ghost:hover{background:var(--surface2);color:var(--text)}
+.btn-sm{height:28px;padding:0 10px;font-size:11px;border-radius:7px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--surface);padding:9px 18px;border-radius:8px;font-size:12px;font-weight:600;z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+/* Tabs */
+.tabs{display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:10px 14px;font-size:12px;font-weight:600;color:var(--text3);border:none;background:none;cursor:pointer;font-family:var(--sans);border-bottom:2px solid transparent;white-space:nowrap;transition:color .12s,border-color .12s}
+.tab:hover{color:var(--text2)}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+/* Provider grid */
+.prov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+.prov-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;transition:border-color .15s}
+.prov-card.configured{border-color:var(--green)}
+.prov-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.prov-name{font-size:14px;font-weight:600;color:var(--text)}
+.prov-meta{display:flex;gap:5px;flex-wrap:wrap;margin-top:3px}
+.tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px;display:inline-block}
+.tag-green{background:var(--green-bg);color:var(--green-text)}
+.tag-blue{background:var(--blue-bg);color:var(--blue)}
+.tag-amber{background:var(--amber-bg);color:var(--amber-text)}
+.tag-red{background:var(--red-bg);color:var(--red-text)}
+.tag-grey{background:var(--surface2);color:var(--text3)}
+.prov-status{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.prov-status.ok{color:var(--green-text)}
+.prov-status.fail{color:var(--red-text)}
+.prov-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+.prov-link{font-size:10px;color:var(--text3);text-decoration:none}
+.prov-link:hover{color:var(--blue);text-decoration:underline}
+/* Modal */
+.modal-wrap{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:16px}
+.modal-wrap.open{display:flex}
+.modal{background:var(--surface);border-radius:14px;border:1px solid var(--border);padding:22px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto}
+.modal-ttl{font-size:15px;font-weight:700;margin-bottom:4px}
+.modal-sub{font-size:11px;color:var(--text3);margin-bottom:16px;line-height:1.4}
+.modal-actions{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
+/* Task config card */
+.task-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
+.task-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:14px}
+.task-name{font-size:14px;font-weight:600}
+.task-desc{font-size:11px;color:var(--text3);margin-top:2px}
+.task-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:640px){.task-grid{grid-template-columns:1fr}}
+.task-grid .full{grid-column:1/-1}
+/* Section headers */
+.sec-ttl{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.sec-sub{font-size:11px;color:var(--text3);margin-bottom:14px;line-height:1.5}
+.alert-banner{padding:10px 14px;background:var(--amber-bg);color:var(--amber-text);border-radius:8px;font-size:12px;margin-bottom:14px;border:1px solid var(--amber);line-height:1.5}
+.alert-banner.info{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-mid)}
+.alert-banner.warn{background:var(--red-bg);color:var(--red-text);border-color:var(--red)}
+.empty{padding:30px;text-align:center;color:var(--text4);font-size:12px}
+/* Toggle */
+.tog{position:relative;width:36px;height:20px;background:var(--surface2);border:1px solid var(--border2);border-radius:20px;cursor:pointer;transition:background .15s;flex-shrink:0}
+.tog::after{content:'';position:absolute;width:14px;height:14px;background:var(--surface);border-radius:50%;top:2px;left:2px;transition:left .15s,background .15s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.tog.on{background:var(--green);border-color:var(--green)}
+.tog.on::after{left:18px;background:#fff}
+</style>
+</head>
+<body>
+
+<!-- Auth -->
+<div class="auth-wrap" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">⚙️ Steel Platform</div>
+    <div class="auth-logo-sub">Settings · Sign in</div>
+    <div class="form-row"><label class="lbl">Email</label><input class="inp" type="email" id="loginEmail" placeholder="you@company.com"></div>
+    <div class="form-row"><label class="lbl">Password</label><input class="inp" type="password" id="loginPassword" placeholder="••••••••"></div>
+    <button class="auth-btn" id="loginBtn">Sign in</button>
+    <div id="authMsg" style="display:none" class="auth-msg"></div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <div class="sb-overlay" id="sbOverlay"></div>
+  <nav class="sidebar" id="sidebar">
+    <div class="sb-logo"><div class="sb-logo-name">⚙️ Steel Platform</div><div class="sb-logo-sub">Export Management Suite</div></div>
+    <div class="sb-nav">
+      <div class="nav-sec">Pipeline</div>
+      <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
+      <a href="index.html" class="nav-item"><span class="nav-icon">📋</span>CRM / Leads</a>
+      <div class="nav-sec">Inventory</div>
+      <a href="stock.html" class="nav-item"><span class="nav-icon">📦</span>Stock</a>
+      <a href="procurement.html" class="nav-item"><span class="nav-icon">🛒</span>Procurement</a>
+      <div class="nav-sec">Operations</div>
+      <a href="logistics.html" class="nav-item"><span class="nav-icon">🚢</span>Logistics</a>
+      <a href="documents.html" class="nav-item"><span class="nav-icon">📄</span>Documents</a>
+      <div class="nav-sec">Finance</div>
+      <a href="bookkeeping.html" class="nav-item"><span class="nav-icon">💰</span>Bookkeeping</a>
+      <div class="nav-sec">Tools</div>
+      <a href="converter.html" class="nav-item"><span class="nav-icon">⚡</span>Grade Converter</a>
+      <a href="tools.html" class="nav-item"><span class="nav-icon">🔧</span>Tools</a>
+      <a href="news.html" class="nav-item"><span class="nav-icon">📰</span>News</a>
+      <a href="mail.html" class="nav-item"><span class="nav-icon">✉️</span>AI Inbox</a>
+      <div class="nav-sec">Team</div>
+      <a href="cont.html" class="nav-item"><span class="nav-icon">👥</span>Contacts</a>
+      <a href="team.html" class="nav-item"><span class="nav-icon">🧑‍💼</span>Team</a>
+      <div class="nav-sec">Account</div>
+      <a href="settings.html" class="nav-item active"><span class="nav-icon">⚙️</span>Settings</a>
+    </div>
+    <div class="sb-footer">
+      <div class="sb-user" id="userEmail">—</div>
+      <div id="adminBadgeWrap" style="display:none;margin-bottom:8px"><span class="admin-badge">⚙ Admin</span></div>
+      <button class="btn btn-ghost" style="width:100%;margin-bottom:6px" id="logoutBtn">Sign out</button>
+      <button class="btn btn-ghost" id="darkBtn" style="width:100%">🌙 Dark mode</button>
+    </div>
+  </nav>
+
+  <div class="main-wrap">
+    <header>
+      <div class="h-left">
+        <button class="menu-btn" id="menuBtn">☰</button>
+        <span class="h-title">⚙️ Settings</span>
+      </div>
+      <div class="h-right"></div>
+    </header>
+
+    <div class="page-body">
+      <div class="alert-banner info">
+        🔒 <strong>Your keys live in this browser only.</strong> Nothing is sent to any Steel Platform server. AI providers see your keys directly over HTTPS, just like the official browser SDKs do. Clearing your browser data will erase everything on this page.
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="providers">AI Providers</button>
+        <button class="tab" data-tab="tasks">AI Tasks</button>
+        <button class="tab" data-tab="email">Email Accounts</button>
+      </div>
+
+      <!-- ── AI PROVIDERS TAB ── -->
+      <div class="tab-panel active" id="tab-providers">
+        <div class="sec-ttl">AI Provider Keys</div>
+        <div class="sec-sub">Add an API key for any provider that supports browser-direct calls. All 7 below have either a generous free tier or low-cost models. Keys are stored in your browser's localStorage and are never transmitted to anyone except the AI provider you choose.</div>
+        <div id="provGrid" class="prov-grid"></div>
+      </div>
+
+      <!-- ── AI TASKS TAB ── -->
+      <div class="tab-panel" id="tab-tasks">
+        <div class="sec-ttl">Per-task AI configuration</div>
+        <div class="sec-sub">Pick which provider+model handles each AI task throughout the app. The system prompt below is automatically prepended to every call for that task.</div>
+        <div id="tasksWrap"></div>
+      </div>
+
+      <!-- ── EMAIL TAB ── -->
+      <div class="tab-panel" id="tab-email">
+        <div class="alert-banner info">📨 <strong>Coming in Phase 2.</strong> Email integration (Gmail OAuth, Outlook OAuth, IMAP via stateless proxy) and the AI inbox will be added next. Email bodies will be cached in IndexedDB on this device only.</div>
+        <div class="sec-ttl">Connected mailboxes</div>
+        <div class="sec-sub">No accounts connected yet.</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit key modal -->
+<div class="modal-wrap" id="keyModal">
+  <div class="modal">
+    <div class="modal-ttl" id="keyModalTtl">Add API Key</div>
+    <div class="modal-sub">Pasted keys are stored in your browser's localStorage and sent only to the AI provider over HTTPS.</div>
+    <div class="form-row">
+      <label class="lbl">API Key</label>
+      <input class="inp" type="password" id="keyInput" placeholder="Paste your API key" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="keyCancel">Cancel</button>
+      <button class="btn btn-blue" id="keySave">Save & test</button>
+    </div>
+    <div id="keyMsg" style="display:none;font-size:12px;margin-top:10px;padding:9px;border-radius:7px;background:var(--red-bg);color:var(--red-text)"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL='https://fmmfofjkebdsrnkchrfo.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtbWZvZmprZWJkc3Jua2NocmZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDAxNDIsImV4cCI6MjA5MjA3NjE0Mn0.bQQJt06mucLCQCrY1NgN-ed2ngDeRLmITmOfQCAM7ZU';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+
+const TASKS = [
+  { id:'digest',       name:'Daily Digest',     desc:'Summarize each morning\'s emails into a brief.' },
+  { id:'reply_draft',  name:'Reply Drafts',     desc:'Generate 2-3 reply variants per email.' },
+  { id:'action_items', name:'Action Item Extraction', desc:'Pull todos / commitments / deadlines from emails.' },
+  { id:'priority',     name:'Priority Scoring', desc:'Score each email 0-100 by urgency.' },
+  { id:'general',      name:'General',          desc:'Default for ad-hoc AI calls from anywhere in the app.' },
+];
+
+// ── Theme ──
+function toggleDark(){const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',t);document.getElementById('darkBtn').textContent=t==='dark'?'☀️ Light':'🌙 Dark mode';localStorage.setItem('sp_theme',t);}
+(()=>{const t=localStorage.getItem('sp_theme')||'light';document.documentElement.setAttribute('data-theme',t);setTimeout(()=>{const b=document.getElementById('darkBtn');if(b&&t==='dark')b.textContent='☀️ Light';},50);})();
+
+// ── Sidebar / toast ──
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sbOverlay').classList.add('open');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbOverlay').classList.remove('open');}
+let _tt=null;
+function toast(msg,type='ok'){const el=document.getElementById('toast');el.textContent=msg;el.style.background=type==='err'?'var(--red-text)':type==='warn'?'var(--amber-text)':'var(--text)';el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2800);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function timeAgo(ts){if(!ts)return'';const s=Math.floor((Date.now()-new Date(ts))/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
+
+// ── Auth ──
+document.getElementById('loginBtn').addEventListener('click',doLogin);
+document.getElementById('loginEmail').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+function showAuthMsg(m){const e=document.getElementById('authMsg');e.textContent=m;e.style.display='block';}
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPassword').value;
+  if(!email||!pass)return showAuthMsg('Please fill in all fields.');
+  const btn=document.getElementById('loginBtn');btn.disabled=true;btn.textContent='Signing in…';
+  const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  btn.disabled=false;btn.textContent='Sign in';
+  if(error)return showAuthMsg(error.message);
+  onSignedIn(data.user);
+}
+document.getElementById('logoutBtn').addEventListener('click',async()=>{await sb.auth.signOut();location.reload();});
+async function onSignedIn(user){
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('userEmail').textContent=user.email;
+  const{data:prof}=await sb.from('profiles').select('is_admin').eq('id',user.id).maybeSingle();
+  if(prof?.is_admin)document.getElementById('adminBadgeWrap').style.display='block';
+  renderProviders();
+  renderTasks();
+}
+sb.auth.getSession().then(({data:{session}})=>{if(session)onSignedIn(session.user);});
+document.getElementById('menuBtn').addEventListener('click',openSidebar);
+document.getElementById('sbOverlay').addEventListener('click',closeSidebar);
+document.getElementById('darkBtn').addEventListener('click',toggleDark);
+
+// ── Tabs ──
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('tab-'+t.dataset.tab).classList.add('active');
+  });
+});
+
+// ── Provider grid ──
+function renderProviders(){
+  const grid = document.getElementById('provGrid');
+  grid.innerHTML = AIClient.providers.map(p => {
+    const stored = AIClient.getKey(p.id);
+    const isCfg = !!stored;
+    const tags = [];
+    if(p.hasFreeTier)  tags.push('<span class="tag tag-green">Free tier</span>');
+    if(isCfg)          tags.push('<span class="tag tag-blue">Configured</span>');
+
+    let status = '';
+    if(isCfg){
+      const last4 = stored.key && stored.key.length >= 4 ? stored.key.slice(-4) : '';
+      status = `<div style="font-size:11px;color:var(--text3);font-family:var(--mono)">••••${esc(last4)}</div>
+                <div class="prov-status">Saved ${timeAgo(stored.savedAt)}</div>`;
+    } else {
+      status = `<div class="prov-status">Not configured</div>`;
+    }
+
+    const actions = isCfg ? `
+      <button class="btn btn-sm" data-act="test"   data-prov="${p.id}">Test</button>
+      <button class="btn btn-sm" data-act="edit"   data-prov="${p.id}">Replace</button>
+      <button class="btn btn-sm btn-ghost" data-act="delete" data-prov="${p.id}" title="Remove">🗑</button>
+    ` : `
+      <button class="btn btn-sm btn-blue" data-act="add" data-prov="${p.id}" style="flex:1">+ Add API key</button>
+    `;
+
+    return `
+      <div class="prov-card ${isCfg?'configured':''}">
+        <div class="prov-head">
+          <div>
+            <div class="prov-name">${esc(p.name)}</div>
+            <div class="prov-meta">${tags.join('')}</div>
+          </div>
+        </div>
+        ${status}
+        <a href="${esc(p.signupUrl)}" target="_blank" rel="noopener" class="prov-link">Get API key →</a>
+        <div class="prov-actions">${actions}</div>
+      </div>
+    `;
+  }).join('');
+
+  grid.querySelectorAll('[data-act]').forEach(el => {
+    el.addEventListener('click', () => handleProvAction(el.dataset.act, el.dataset.prov));
+  });
+}
+
+async function handleProvAction(act, providerId){
+  const provDef = AIClient.getProvider(providerId);
+  if(!provDef) return;
+
+  if(act === 'add' || act === 'edit'){
+    openKeyModal(provDef);
+    return;
+  }
+  if(act === 'test'){
+    toast('Testing '+provDef.name+'…');
+    const stored = AIClient.getKey(providerId);
+    if(!stored){ toast('No key saved','err'); return; }
+    const r = await AIClient.testKey(providerId, stored.key, stored.metadata);
+    if(r.ok) toast('✓ '+provDef.name+' works');
+    else     toast('✗ '+provDef.name+': '+(r.error||'failed'),'err');
+    return;
+  }
+  if(act === 'delete'){
+    if(!confirm(`Remove the saved ${provDef.name} API key from this browser?`)) return;
+    AIClient.deleteKey(providerId);
+    toast(provDef.name+' key removed');
+    renderProviders();
+    renderTasks(); // re-render in case task picker was using this provider
+    return;
+  }
+}
+
+// ── Modal: add/edit key ──
+let _modalProv = null;
+function openKeyModal(provDef){
+  _modalProv = provDef;
+  document.getElementById('keyModalTtl').textContent =
+    (AIClient.isConfigured(provDef.id) ? 'Replace ' : 'Add ') + provDef.name + ' key';
+  document.getElementById('keyInput').value = '';
+  document.getElementById('keyMsg').style.display = 'none';
+  document.getElementById('keyModal').classList.add('open');
+  setTimeout(()=>document.getElementById('keyInput').focus(), 50);
+}
+document.getElementById('keyCancel').addEventListener('click', () => {
+  document.getElementById('keyModal').classList.remove('open');
+});
+document.getElementById('keyInput').addEventListener('keydown', e => {
+  if(e.key === 'Enter') document.getElementById('keySave').click();
+});
+document.getElementById('keySave').addEventListener('click', async () => {
+  const key = document.getElementById('keyInput').value.trim();
+  const msg = document.getElementById('keyMsg');
+  if(!key){ msg.textContent='Paste an API key first.'; msg.style.display='block'; return; }
+
+  const btn = document.getElementById('keySave');
+  btn.disabled = true; btn.textContent = 'Testing…';
+  msg.style.display = 'none';
+
+  // Test before saving — better UX than saving a bad key
+  const test = await AIClient.testKey(_modalProv.id, key, {});
+  if(!test.ok){
+    msg.textContent = 'Key test failed: ' + (test.error || 'unknown');
+    msg.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Save & test';
+    return;
+  }
+
+  AIClient.setKey(_modalProv.id, key, {});
+  toast('✓ '+_modalProv.name+' verified & saved');
+  document.getElementById('keyModal').classList.remove('open');
+  btn.disabled = false; btn.textContent = 'Save & test';
+  renderProviders();
+  renderTasks();
+});
+
+// ── Task config ──
+function renderTasks(){
+  const wrap = document.getElementById('tasksWrap');
+  const activeProviders = AIClient.providers.filter(p => AIClient.isConfigured(p.id));
+  if(!activeProviders.length){
+    wrap.innerHTML = '<div class="alert-banner">⚠ Add at least one AI provider on the "AI Providers" tab before configuring tasks.</div>';
+    return;
+  }
+
+  wrap.innerHTML = TASKS.map(t => {
+    const cfg = AIClient.getTaskConfig(t.id) || {
+      provider:'', model:'', temperature:0.7, max_tokens:2000, system_prompt:'', is_enabled:true,
+    };
+    const provOptions = activeProviders.map(p =>
+      `<option value="${p.id}" ${cfg.provider===p.id?'selected':''}>${esc(p.name)}</option>`
+    ).join('');
+    const currentProv = activeProviders.find(p => p.id === cfg.provider) || activeProviders[0];
+    const modelDatalist = currentProv ? currentProv.defaultModels.map(m => `<option value="${esc(m)}">`).join('') : '';
+    const isEnabled = cfg.is_enabled !== false;
+
+    return `
+      <div class="task-card" data-task="${t.id}">
+        <div class="task-head">
+          <div>
+            <div class="task-name">${esc(t.name)}</div>
+            <div class="task-desc">${esc(t.desc)}</div>
+          </div>
+          <div class="tog ${isEnabled?'on':''}" data-task-tog="${t.id}" title="${isEnabled?'Enabled':'Disabled'}"></div>
+        </div>
+        <div class="task-grid">
+          <div>
+            <label class="lbl">Provider</label>
+            <select class="inp inp-sm" data-f="provider">
+              <option value="">— select —</option>
+              ${provOptions}
+            </select>
+          </div>
+          <div>
+            <label class="lbl">Model</label>
+            <input class="inp inp-sm" data-f="model" list="models-${t.id}" value="${esc(cfg.model||'')}" placeholder="${currentProv?esc(currentProv.defaultModels[0]||''):''}">
+            <datalist id="models-${t.id}">${modelDatalist}</datalist>
+          </div>
+          <div>
+            <label class="lbl">Temperature</label>
+            <input class="inp inp-sm" type="number" data-f="temperature" min="0" max="2" step="0.1" value="${cfg.temperature ?? 0.7}">
+          </div>
+          <div>
+            <label class="lbl">Max tokens</label>
+            <input class="inp inp-sm" type="number" data-f="max_tokens" min="50" max="32000" step="50" value="${cfg.max_tokens ?? 2000}">
+          </div>
+          <div class="full">
+            <label class="lbl">System prompt (optional)</label>
+            <textarea class="inp" data-f="system_prompt" placeholder="e.g. You are a precise email summarizer for a steel exporter…">${esc(cfg.system_prompt||'')}</textarea>
+          </div>
+          <div class="full" style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" data-task-test="${t.id}">Test prompt</button>
+            <button class="btn btn-blue btn-sm"  data-task-save="${t.id}">Save</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Provider change → update model datalist & input placeholder
+  wrap.querySelectorAll('[data-task]').forEach(card => {
+    const taskId = card.dataset.task;
+    card.querySelector('[data-f="provider"]').addEventListener('change', e => {
+      const provDef = AIClient.getProvider(e.target.value);
+      const dl = card.querySelector(`#models-${taskId}`);
+      const modelInp = card.querySelector('[data-f="model"]');
+      if(provDef){
+        dl.innerHTML = provDef.defaultModels.map(m => `<option value="${esc(m)}">`).join('');
+        modelInp.placeholder = provDef.defaultModels[0] || '';
+        if(!modelInp.value) modelInp.value = provDef.defaultModels[0] || '';
+      }
+    });
+  });
+
+  wrap.querySelectorAll('[data-task-save]').forEach(btn => {
+    btn.addEventListener('click', () => saveTaskCfg(btn.dataset.taskSave));
+  });
+  wrap.querySelectorAll('[data-task-test]').forEach(btn => {
+    btn.addEventListener('click', () => testTaskCfg(btn.dataset.taskTest));
+  });
+  wrap.querySelectorAll('[data-task-tog]').forEach(el => {
+    el.addEventListener('click', () => toggleTaskCfg(el.dataset.taskTog));
+  });
+}
+
+function saveTaskCfg(taskId){
+  const card = document.querySelector(`[data-task="${taskId}"]`);
+  const get = f => card.querySelector(`[data-f="${f}"]`).value;
+  const provider = get('provider');
+  const model = get('model').trim();
+  if(!provider || !model){ toast('Pick a provider and a model','err'); return; }
+  const existing = AIClient.getTaskConfig(taskId) || {};
+  AIClient.setTaskConfig(taskId, {
+    provider,
+    model,
+    temperature: parseFloat(get('temperature')) || 0.7,
+    max_tokens: parseInt(get('max_tokens'),10) || 2000,
+    system_prompt: get('system_prompt').trim() || null,
+    is_enabled: existing.is_enabled !== false,
+  });
+  toast(taskId+' saved');
+}
+
+function toggleTaskCfg(taskId){
+  const cur = AIClient.getTaskConfig(taskId);
+  if(!cur){ toast('Save the task first','err'); return; }
+  AIClient.setTaskConfig(taskId, { is_enabled: !cur.is_enabled });
+  toast(taskId + (cur.is_enabled ? ' disabled' : ' enabled'));
+  renderTasks();
+}
+
+async function testTaskCfg(taskId){
+  // Save current form values first so the test uses what's on screen
+  saveTaskCfg(taskId);
+  toast('Testing…');
+  try {
+    const r = await AIClient.chat({
+      task: taskId,
+      messages: [{ role:'user', content:'Reply with just the word PONG.' }],
+    });
+    toast('✓ '+taskId+': "'+r.content.trim().slice(0,50)+'"');
+  } catch(e){
+    toast('Test failed: '+e.message,'err');
+  }
+}
+</script>
+</body>
+</html>
