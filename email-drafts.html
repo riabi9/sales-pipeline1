@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#185FA5">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Email Drafts – Steel Platform</title>
+    <title>Email & WhatsApp Drafts – Steel Platform</title>
     <style>
+        /* ── all existing CSS unchanged ── */
         :root {
             --bg: #f5f5f3;
             --surface: #fff;
@@ -269,6 +270,30 @@
             padding: 0;
             font-size: 15px;
         }
+        /* Mode toggle button */
+        .mode-toggle {
+            display: flex;
+            background: var(--surface2);
+            border-radius: 7px;
+            overflow: hidden;
+            border: 1px solid var(--border2);
+            height: 30px;
+        }
+        .mode-btn {
+            height: 100%;
+            padding: 0 10px;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            background: transparent;
+            color: var(--text3);
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .mode-btn.active {
+            background: var(--blue);
+            color: #fff;
+        }
         main {
             padding: 12px;
             max-width: 1500px;
@@ -370,6 +395,14 @@
         .draft-item-count {
             font-size: 10px;
             color: var(--text3);
+        }
+        .draft-item-type {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 10px;
+            background: var(--green-bg);
+            color: var(--green-text);
         }
         .draft-item-actions {
             display: none;
@@ -707,23 +740,12 @@
             text-align: center;
         }
         @keyframes toastIn {
-            from {
-                opacity: 0;
-                transform: translateX(-50%) translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(-50%) translateY(0);
-            }
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
         @keyframes toastOut {
-            from {
-                opacity: 1;
-            }
-            to {
-                opacity: 0;
-                transform: translateX(-50%) translateY(20px);
-            }
+            from { opacity: 1; }
+            to { opacity: 0; transform: translateX(-50%) translateY(20px); }
         }
 
         /* ── Confirm dialog ── */
@@ -804,45 +826,20 @@
         }
 
         /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
-        }
-        ::-webkit-scrollbar-track {
-            background: var(--surface2);
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: var(--border2);
-            border-radius: 4px;
-        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: var(--surface2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
 
         /* Empty state */
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text4);
-        }
-        .empty-state-icon {
-            font-size: 40px;
-            margin-bottom: 10px;
-        }
-        .empty-state-text {
-            font-size: 13px;
-            margin-bottom: 6px;
-        }
-        .empty-state-sub {
-            font-size: 11px;
-            color: var(--text4);
-        }
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text4); }
+        .empty-state-icon { font-size: 40px; margin-bottom: 10px; }
+        .empty-state-text { font-size: 13px; margin-bottom: 6px; }
+        .empty-state-sub { font-size: 11px; color: var(--text4); }
     </style>
 </head>
 <body>
     <div class="app-layout">
-        <!-- Sidebar overlay -->
         <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-
-        <!-- Sidebar -->
         <nav class="sidebar" id="sidebar">
             <div class="sidebar-logo">
                 <div class="sidebar-logo-text">⚙️ Steel Platform</div>
@@ -875,12 +872,15 @@
             </div>
         </nav>
 
-        <!-- Main content -->
         <div class="main-content">
             <div class="topbar">
                 <div class="topbar-left">
                     <button class="menu-btn" onclick="openSidebar()">☰</button>
-                    <span class="page-title">✉️ Email Drafts</span>
+                    <span class="page-title">✉️ Messaging</span>
+                    <div class="mode-toggle">
+                        <button class="mode-btn active" data-mode="email" onclick="switchMode('email')">📧 Email</button>
+                        <button class="mode-btn" data-mode="whatsapp" onclick="switchMode('whatsapp')">💬 WhatsApp</button>
+                    </div>
                 </div>
                 <div class="topbar-right">
                     <button class="hbtn hbtn-blue" onclick="createNewDraft()">+ New draft</button>
@@ -889,22 +889,20 @@
             </div>
             <main>
                 <div class="email-layout">
-                    <!-- Drafts list -->
                     <div class="drafts-panel" id="draftsPanel">
                         <div class="drafts-panel-header">
-                            <span class="drafts-panel-title">📁 Saved drafts</span>
+                            <span class="drafts-panel-title" id="draftsPanelTitle">📁 Email drafts</span>
                             <span style="font-size:10px;color:var(--text4)" id="draftCount">0</span>
                         </div>
                         <div class="drafts-list" id="draftsList">
                             <div class="empty-state">
                                 <div class="empty-state-icon">📝</div>
                                 <div class="empty-state-text">No drafts yet</div>
-                                <div class="empty-state-sub">Create your first email draft</div>
+                                <div class="empty-state-sub">Create your first message draft</div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Editor panel -->
                     <div class="editor-panel" id="editorPanel">
                         <div class="editor-tabs">
                             <button class="editor-tab active" data-tab="compose" onclick="switchTab('compose')">✏️ Compose</button>
@@ -913,50 +911,10 @@
                             <button class="editor-tab" data-tab="send" onclick="switchTab('send')">📤 Send</button>
                         </div>
                         <div class="editor-body" id="editorBody">
-                            <!-- Compose tab -->
-                            <div id="tab-compose" class="tab-content" style="display:flex;flex-direction:column;gap:10px;">
-                                <div class="form-row-inline">
-                                    <div class="form-row"><label class="form-label">Draft name</label><input class="form-input" id="draftName" placeholder="e.g. Cold outreach EN"></div>
-                                    <div class="form-row" style="max-width:100px"><label class="form-label">Language</label><select class="form-input" id="draftLang"><option value="EN">EN</option><option value="FR">FR</option><option value="DE">DE</option><option value="ES">ES</option><option value="IT">IT</option><option value="PT">PT</option><option value="AR">AR</option><option value="ZH">ZH</option><option value="RU">RU</option><option value="Other">Other</option></select></div>
-                                </div>
-                                <div class="form-row"><label class="form-label">Subject line <span style="font-weight:400;color:var(--text4)">(use
-                                            {{Name}}, {{Company}}, {{Email}} for personalization)</span></label><input class="form-input" id="draftSubject" placeholder="e.g. Steel supply inquiry – {{Company}}"></div>
-                                <div class="form-row" style="flex:1"><label class="form-label">Email body <span style="font-weight:400;color:var(--text4)">(placeholders: {{Name}},
-                                            {{Company}}, {{Email}})</span></label><textarea class="form-input" id="draftBody" placeholder="Dear {{Name}}," style="flex:1;min-height:180px;font-size:13px;line-height:1.6"></textarea></div>
-                                <div class="form-row-inline">
-                                    <div class="form-row"><label class="form-label">CC</label><input class="form-input" id="draftCC" placeholder="cc@company.com (comma-separated)"></div>
-                                    <div class="form-row"><label class="form-label">BCC</label><input class="form-input" id="draftBCC" placeholder="bcc@company.com (comma-separated)"></div>
-                                </div>
-                                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                                    <button class="hbtn hbtn-blue" onclick="saveCurrentDraft()">💾 Save draft</button>
-                                    <span style="font-size:10px;color:var(--text4)" id="saveStatus"></span>
-                                </div>
-                            </div>
-
+                            <!-- Compose tab: content changes based on mode -->
+                            <div id="tab-compose" class="tab-content" style="display:flex;flex-direction:column;gap:10px;"></div>
                             <!-- Recipients tab -->
-                            <div id="tab-recipients" class="tab-content" style="display:none;flex-direction:column;gap:10px;">
-                                <div class="form-row">
-                                    <label class="form-label">📋 Paste recipients (one per line: Name, Email, Company)</label>
-                                    <textarea class="paste-area" id="pasteRecipients" placeholder="John Doe, john@acme.com, ACME Inc.
-                                        Jane Smith, jane@steelcorp.com, SteelCorp
-                                        bob@example.com
-                                        Alice, alice@factory.com"></textarea>
-                                    <span class="help-text">Format: <strong>Name, Email, Company</strong> — Name and Company are optional. One entry per line. Separate with commas, tabs, or semicolons.</span>
-                                </div>
-                                <div style="display:flex;gap:8px;flex-wrap:wrap">
-                                    <button class="hbtn hbtn-blue" onclick="parsePastedRecipients()">➕ Add from paste</button>
-                                    <button class="hbtn" onclick="addEmptyRecipient()">+ Add one row</button>
-                                    <button class="hbtn" onclick="clearAllRecipients()" style="color:var(--red-text);border-color:var(--red)">Clear all</button>
-                                </div>
-                                <div style="overflow-x:auto">
-                                    <table class="recipient-list" id="recipientTable">
-                                        <thead><tr><th style="width:28px"></th><th>Name</th><th>Email</th><th>Company</th><th style="width:32px"></th></tr></thead>
-                                        <tbody id="recipientTbody"></tbody>
-                                    </table>
-                                    <div class="recipients-empty" id="recipientsEmpty">No recipients added yet. Paste a list above or add rows manually.</div>
-                                </div>
-                            </div>
-
+                            <div id="tab-recipients" class="tab-content" style="display:none;flex-direction:column;gap:10px;"></div>
                             <!-- Preview tab -->
                             <div id="tab-preview" class="tab-content" style="display:none;flex-direction:column;gap:10px;">
                                 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -967,40 +925,8 @@
                                 <div class="preview-meta" id="previewMeta"></div>
                                 <div class="preview-box" id="previewBox"></div>
                             </div>
-
                             <!-- Send tab -->
-                            <div id="tab-send" class="tab-content" style="display:none;flex-direction:column;gap:12px;">
-                                <div style="background:var(--blue-bg);border-radius:10px;padding:12px 14px;border:1px solid var(--blue-light)">
-                                    <div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:4px">📤 Outlook integration</div>
-                                    <div style="font-size:11px;color:var(--text2);line-height:1.5">
-                                        Clicking a button below will open Outlook (your default mail client) with a <strong>pre-filled draft</strong>.
-                                        You just need to review and click <strong>Send</strong> in Outlook.
-                                    </div>
-                                </div>
-                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-                                    <div style="background:var(--surface2);border-radius:10px;padding:14px;border:1px solid
-                                        var(--border);display:flex;flex-direction:column;gap:8px">
-                                        <div style="font-size:13px;font-weight:700;color:var(--text)">📧 Bulk – One email to all</div>
-                                        <div style="font-size:11px;color:var(--text3)">All recipients in BCC. Same subject & body for everyone. Placeholders will be removed.</div>
-                                        <button class="hbtn hbtn-green" onclick="sendBulkOutlook()" style="margin-top:auto">🚀 Open in Outlook</button>
-                                    </div>
-                                    <div style="background:var(--surface2);border-radius:10px;padding:14px;border:1px solid
-                                        var(--border);display:flex;flex-direction:column;gap:8px">
-                                        <div style="font-size:13px;font-weight:700;color:var(--text)">👤 Personalized – One by one</div>
-                                        <div style="font-size:11px;color:var(--text3)">Each recipient gets a personalized email. You'll click through a queue – one Outlook window at a time.</div>
-                                        <button class="hbtn hbtn-blue" onclick="startPersonalizedQueue()" style="margin-top:auto">🔄 Start queue</button>
-                                    </div>
-                                </div>
-                                <div style="background:var(--surface2);border-radius:10px;padding:14px;border:1px solid
-                                    var(--border);display:flex;flex-direction:column;gap:8px">
-                                    <div style="font-size:13px;font-weight:700;color:var(--text)">📋 Copy for manual paste</div>
-                                    <div style="font-size:11px;color:var(--text3)">Copy the full email content to your clipboard, then paste into Outlook manually.</div>
-                                    <button class="hbtn" onclick="copyToClipboard()">📋 Copy to clipboard</button>
-                                </div>
-                                <div style="font-size:10px;color:var(--text4);text-align:center">
-                                    ⚠️ <code>mailto:</code> links have a ~2000-character limit. For long emails, use Copy to Clipboard or split into shorter messages.
-                                </div>
-                            </div>
+                            <div id="tab-send" class="tab-content" style="display:none;flex-direction:column;gap:12px;"></div>
                         </div>
                     </div>
                 </div>
@@ -1011,15 +937,15 @@
     <!-- Queue modal -->
     <div id="queueOverlay" class="queue-overlay" style="display:none">
         <div class="queue-card">
-            <div class="queue-title">📤 Personalized send queue</div>
+            <div class="queue-title" id="queueModalTitle">📤 Send queue</div>
             <div class="queue-progress" id="queueProgress"></div>
             <div style="font-size:11px;color:var(--text3);margin-bottom:4px"><strong>To:</strong> <span id="queueRecipientInfo"></span></div>
-            <div style="font-size:11px;color:var(--text3);margin-bottom:4px"><strong>Subject:</strong> <span id="queueSubject"></span></div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px" id="queueSubjectLine"><strong>Subject:</strong> <span id="queueSubject"></span></div>
             <div class="queue-body-preview" id="queueBodyPreview"></div>
             <div class="queue-actions">
                 <button class="btn-cancel" onclick="skipInQueue()">⏭ Skip</button>
                 <button class="btn-cancel" onclick="closeQueue()">✕ Close</button>
-                <button class="btn-primary" id="queueOpenBtn" onclick="openCurrentInQueue()">📧 Open in Outlook →</button>
+                <button class="btn-primary" id="queueOpenBtn" onclick="openCurrentInQueue()">📧 Open →</button>
             </div>
         </div>
     </div>
@@ -1036,32 +962,42 @@
         </div>
     </div>
 
+    <!-- Schedule reminder modal -->
+    <div id="scheduleOverlay" class="confirm-overlay" style="display:none">
+        <div class="confirm-card">
+            <div class="confirm-title">⏰ Weekly WhatsApp reminder</div>
+            <div class="confirm-text" id="scheduleText"></div>
+            <div class="confirm-actions">
+                <button class="btn-cancel" onclick="dismissSchedule()">Dismiss</button>
+                <button class="btn-primary" onclick="startScheduledQueue()">Start sending now</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // ═══════════════ STORAGE ═══════════════
+        // ═══════════════ GLOBAL STATE ═══════════════
         const STORAGE_KEY = 'sp_email_drafts';
+        const SCHEDULE_KEY = 'whatsapp_weekly_schedule';
         let drafts = [];
         let currentDraftId = null;
         let currentTab = 'compose';
-        let recipients = []; // [{name, email, company}]
+        let recipients = [];           // unified: name, email/phone, company
         let queueIndex = 0;
         let queueList = [];
         let pendingConfirmCallback = null;
+        let currentMode = 'email';    // 'email' or 'whatsapp'
 
+        // ═══════════════ STORAGE ═══════════════
         function loadDrafts() {
             try {
                 const raw = localStorage.getItem(STORAGE_KEY);
                 drafts = raw ? JSON.parse(raw) : [];
-            } catch (e) {
-                drafts = [];
-            }
+                // Backfill: ensure all drafts have a 'type' field
+                drafts.forEach(d => { if (!d.type) d.type = 'email'; });
+            } catch (e) { drafts = []; }
         }
-
-        function saveAllDrafts() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(drafts));
-        }
-
+        function saveAllDrafts() { localStorage.setItem(STORAGE_KEY, JSON.stringify(drafts)); }
         function findDraft(id) { return drafts.find(d => d.id === id); }
-
         function getCurrentDraft() { return currentDraftId ? findDraft(currentDraftId) : null; }
 
         // ═══════════════ DARK MODE ═══════════════
@@ -1082,7 +1018,6 @@
             document.getElementById('sidebar').classList.add('open');
             document.getElementById('sidebarOverlay').classList.add('open');
         }
-
         function closeSidebar() {
             document.getElementById('sidebar').classList.remove('open');
             document.getElementById('sidebarOverlay').classList.remove('open');
@@ -1106,15 +1041,44 @@
             document.getElementById('confirmOverlay').style.display = 'flex';
             pendingConfirmCallback = callback;
         }
-
         function closeConfirm() {
             document.getElementById('confirmOverlay').style.display = 'none';
             pendingConfirmCallback = null;
         }
-
         function confirmAction() {
             if (pendingConfirmCallback) pendingConfirmCallback();
             closeConfirm();
+        }
+
+        // ═══════════════ MODE SWITCHING ═══════════════
+        function switchMode(mode) {
+            if (mode === currentMode) return;
+            saveCurrentDraftSilent();
+            currentMode = mode;
+            // Update toggle buttons
+            document.querySelectorAll('.mode-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.mode === mode);
+            });
+            // Update panel title
+            document.getElementById('draftsPanelTitle').textContent = mode === 'email' ? '📁 Email drafts' : '💬 WhatsApp drafts';
+            // Re-render draft list filtered by mode
+            renderDraftsList();
+            // Clear current draft and editor if the selected draft doesn't match mode
+            const cur = getCurrentDraft();
+            if (cur && cur.type !== mode) {
+                currentDraftId = null;
+                recipients = [];
+                clearEditor();
+            }
+            // If no draft selected and there are drafts of this mode, select first
+            if (!currentDraftId) {
+                const first = drafts.filter(d => d.type === mode)[0];
+                if (first) selectDraft(first.id);
+                else clearEditor();
+            }
+            // Refresh editor tabs
+            switchTab('compose');
+            renderRecipientTable();
         }
 
         // ═══════════════ RECIPIENTS ═══════════════
@@ -1123,21 +1087,25 @@
             const empty = document.getElementById('recipientsEmpty');
             const badge = document.getElementById('recipCountBadge');
             badge.textContent = '(' + recipients.length + ')';
+            const isEmail = currentMode === 'email';
+            const col2Label = isEmail ? 'Email' : 'Phone';
+            const col2Placeholder = isEmail ? 'email@...' : '+1234567890';
+            let html = '';
             if (recipients.length === 0) {
-                tbody.innerHTML = '';
-                empty.style.display = 'block';
+                html = '<tr><td colspan="5" style="text-align:center;color:var(--text4);padding:30px">No recipients yet. Paste a list above or add rows manually.</td></tr>';
             } else {
-                empty.style.display = 'none';
-                tbody.innerHTML = recipients.map((r, i) => `
+                html = recipients.map((r, i) => `
                     <tr>
                         <td style="text-align:center;color:var(--text4);font-size:10px">${i + 1}</td>
                         <td><input value="${escapeHtml(r.name || '')}" placeholder="Name" data-idx="${i}" data-field="name" onchange="updateRecipientField(${i},'name',this.value)"></td>
-                        <td><input value="${escapeHtml(r.email || '')}" placeholder="email@..." data-idx="${i}" data-field="email" onchange="updateRecipientField(${i},'email',this.value)"></td>
+                        <td><input value="${escapeHtml(r.email || '')}" placeholder="${col2Placeholder}" data-idx="${i}" data-field="email" onchange="updateRecipientField(${i},'email',this.value)"></td>
                         <td><input value="${escapeHtml(r.company || '')}" placeholder="Company" data-idx="${i}" data-field="company" onchange="updateRecipientField(${i},'company',this.value)"></td>
                         <td><button class="btn-remove-recip" onclick="removeRecipient(${i})" title="Remove">×</button></td>
                     </tr>
                 `).join('');
             }
+            tbody.innerHTML = html;
+            document.getElementById('recipientsEmpty').style.display = recipients.length ? 'none' : 'block';
             updatePreviewDropdown();
         }
 
@@ -1147,60 +1115,72 @@
                 saveRecipientsToDraft();
             }
         }
-
         function removeRecipient(idx) {
             recipients.splice(idx, 1);
             saveRecipientsToDraft();
             renderRecipientTable();
         }
-
         function addEmptyRecipient() {
             recipients.push({ name: '', email: '', company: '' });
             saveRecipientsToDraft();
             renderRecipientTable();
         }
-
         function clearAllRecipients() {
-            showConfirm('Clear all recipients?', 'This will remove all ' + recipients.length +
-                ' recipient(s) from this draft.', () => {
-                    recipients = [];
-                    saveRecipientsToDraft();
-                    renderRecipientTable();
-                    showToast('All recipients cleared');
-                });
+            showConfirm('Clear all recipients?', 'This will remove all ' + recipients.length + ' recipient(s).', () => {
+                recipients = [];
+                saveRecipientsToDraft();
+                renderRecipientTable();
+                showToast('All recipients cleared');
+            });
         }
-
         function parsePastedRecipients() {
             const raw = document.getElementById('pasteRecipients').value.trim();
             if (!raw) { showToast('Paste some recipient data first'); return; }
             const lines = raw.split(/[\n\r]+/).filter(l => l.trim());
             let added = 0;
+            const isWhatsApp = currentMode === 'whatsapp';
             lines.forEach(line => {
-                // Split by comma, tab, or semicolon
                 const parts = line.split(/[,\t;]+/).map(s => s.trim()).filter(Boolean);
                 if (parts.length === 0) return;
-                let name = '',
-                    email = '',
-                    company = '';
-                // Heuristic: find the part with @ as email
+                let name = '', email = '', company = '';
                 const emailIdx = parts.findIndex(p => p.includes('@'));
-                if (emailIdx >= 0) {
-                    email = parts[emailIdx];
-                    if (emailIdx > 0) name = parts[0];
-                    if (parts.length > emailIdx + 1) company = parts[emailIdx + 1];
-                    if (emailIdx > 1 && parts.length > emailIdx + 1) {
-                        name = parts.slice(0, emailIdx).join(' ');
-                        company = parts.slice(emailIdx + 1).join(' ');
+                if (isWhatsApp) {
+                    // For WhatsApp, look for a part that looks like a phone number (digits, maybe +)
+                    const phoneIdx = parts.findIndex(p => /^\+?\d[\d\s\-\(\)]+$/.test(p));
+                    if (phoneIdx >= 0) {
+                        email = parts[phoneIdx]; // use email field to store phone
+                        if (phoneIdx > 0) name = parts[0];
+                        if (parts.length > phoneIdx + 1) company = parts[phoneIdx + 1];
+                    } else {
+                        // fallback: take first part as name, second as phone
+                        if (parts.length >= 2) {
+                            name = parts[0];
+                            email = parts[1]; // treat as phone
+                            if (parts.length > 2) company = parts.slice(2).join(' ');
+                        } else if (parts.length === 1) {
+                            email = parts[0]; // assume it's a phone
+                        }
                     }
-                } else if (parts.length === 1) {
-                    email = parts[0];
-                } else if (parts.length === 2) {
-                    name = parts[0];
-                    email = parts[1];
                 } else {
-                    name = parts[0];
-                    email = parts[1];
-                    company = parts.slice(2).join(' ');
+                    // email mode: original logic
+                    if (emailIdx >= 0) {
+                        email = parts[emailIdx];
+                        if (emailIdx > 0) name = parts[0];
+                        if (parts.length > emailIdx + 1) company = parts[emailIdx + 1];
+                        if (emailIdx > 1 && parts.length > emailIdx + 1) {
+                            name = parts.slice(0, emailIdx).join(' ');
+                            company = parts.slice(emailIdx + 1).join(' ');
+                        }
+                    } else if (parts.length === 1) {
+                        email = parts[0];
+                    } else if (parts.length === 2) {
+                        name = parts[0];
+                        email = parts[1];
+                    } else {
+                        name = parts[0];
+                        email = parts[1];
+                        company = parts.slice(2).join(' ');
+                    }
                 }
                 if (email) {
                     recipients.push({ name, email, company });
@@ -1213,7 +1193,7 @@
                 document.getElementById('pasteRecipients').value = '';
                 showToast('Added ' + added + ' recipient(s)');
             } else {
-                showToast('No valid emails found in pasted data');
+                showToast('No valid contacts found in pasted data');
             }
         }
 
@@ -1238,8 +1218,7 @@
             const cur = sel.value;
             sel.innerHTML = '<option value="">-- No recipient (show placeholders) --</option>';
             recipients.forEach((r, i) => {
-                const label = [r.name, r.email, r.company].filter(Boolean).join(' – ') || 'Recipient ' + (
-                    i + 1);
+                const label = [r.name, r.email, r.company].filter(Boolean).join(' – ') || 'Recipient ' + (i + 1);
                 sel.innerHTML += `<option value="${i}"${String(i)===cur?' selected':''}>${escapeHtml(label)}</option>`;
             });
             updatePreview();
@@ -1247,8 +1226,11 @@
 
         function updatePreview() {
             const idx = document.getElementById('previewRecipient').value;
-            const subject = document.getElementById('draftSubject').value || '(no subject)';
-            const body = document.getElementById('draftBody').value || '(no body)';
+            const isEmail = currentMode === 'email';
+            const subjectEl = document.getElementById(isEmail ? 'draftSubject' : 'draftSubjectWhatsapp');
+            const bodyEl = document.getElementById(isEmail ? 'draftBody' : 'draftBodyWhatsapp');
+            const subject = subjectEl ? subjectEl.value : '';
+            const body = bodyEl ? bodyEl.value : '';
             const meta = document.getElementById('previewMeta');
             const box = document.getElementById('previewBox');
             let r = null;
@@ -1257,12 +1239,16 @@
             }
             const filledSubject = fillPlaceholders(subject, r);
             const filledBody = fillPlaceholders(body, r);
-            meta.innerHTML = r ?
-                `<span>📧 <strong>To:</strong> ${escapeHtml(r.email)}</span><span>👤 ${escapeHtml(r.name||'—')}</span><span>🏢 ${escapeHtml(r.company||'—')}</span>` :
-                '<span style="color:var(--text4)">Select a recipient to see personalized preview</span>';
-            // Highlight remaining placeholders
-            const displayBody = r ? filledBody : body.replace(/\{\{(\w+)\}\}/g,
-                '<span class="placeholder-highlight">{{$1}}</span>');
+            if (isEmail) {
+                meta.innerHTML = r ?
+                    `<span>📧 <strong>To:</strong> ${escapeHtml(r.email)}</span><span>👤 ${escapeHtml(r.name||'—')}</span><span>🏢 ${escapeHtml(r.company||'—')}</span>` :
+                    '<span style="color:var(--text4)">Select a recipient to see personalized preview</span>';
+            } else {
+                meta.innerHTML = r ?
+                    `<span>💬 <strong>To:</strong> ${escapeHtml(r.email)}</span><span>👤 ${escapeHtml(r.name||'—')}</span><span>🏢 ${escapeHtml(r.company||'—')}</span>` :
+                    '<span style="color:var(--text4)">Select a recipient to see personalized preview</span>';
+            }
+            const displayBody = r ? filledBody : body.replace(/\{\{(\w+)\}\}/g, '<span class="placeholder-highlight">{{$1}}</span>');
             box.innerHTML = r ? escapeHtml(filledBody).replace(/\n/g, '<br>') : displayBody.replace(/\n/g, '<br>');
             document.getElementById('previewMeta').style.display = r ? 'flex' : 'block';
         }
@@ -1275,21 +1261,19 @@
                 result = result.replace(/\{\{Company\}\}/gi, recipient.company || '');
                 result = result.replace(/\{\{Email\}\}/gi, recipient.email || '');
             }
-            // Remove any remaining placeholders
             result = result.replace(/\{\{\w+\}\}/g, '');
-            // Clean up double spaces and orphaned commas
             result = result.replace(/  +/g, ' ').replace(/,\s*,/g, ',').replace(/^,\s*/, '');
             return result;
         }
 
         // ═══════════════ DRAFT MANAGEMENT ═══════════════
         function generateId() { return 'draft_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8); }
-
         function createNewDraft() {
             const d = {
                 id: generateId(),
-                name: 'New draft',
-                language: 'EN',
+                type: currentMode,
+                name: 'New ' + (currentMode === 'email' ? 'email' : 'message'),
+                language: currentMode === 'email' ? 'EN' : '',
                 subject: '',
                 body: '',
                 cc: '',
@@ -1304,25 +1288,18 @@
             renderDraftsList();
             showToast('New draft created');
         }
-
         function duplicateDraft(id) {
             const orig = findDraft(id);
             if (!orig) return;
-            const d = {
-                ...orig,
-                id: generateId(),
-                name: (orig.name || 'Draft') + ' (copy)',
-                recipients: orig.recipients ? orig.recipients.map(r => ({ ...r })) : [],
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            };
+            const d = { ...orig, id: generateId(), name: (orig.name || 'Draft') + ' (copy)',
+                recipients: orig.recipients ? orig.recipients.map(r => ({...r})) : [],
+                createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
             drafts.unshift(d);
             saveAllDrafts();
             selectDraft(d.id);
             renderDraftsList();
             showToast('Draft duplicated');
         }
-
         function deleteDraft(id) {
             const d = findDraft(id);
             if (!d) return;
@@ -1341,44 +1318,55 @@
         }
 
         function selectDraft(id) {
-            // Save current first
             saveCurrentDraftSilent();
             currentDraftId = id;
             const d = findDraft(id);
             if (!d) return;
-            // Load into editor
-            document.getElementById('draftName').value = d.name || '';
-            document.getElementById('draftLang').value = d.language || 'EN';
-            document.getElementById('draftSubject').value = d.subject || '';
-            document.getElementById('draftBody').value = d.body || '';
-            document.getElementById('draftCC').value = d.cc || '';
-            document.getElementById('draftBCC').value = d.bcc || '';
-            recipients = d.recipients ? d.recipients.map(r => ({ ...r })) : [];
+            // Load into editor according to mode
+            if (d.type === 'email') {
+                document.getElementById('draftName').value = d.name || '';
+                document.getElementById('draftLang').value = d.language || 'EN';
+                document.getElementById('draftSubject').value = d.subject || '';
+                document.getElementById('draftBody').value = d.body || '';
+                document.getElementById('draftCC').value = d.cc || '';
+                document.getElementById('draftBCC').value = d.bcc || '';
+            } else {
+                document.getElementById('draftName').value = d.name || '';
+                document.getElementById('draftLang').value = d.language || '';
+                document.getElementById('draftSubjectWhatsapp').value = d.subject || ''; // we repurpose subject for optional label
+                document.getElementById('draftBodyWhatsapp').value = d.body || '';
+                // CC/BCC not used
+            }
+            recipients = d.recipients ? d.recipients.map(r => ({...r})) : [];
             renderRecipientTable();
             renderDraftsList();
             switchTab('compose');
-            document.getElementById('saveStatus').textContent = '';
+            document.getElementById('saveStatus') && (document.getElementById('saveStatus').textContent = '');
         }
 
         function saveCurrentDraft() {
             const d = getCurrentDraft();
             if (!d) {
-                // Create new draft from current editor content
-                if (!document.getElementById('draftName').value.trim() &&
-                    !document.getElementById('draftSubject').value.trim() &&
-                    !document.getElementById('draftBody').value.trim() &&
-                    recipients.length === 0) {
+                // Create new draft from editor content
+                const nameEl = document.getElementById('draftName');
+                const name = nameEl ? nameEl.value.trim() : '';
+                const subjectEl = document.getElementById(currentMode === 'email' ? 'draftSubject' : 'draftSubjectWhatsapp');
+                const bodyEl = document.getElementById(currentMode === 'email' ? 'draftBody' : 'draftBodyWhatsapp');
+                const subject = subjectEl ? subjectEl.value : '';
+                const body = bodyEl ? bodyEl.value : '';
+                if (!name && !subject && !body && recipients.length === 0) {
                     showToast('Nothing to save yet');
                     return;
                 }
                 const newD = {
                     id: generateId(),
-                    name: document.getElementById('draftName').value.trim() || 'Untitled draft',
-                    language: document.getElementById('draftLang').value,
-                    subject: document.getElementById('draftSubject').value,
-                    body: document.getElementById('draftBody').value,
-                    cc: document.getElementById('draftCC').value,
-                    bcc: document.getElementById('draftBCC').value,
+                    type: currentMode,
+                    name: name || 'Untitled draft',
+                    language: document.getElementById('draftLang')?.value || '',
+                    subject: subject,
+                    body: body,
+                    cc: currentMode === 'email' ? (document.getElementById('draftCC')?.value || '') : '',
+                    bcc: currentMode === 'email' ? (document.getElementById('draftBCC')?.value || '') : '',
                     recipients: [...recipients],
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString()
@@ -1387,23 +1375,26 @@
                 currentDraftId = newD.id;
                 saveAllDrafts();
                 renderDraftsList();
-                document.getElementById('saveStatus').textContent = '✓ Saved';
-                setTimeout(() => { document.getElementById('saveStatus').textContent = ''; }, 2000);
                 showToast('Draft saved');
                 return;
             }
             d.name = document.getElementById('draftName').value.trim() || 'Untitled draft';
-            d.language = document.getElementById('draftLang').value;
-            d.subject = document.getElementById('draftSubject').value;
-            d.body = document.getElementById('draftBody').value;
-            d.cc = document.getElementById('draftCC').value;
-            d.bcc = document.getElementById('draftBCC').value;
+            d.language = document.getElementById('draftLang')?.value || '';
+            if (currentMode === 'email') {
+                d.subject = document.getElementById('draftSubject').value;
+                d.body = document.getElementById('draftBody').value;
+                d.cc = document.getElementById('draftCC').value;
+                d.bcc = document.getElementById('draftBCC').value;
+            } else {
+                d.subject = document.getElementById('draftSubjectWhatsapp').value; // optional label
+                d.body = document.getElementById('draftBodyWhatsapp').value;
+            }
             d.recipients = [...recipients];
             d.updatedAt = new Date().toISOString();
             saveAllDrafts();
             renderDraftsList();
-            document.getElementById('saveStatus').textContent = '✓ Saved';
-            setTimeout(() => { document.getElementById('saveStatus').textContent = ''; }, 2000);
+            document.getElementById('saveStatus') && (document.getElementById('saveStatus').textContent = '✓ Saved');
+            setTimeout(() => { if (document.getElementById('saveStatus')) document.getElementById('saveStatus').textContent = ''; }, 2000);
             showToast('Draft saved');
         }
 
@@ -1411,78 +1402,209 @@
             const d = getCurrentDraft();
             if (!d) return;
             d.name = document.getElementById('draftName').value.trim() || 'Untitled draft';
-            d.language = document.getElementById('draftLang').value;
-            d.subject = document.getElementById('draftSubject').value;
-            d.body = document.getElementById('draftBody').value;
-            d.cc = document.getElementById('draftCC').value;
-            d.bcc = document.getElementById('draftBCC').value;
+            d.language = document.getElementById('draftLang')?.value || '';
+            if (currentMode === 'email') {
+                d.subject = document.getElementById('draftSubject').value;
+                d.body = document.getElementById('draftBody').value;
+                d.cc = document.getElementById('draftCC').value;
+                d.bcc = document.getElementById('draftBCC').value;
+            } else {
+                d.subject = document.getElementById('draftSubjectWhatsapp').value;
+                d.body = document.getElementById('draftBodyWhatsapp').value;
+            }
             d.recipients = [...recipients];
             d.updatedAt = new Date().toISOString();
             saveAllDrafts();
         }
 
         function clearEditor() {
-            document.getElementById('draftName').value = '';
-            document.getElementById('draftLang').value = 'EN';
-            document.getElementById('draftSubject').value = '';
-            document.getElementById('draftBody').value = '';
-            document.getElementById('draftCC').value = '';
-            document.getElementById('draftBCC').value = '';
+            const nameEl = document.getElementById('draftName');
+            if (nameEl) nameEl.value = '';
+            const langEl = document.getElementById('draftLang');
+            if (langEl) langEl.value = currentMode === 'email' ? 'EN' : '';
+            if (currentMode === 'email') {
+                document.getElementById('draftSubject').value = '';
+                document.getElementById('draftBody').value = '';
+                document.getElementById('draftCC').value = '';
+                document.getElementById('draftBCC').value = '';
+            } else {
+                document.getElementById('draftSubjectWhatsapp').value = '';
+                document.getElementById('draftBodyWhatsapp').value = '';
+            }
             recipients = [];
-            document.getElementById('saveStatus').textContent = '';
+            if (document.getElementById('saveStatus')) document.getElementById('saveStatus').textContent = '';
         }
 
         function renderDraftsList() {
             const container = document.getElementById('draftsList');
-            const count = document.getElementById('draftCount');
-            count.textContent = drafts.length + ' draft' + (drafts.length !== 1 ? 's' : '');
-            if (drafts.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📝</div>
-                        <div class="empty-state-text">No drafts yet</div>
-                        <div class="empty-state-sub">Create your first email draft</div>
-                    </div>`;
+            const countEl = document.getElementById('draftCount');
+            const filtered = drafts.filter(d => d.type === currentMode);
+            countEl.textContent = filtered.length + ' draft' + (filtered.length !== 1 ? 's' : '');
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📝</div><div class="empty-state-text">No ${currentMode} drafts yet</div><div class="empty-state-sub">Create your first message draft</div></div>`;
                 return;
             }
-            container.innerHTML = drafts.map(d => {
+            container.innerHTML = filtered.map(d => {
                 const isActive = d.id === currentDraftId;
                 const recCount = (d.recipients || []).length;
-                const dateStr = d.updatedAt ? new Date(d.updatedAt).toLocaleDateString('en-GB', { day: 'numeric',
-                    month: 'short' }) : '';
-                return `
-                    <div class="draft-item${isActive?' active':''}" onclick="selectDraft('${d.id}')">
-                        <div class="draft-item-name">${escapeHtml(d.name||'Untitled')}</div>
-                        <div class="draft-item-meta">
-                            <span class="draft-item-lang">${escapeHtml(d.language||'EN')}</span>
-                            ${recCount>0?`<span class="draft-item-count">${recCount} recipient${recCount!==1?'s':''}</span>`:''}
-                            ${dateStr?`<span>${dateStr}</span>`:''}
-                        </div>
-                        <div class="draft-item-actions" onclick="event.stopPropagation()">
-                            <button class="draft-item-btn dup" onclick="duplicateDraft('${d.id}')" title="Duplicate">⧉</button>
-                            <button class="draft-item-btn" onclick="deleteDraft('${d.id}')" title="Delete">🗑</button>
-                        </div>
-                    </div>`;
+                const dateStr = d.updatedAt ? new Date(d.updatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
+                const typeLabel = d.type === 'whatsapp' ? '💬' : '📧';
+                return `<div class="draft-item${isActive?' active':''}" onclick="selectDraft('${d.id}')">
+                    <div class="draft-item-name">${escapeHtml(d.name||'Untitled')}</div>
+                    <div class="draft-item-meta">
+                        <span class="draft-item-type">${typeLabel}</span>
+                        <span class="draft-item-lang">${escapeHtml(d.language||'EN')}</span>
+                        ${recCount>0?`<span class="draft-item-count">${recCount} recipient${recCount!==1?'s':''}</span>`:''}
+                        ${dateStr?`<span>${dateStr}</span>`:''}
+                    </div>
+                    <div class="draft-item-actions" onclick="event.stopPropagation()">
+                        <button class="draft-item-btn dup" onclick="duplicateDraft('${d.id}')" title="Duplicate">⧉</button>
+                        <button class="draft-item-btn" onclick="deleteDraft('${d.id}')" title="Delete">🗑</button>
+                    </div></div>`;
             }).join('');
         }
 
-        // ═══════════════ TABS ═══════════════
+        // ═══════════════ TABS & DYNAMIC CONTENT ═══════════════
         function switchTab(tab) {
             currentTab = tab;
             document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
             document.querySelector(`[data-tab="${tab}"]`)?.classList.add('active');
+            // Show/hide tab content divs
             ['compose', 'recipients', 'preview', 'send'].forEach(t => {
-                document.getElementById('tab-' + t).style.display = t === tab ? 'flex' : 'none';
+                const el = document.getElementById('tab-' + t);
+                if (el) el.style.display = t === tab ? 'flex' : 'none';
             });
+            // Populate content if needed
+            if (tab === 'compose') renderComposeTab();
+            if (tab === 'recipients') renderRecipientsTab();
             if (tab === 'preview') updatePreviewDropdown();
-            if (tab === 'recipients') renderRecipientTable();
             if (tab === 'send') {
-                // Silently save before showing send options
                 saveCurrentDraftSilent();
+                renderSendTab();
             }
         }
 
-        // ═══════════════ OUTLOOK INTEGRATION ═══════════════
+        function renderComposeTab() {
+            const container = document.getElementById('tab-compose');
+            if (!container) return;
+            const isEmail = currentMode === 'email';
+            if (isEmail) {
+                container.innerHTML = `
+                    <div class="form-row-inline">
+                        <div class="form-row"><label class="form-label">Draft name</label><input class="form-input" id="draftName" placeholder="e.g. Cold outreach EN"></div>
+                        <div class="form-row" style="max-width:100px"><label class="form-label">Language</label><select class="form-input" id="draftLang"><option value="EN">EN</option><option value="FR">FR</option>...</select></div>
+                    </div>
+                    <div class="form-row"><label class="form-label">Subject line <span style="font-weight:400;color:var(--text4)">(use {{Name}}, {{Company}}, {{Email}})</span></label><input class="form-input" id="draftSubject"></div>
+                    <div class="form-row" style="flex:1"><label class="form-label">Email body</label><textarea class="form-input" id="draftBody" style="flex:1;min-height:180px"></textarea></div>
+                    <div class="form-row-inline">
+                        <div class="form-row"><label class="form-label">CC</label><input class="form-input" id="draftCC"></div>
+                        <div class="form-row"><label class="form-label">BCC</label><input class="form-input" id="draftBCC"></div>
+                    </div>
+                    <div style="display:flex;gap:8px;"><button class="hbtn hbtn-blue" onclick="saveCurrentDraft()">💾 Save draft</button><span id="saveStatus"></span></div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="form-row-inline">
+                        <div class="form-row"><label class="form-label">Draft name</label><input class="form-input" id="draftName" placeholder="e.g. Weekly update"></div>
+                        <div class="form-row" style="max-width:100px"><label class="form-label">Lang</label><select class="form-input" id="draftLang"><option value="">—</option><option value="EN">EN</option><option value="FR">FR</option>...</select></div>
+                    </div>
+                    <div class="form-row"><label class="form-label">Optional label</label><input class="form-input" id="draftSubjectWhatsapp" placeholder="e.g. Weekly stock report"></div>
+                    <div class="form-row" style="flex:1"><label class="form-label">Message <span style="font-weight:400;color:var(--text4)">(use {{Name}}, {{Company}}, {{Email}} for phone)</span></label><textarea class="form-input" id="draftBodyWhatsapp" style="flex:1;min-height:180px"></textarea></div>
+                    <div style="display:flex;gap:8px;"><button class="hbtn hbtn-blue" onclick="saveCurrentDraft()">💾 Save draft</button><span id="saveStatus"></span></div>
+                `;
+            }
+            // Reload current draft values into the new fields
+            const cur = getCurrentDraft();
+            if (cur) {
+                document.getElementById('draftName').value = cur.name || '';
+                if (isEmail) {
+                    document.getElementById('draftLang').value = cur.language || 'EN';
+                    document.getElementById('draftSubject').value = cur.subject || '';
+                    document.getElementById('draftBody').value = cur.body || '';
+                    document.getElementById('draftCC').value = cur.cc || '';
+                    document.getElementById('draftBCC').value = cur.bcc || '';
+                } else {
+                    document.getElementById('draftLang').value = cur.language || '';
+                    document.getElementById('draftSubjectWhatsapp').value = cur.subject || '';
+                    document.getElementById('draftBodyWhatsapp').value = cur.body || '';
+                }
+            }
+        }
+
+        function renderRecipientsTab() {
+            const container = document.getElementById('tab-recipients');
+            const isEmail = currentMode === 'email';
+            const placeholder = isEmail ? 'John Doe, john@acme.com, ACME Inc.\nJane Smith, jane@steelcorp.com, SteelCorp' : 'John, +1234567890, ACME\nJane, +0987654321, SteelCorp';
+            const helpText = isEmail ? 'Format: <strong>Name, Email, Company</strong>' : 'Format: <strong>Name, Phone, Company</strong> (phone with country code)';
+            container.innerHTML = `
+                <div class="form-row">
+                    <label class="form-label">📋 Paste recipients</label>
+                    <textarea class="paste-area" id="pasteRecipients" placeholder="${placeholder}"></textarea>
+                    <span class="help-text">${helpText} — one per line. Separate with commas, tabs, or semicolons.</span>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button class="hbtn hbtn-blue" onclick="parsePastedRecipients()">➕ Add from paste</button>
+                    <button class="hbtn" onclick="addEmptyRecipient()">+ Add one row</button>
+                    <button class="hbtn" onclick="clearAllRecipients()" style="color:var(--red-text);border-color:var(--red)">Clear all</button>
+                </div>
+                <div style="overflow-x:auto">
+                    <table class="recipient-list">
+                        <thead><tr><th style="width:28px"></th><th>Name</th><th>${isEmail ? 'Email' : 'Phone'}</th><th>Company</th><th style="width:32px"></th></tr></thead>
+                        <tbody id="recipientTbody"></tbody>
+                    </table>
+                    <div class="recipients-empty" id="recipientsEmpty">No recipients yet.</div>
+                </div>
+            `;
+            renderRecipientTable();
+        }
+
+        function renderSendTab() {
+            const container = document.getElementById('tab-send');
+            const isEmail = currentMode === 'email';
+            if (isEmail) {
+                container.innerHTML = `
+                    <div style="background:var(--blue-bg);border-radius:10px;padding:12px 14px;border:1px solid var(--blue-light)">
+                        <div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:4px">📤 Outlook integration</div>
+                        <div style="font-size:11px;color:var(--text2)">Opens pre-filled email in your default mail client.</div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                        <div class="card-send"><div>📧 Bulk – BCC all</div><button class="hbtn hbtn-green" onclick="sendBulkOutlook()">🚀 Open in Outlook</button></div>
+                        <div class="card-send"><div>👤 Personalized queue</div><button class="hbtn hbtn-blue" onclick="startPersonalizedQueue()">🔄 Start queue</button></div>
+                    </div>
+                    <div class="card-send"><div>📋 Copy to clipboard</div><button class="hbtn" onclick="copyToClipboard()">📋 Copy</button></div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div style="background:var(--green-bg);border-radius:10px;padding:12px 14px;border:1px solid var(--green)">
+                        <div style="font-size:13px;font-weight:600;color:var(--green-text);margin-bottom:4px">💬 WhatsApp Web</div>
+                        <div style="font-size:11px;color:var(--text2)">Opens WhatsApp Web with a prefilled message. You'll need to press Send manually.</div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                        <div class="card-send"><div>🔄 Personalized queue</div><button class="hbtn hbtn-blue" onclick="startWhatsAppQueue()">Start queue</button></div>
+                        <div class="card-send"><div>📋 Copy all WhatsApp links</div><button class="hbtn" onclick="copyWhatsAppLinks()">Copy links</button></div>
+                    </div>
+                    <div style="background:var(--surface2);border-radius:10px;padding:14px;border:1px solid var(--border)">
+                        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">⏰ Weekly schedule</div>
+                        <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Set a reminder to send these messages every Monday morning.</div>
+                        <button class="hbtn hbtn-green" onclick="setWeeklyReminder()">🔔 Remind me next Monday</button>
+                        <span style="font-size:10px;color:var(--text4);margin-left:8px" id="reminderInfo"></span>
+                    </div>
+                `;
+                // Display existing reminder
+                const saved = localStorage.getItem(SCHEDULE_KEY);
+                if (saved) {
+                    const due = new Date(parseInt(saved));
+                    document.getElementById('reminderInfo').textContent = 'Reminder set for ' + due.toLocaleString();
+                }
+            }
+        }
+
+        // Card style helper
+        const style = document.createElement('style');
+        style.textContent = `.card-send { background:var(--surface2); border-radius:10px; padding:14px; border:1px solid var(--border); display:flex; flex-direction:column; gap:8px; } .card-send div:first-child { font-size:13px; font-weight:700; color:var(--text); }`;
+        document.head.appendChild(style);
+
+        // ═══════════════ OUTLOOK / EMAIL SEND (unchanged) ═══════════════
         function buildMailtoUrl(to, subject, body, cc, bcc) {
             let url = 'mailto:' + encodeURIComponent(to);
             const params = [];
@@ -1493,7 +1615,6 @@
             if (params.length) url += '?' + params.join('&');
             return url;
         }
-
         function sendBulkOutlook() {
             saveCurrentDraftSilent();
             const d = getCurrentDraft();
@@ -1505,14 +1626,10 @@
             const cc = d.cc || '';
             const bcc = emails.join(',');
             const url = buildMailtoUrl('', subject, body, cc, bcc);
-            if (url.length > 2000) {
-                showToast('⚠️ Email is long – consider using Copy to Clipboard instead');
-            }
-            // Open Outlook
+            if (url.length > 2000) showToast('⚠️ Email is long – consider Copy to Clipboard');
             window.location.href = url;
             showToast('📤 Opening Outlook with ' + emails.length + ' recipient(s) in BCC');
         }
-
         function startPersonalizedQueue() {
             saveCurrentDraftSilent();
             const d = getCurrentDraft();
@@ -1521,6 +1638,23 @@
             if (validRecipients.length === 0) { showToast('Add at least one recipient with an email address'); return; }
             queueList = validRecipients;
             queueIndex = 0;
+            document.getElementById('queueModalTitle').textContent = '📤 Personalized email queue';
+            document.getElementById('queueSubjectLine').style.display = 'block';
+            showQueueItem();
+            document.getElementById('queueOverlay').style.display = 'flex';
+        }
+
+        // ═══════════════ WHATSAPP SEND ═══════════════
+        function startWhatsAppQueue() {
+            saveCurrentDraftSilent();
+            const d = getCurrentDraft();
+            if (!d) { showToast('Save your draft first'); return; }
+            const valid = recipients.filter(r => r.email); // email holds phone
+            if (valid.length === 0) { showToast('Add at least one recipient with a phone number'); return; }
+            queueList = valid;
+            queueIndex = 0;
+            document.getElementById('queueModalTitle').textContent = '💬 WhatsApp message queue';
+            document.getElementById('queueSubjectLine').style.display = 'none'; // no subject
             showQueueItem();
             document.getElementById('queueOverlay').style.display = 'flex';
         }
@@ -1528,23 +1662,29 @@
         function showQueueItem() {
             if (queueIndex >= queueList.length) {
                 closeQueue();
-                showToast('✅ All personalized emails queued!');
+                showToast('✅ All messages queued!');
                 return;
             }
             const d = getCurrentDraft();
             const r = queueList[queueIndex];
-            const subject = fillPlaceholders(d.subject || '', r);
+            const isWhatsApp = currentMode === 'whatsapp';
+            const subject = isWhatsApp ? '' : fillPlaceholders(d.subject || '', r);
             const body = fillPlaceholders(d.body || '', r);
-            document.getElementById('queueProgress').textContent =
-                'Email ' + (queueIndex + 1) + ' of ' + queueList.length;
-            document.getElementById('queueRecipientInfo').textContent =
-                [r.name, r.email, r.company].filter(Boolean).join(' – ');
-            document.getElementById('queueSubject').textContent = subject || '(no subject)';
+            document.getElementById('queueProgress').textContent = (isWhatsApp ? 'Message' : 'Email') + ' ' + (queueIndex + 1) + ' of ' + queueList.length;
+            document.getElementById('queueRecipientInfo').textContent = [r.name, r.email, r.company].filter(Boolean).join(' – ');
+            document.getElementById('queueSubject').textContent = subject || (isWhatsApp ? '—' : '');
             document.getElementById('queueBodyPreview').textContent = body || '(no body)';
-            document.getElementById('queueOpenBtn').textContent = '📧 Open in Outlook →';
+            if (isWhatsApp) {
+                document.getElementById('queueOpenBtn').textContent = '📱 Open in WhatsApp';
+                document.getElementById('queueOpenBtn').onclick = openCurrentInQueueWhatsApp;
+            } else {
+                document.getElementById('queueOpenBtn').textContent = '📧 Open in Outlook';
+                document.getElementById('queueOpenBtn').onclick = openCurrentInQueueEmail;
+            }
         }
 
-        function openCurrentInQueue() {
+        function openCurrentInQueueEmail() {
+            // Original email queue logic
             if (queueIndex >= queueList.length) return;
             const d = getCurrentDraft();
             const r = queueList[queueIndex];
@@ -1553,69 +1693,106 @@
             const cc = d.cc || '';
             const bcc = d.bcc || '';
             const url = buildMailtoUrl(r.email, subject, body, cc, bcc);
-            if (url.length > 2000) {
-                showToast('⚠️ Email is long – consider using Copy to Clipboard instead');
-            }
+            if (url.length > 2000) showToast('⚠️ Email is long');
             window.location.href = url;
             showToast('📤 Opened for: ' + r.email);
-            // Advance queue
             queueIndex++;
-            setTimeout(() => {
+            setTimeout(() => { if (queueIndex < queueList.length) showQueueItem(); else closeQueue(); }, 600);
+        }
+
+        function openCurrentInQueueWhatsApp() {
+            if (queueIndex >= queueList.length) return;
+            const d = getCurrentDraft();
+            const r = queueList[queueIndex];
+            const body = fillPlaceholders(d.body || '', r);
+            const phone = r.email.replace(/\D/g, ''); // keep only digits
+            const url = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(body);
+            window.open(url, '_blank');
+            showToast('📱 Opened WhatsApp for: ' + r.email);
+            // We'll show a "Mark as sent" button now
+            document.getElementById('queueOpenBtn').textContent = '✅ Mark sent & next';
+            document.getElementById('queueOpenBtn').onclick = () => {
+                queueIndex++;
                 if (queueIndex < queueList.length) {
                     showQueueItem();
                 } else {
                     closeQueue();
-                    showToast('✅ All done! ' + queueList.length + ' email(s) sent to Outlook.');
+                    showToast('✅ All WhatsApp messages queued!');
                 }
-            }, 600);
+            };
         }
 
         function skipInQueue() {
             queueIndex++;
-            if (queueIndex >= queueList.length) {
-                closeQueue();
-                showToast('✅ Queue complete');
-            } else {
-                showQueueItem();
-            }
+            if (queueIndex >= queueList.length) { closeQueue(); showToast('✅ Queue complete'); }
+            else showQueueItem();
         }
-
         function closeQueue() {
             document.getElementById('queueOverlay').style.display = 'none';
             queueList = [];
             queueIndex = 0;
         }
-
+        function copyWhatsAppLinks() {
+            saveCurrentDraftSilent();
+            const d = getCurrentDraft();
+            if (!d) return;
+            const valid = recipients.filter(r => r.email);
+            if (valid.length === 0) { showToast('No recipients'); return; }
+            const links = valid.map(r => {
+                const phone = r.email.replace(/\D/g, '');
+                const body = fillPlaceholders(d.body || '', r);
+                return 'https://wa.me/' + phone + '?text=' + encodeURIComponent(body);
+            }).join('\n');
+            navigator.clipboard.writeText(links).then(() => showToast('📋 WhatsApp links copied (' + valid.length + ')'));
+        }
         function copyToClipboard() {
             saveCurrentDraftSilent();
             const d = getCurrentDraft();
-            if (!d) { showToast('Save your draft first'); return; }
-            const subject = d.subject || '(no subject)';
+            if (!d) return;
+            const subject = d.subject || '';
             const body = d.body || '';
-            const text = 'Subject: ' + subject + '\n\n' + body;
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(text).then(() => {
-                    showToast('📋 Email content copied to clipboard');
-                }).catch(() => {
-                    fallbackCopy(text);
-                });
-            } else {
-                fallbackCopy(text);
+            const text = (subject ? 'Subject: ' + subject + '\n\n' : '') + body;
+            navigator.clipboard.writeText(text).then(() => showToast('📋 Copied'));
+        }
+
+        // ═══════════════ WEEKLY SCHEDULING ═══════════════
+        function setWeeklyReminder() {
+            // Next Monday 9:00 AM
+            const now = new Date();
+            const day = now.getDay(); // 0 sunday
+            const daysUntilMonday = day === 1 ? (now.getHours() < 9 ? 0 : 7) : (day === 0 ? 1 : 8 - day);
+            const nextMonday = new Date(now);
+            nextMonday.setDate(now.getDate() + daysUntilMonday);
+            nextMonday.setHours(9, 0, 0, 0);
+            localStorage.setItem(SCHEDULE_KEY, nextMonday.getTime().toString());
+            document.getElementById('reminderInfo').textContent = 'Reminder set for ' + nextMonday.toLocaleString();
+            showToast('⏰ Reminder set for next Monday 9:00 AM');
+        }
+
+        function checkWeeklyReminder() {
+            if (currentMode !== 'whatsapp') return;
+            const saved = localStorage.getItem(SCHEDULE_KEY);
+            if (!saved) return;
+            const due = new Date(parseInt(saved));
+            if (new Date() >= due) {
+                // Show modal
+                document.getElementById('scheduleText').textContent = 'It\'s time to send your weekly WhatsApp messages! Start the queue?';
+                document.getElementById('scheduleOverlay').style.display = 'flex';
             }
         }
 
-        function fallbackCopy(text) {
-            const ta = document.createElement('textarea');
-            ta.value = text;
-            ta.style.position = 'fixed';
-            ta.style.left = '-9999px';
-            document.body.appendChild(ta);
-            ta.select();
-            try { document.execCommand('copy');
-                showToast('📋 Copied!'); } catch (e) { showToast('Copy failed – please select and copy manually'); }
-            document.body.removeChild(ta);
+        function startScheduledQueue() {
+            document.getElementById('scheduleOverlay').style.display = 'none';
+            localStorage.removeItem(SCHEDULE_KEY);
+            startWhatsAppQueue();
         }
 
+        function dismissSchedule() {
+            document.getElementById('scheduleOverlay').style.display = 'none';
+            localStorage.removeItem(SCHEDULE_KEY); // optional: clear so it won't bother again
+        }
+
+        // ═══════════════ CSV EXPORT ═══════════════
         function exportAllCSV() {
             saveCurrentDraftSilent();
             const allRecipients = [];
@@ -1623,73 +1800,59 @@
                 (d.recipients || []).forEach(r => {
                     if (r.email) {
                         allRecipients.push({
+                            type: d.type || 'email',
                             draft: d.name || 'Untitled',
-                            language: d.language || 'EN',
+                            language: d.language || '',
                             name: r.name || '',
-                            email: r.email,
+                            contact: r.email,
                             company: r.company || '',
-                            subject: fillPlaceholders(d.subject || '', r),
-                            body: fillPlaceholders(d.body || '', r).replace(/\n/g,
-                                ' | ').slice(0, 200)
+                            subject: d.subject || '',
+                            body: fillPlaceholders(d.body || '', r).replace(/\n/g, ' | ').slice(0, 200)
                         });
                     }
                 });
             });
-            if (allRecipients.length === 0) { showToast('No recipients across all drafts to export'); return; }
-            const headers = ['Draft', 'Language', 'Name', 'Email', 'Company', 'Subject', 'Body Preview'];
+            if (allRecipients.length === 0) { showToast('No recipients to export'); return; }
+            const headers = ['Type', 'Draft', 'Language', 'Name', 'Contact', 'Company', 'Subject', 'Body Preview'];
             const csv = [headers.join(','), ...allRecipients.map(r =>
-                [r.draft, r.language, r.name, r.email, r.company, r.subject, r.body].map(v =>
-                    '"' + (v || '').replace(/"/g, '""') + '"').join(',')
+                [r.type, r.draft, r.language, r.name, r.contact, r.company, r.subject, r.body].map(v => '"' + (v || '').replace(/"/g, '""') + '"').join(',')
             )].join('\n');
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'email_drafts_export.csv';
-            document.body.appendChild(a);
+            a.download = 'drafts_export.csv';
             a.click();
-            document.body.removeChild(a);
             URL.revokeObjectURL(url);
             showToast('📥 CSV exported with ' + allRecipients.length + ' entries');
         }
 
-        // ═══════════════ KEYBOARD SHORTCUTS ═══════════════
-        document.addEventListener('keydown', function(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                e.preventDefault();
-                saveCurrentDraft();
-            }
-        });
-
         // ═══════════════ INIT ═══════════════
         function init() {
             loadDrafts();
+            // Ensure currentMode matches UI
+            document.querySelectorAll('.mode-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.mode === currentMode);
+            });
             renderDraftsList();
-            renderRecipientTable();
             switchTab('compose');
-            // Auto-select first draft if none selected
-            if (drafts.length > 0 && !currentDraftId) {
-                selectDraft(drafts[0].id);
+            if (!currentDraftId) {
+                const first = drafts.filter(d => d.type === currentMode)[0];
+                if (first) selectDraft(first.id);
             }
-            // Close modals on overlay click
-            document.getElementById('queueOverlay').addEventListener('click', function(e) {
-                if (e.target === this) closeQueue();
-            });
-            document.getElementById('confirmOverlay').addEventListener('click', function(e) {
-                if (e.target === this) closeConfirm();
-            });
-            // Escape to close modals
+            document.getElementById('queueOverlay').addEventListener('click', function(e) { if (e.target === this) closeQueue(); });
+            document.getElementById('confirmOverlay').addEventListener('click', function(e) { if (e.target === this) closeConfirm(); });
             document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveCurrentDraft(); }
                 if (e.key === 'Escape') {
                     if (document.getElementById('queueOverlay').style.display === 'flex') closeQueue();
                     if (document.getElementById('confirmOverlay').style.display === 'flex') closeConfirm();
+                    if (document.getElementById('scheduleOverlay').style.display === 'flex') dismissSchedule();
                 }
             });
+            checkWeeklyReminder();
         }
-
         init();
-        console.log('✉️ Email Drafts page ready');
-        console.log('📋 ' + drafts.length + ' draft(s) loaded from localStorage');
     </script>
 </body>
 </html>
