@@ -2858,7 +2858,6 @@
         .wa-preview-badge.inactive {
             background: #999;
         }
-/* Unified hero card: promo banner sits flush atop featured stock */
         .combo-shell {
             max-width: 1280px;
             margin: 18px auto 4px;
@@ -2879,7 +2878,6 @@
     </style>
 </head>
 <body>
-
 
     <div class="admin-banner" id="adminBanner">
         <span>👤</span>
@@ -2928,7 +2926,7 @@
             <div class="sp-item">🏷️ <b id="spGradesTotal">—</b> unique grades</div>
         </div>
     </div>
-<!-- Merged card: promo banner on top, featured stock below, HOT/URGENT/NEW badges render on each featured card -->
+
     <section class="combo-shell" id="comboShell">
         <div class="promo-banner" id="promoBanner"></div>
         <div class="featured-shell hidden" id="featuredShell">
@@ -2969,8 +2967,6 @@
         </div>
     </div>
 
-
-    
     <main class="results-shell">
         <div class="results-meta">
             <div><span class="pill" id="resultsCount">Loading…</span></div>
@@ -3017,7 +3013,7 @@
         <span style="margin:0 6px;color:var(--text4)">·</span>
         <a href="#admin" id="teamLoginLink" onclick="openAdminLogin();return false">Team login</a>
         <span style="margin:0 6px;color:var(--text4)">·</span>
-        <span style="color:var(--text4);font-size:10px" id="versionLabel">v10</span>
+        <span style="color:var(--text4);font-size:10px" id="versionLabel">v11</span>
     </footer>
 
     <button class="float-cart" id="floatCart" onclick="openCart()">
@@ -3105,9 +3101,10 @@
                 <div class="mk-tabs">
                     <button class="mk-tab active" onclick="switchMkTab('featured')" id="mkTabFeatured">🌟 Featured & Tags</button>
                     <button class="mk-tab" onclick="switchMkTab('banner')" id="mkTabBanner">📢 Banner</button>
-<button class="mk-tab" onclick="switchMkTab('social')" id="mkTabSocial">📈 Social Proof</button>
+                    <button class="mk-tab" onclick="switchMkTab('social')" id="mkTabSocial">📈 Social Proof</button>
                     <button class="mk-tab" onclick="switchMkTab('subs')" id="mkTabSubs">📧 Subscribers</button>
                     <button class="mk-tab" onclick="switchMkTab('whatsapp')" id="mkTabWhatsapp">💬 WhatsApp</button>
+                    <button class="mk-tab" onclick="switchMkTab('lists')" id="mkTabLists">📋 Stock Lists</button>
                 </div>
 
                 <div id="mkPaneFeatured">
@@ -3133,7 +3130,8 @@
                     </div>
                     <div id="mkBannerMsg" style="margin-top:10px"></div>
                 </div>
-<div id="mkPaneSocial" style="display:none">
+
+                <div id="mkPaneSocial" style="display:none">
                     <div class="banner amber" style="margin-bottom:10px"><span>📈</span><div>Make the page feel busy. <b>"Refresh now"</b> resets the timer to "just now" — it then ticks up live for everyone. <b>"+1 this week"</b> adds one to the week count. Real client enquiries always count on top automatically.</div></div>
                     <div class="form-grid">
                         <div class="fld" style="display:flex;flex-direction:column;gap:8px">
@@ -3179,6 +3177,11 @@
                     </div>
                     <div id="mkWaMsg" style="margin-top:10px"></div>
                 </div>
+
+                <div id="mkPaneLists" style="display:none">
+                    <div class="banner amber" style="margin-bottom:10px"><span>📋</span><div>Toggle which supplier lists are visible to clients. When a list is <b>OFF</b>, its products are hidden from the public catalogue. Changes take effect immediately.</div></div>
+                    <div id="mkListsList"></div>
+                </div>
             </div>
             <div class="modal-ft">
                 <span class="subtle-link" id="mkFootMeta"></span>
@@ -3187,7 +3190,7 @@
                 <button class="btn btn-blue" id="mkSaveBtn" onclick="saveBanner()" style="display:none">💾 Save banner & publish</button>
                 <button class="btn btn-ghost" id="mkClearBannerBtn" onclick="clearBanner()" style="display:none;color:var(--red-text)">Hide active banner</button>
                 <button class="btn btn-green" id="mkWaSaveBtn" onclick="saveWhatsappSettings()" style="display:none">💾 Save WhatsApp</button>
-<button class="btn btn-purple" id="mkSpSaveBtn" onclick="saveSocialProofSettings()" style="display:none">💾 Save social proof</button>
+                <button class="btn btn-purple" id="mkSpSaveBtn" onclick="saveSocialProofSettings()" style="display:none">💾 Save social proof</button>
             </div>
         </div>
     </div>
@@ -3274,63 +3277,69 @@
             <div class="modal-bd">
                 <p style="font-size:13px;line-height:1.6;margin-bottom:12px;color:var(--text2)">The <code style="background:var(--surface2);padding:1px 5px;border-radius:4px;font-family:var(--mono)">client_enquiries</code> table doesn't exist in your Supabase project yet. Run this SQL once in your <a href="https://supabase.com/dashboard" target="_blank">Supabase SQL Editor</a>, then refresh the page.</p>
                 <pre class="sql-pre" id="sqlCode">-- Step 1 — table for incoming client enquiries
-                    CREATE TABLE IF NOT EXISTS client_enquiries (
-                    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-                    created_at timestamptz DEFAULT now(),
-                    ref text,
-                    client_name text NOT NULL,
-                    client_email text NOT NULL,
-                    client_company text,
-                    client_phone text,
-                    client_country text,
-                    project_ref text,
-                    message text,
-                    items jsonb,
-                    item_count int,
-                    status text DEFAULT 'new',
-                    source text DEFAULT 'public_catalogue'
-                    );
+CREATE TABLE IF NOT EXISTS client_enquiries (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at timestamptz DEFAULT now(),
+  ref text,
+  client_name text NOT NULL,
+  client_email text NOT NULL,
+  client_company text,
+  client_phone text,
+  client_country text,
+  project_ref text,
+  message text,
+  items jsonb,
+  item_count int,
+  status text DEFAULT 'new',
+  source text DEFAULT 'public_catalogue'
+);
 
-                    DROP POLICY IF EXISTS "anon_insert_enquiries"   ON client_enquiries;
-                    DROP POLICY IF EXISTS "auth_read_enquiries"     ON client_enquiries;
-                    DROP POLICY IF EXISTS "auth_update_enquiries"   ON client_enquiries;
-                    DROP POLICY IF EXISTS "auth_delete_enquiries"   ON client_enquiries;
-                    DROP POLICY IF EXISTS "anyone_can_submit"       ON client_enquiries;
-                    DROP POLICY IF EXISTS "team_can_read"           ON client_enquiries;
-                    DROP POLICY IF EXISTS "team_can_update"         ON client_enquiries;
-                    DROP POLICY IF EXISTS "team_can_delete"         ON client_enquiries;
+DROP POLICY IF EXISTS "anon_insert_enquiries"   ON client_enquiries;
+DROP POLICY IF EXISTS "auth_read_enquiries"     ON client_enquiries;
+DROP POLICY IF EXISTS "auth_update_enquiries"   ON client_enquiries;
+DROP POLICY IF EXISTS "auth_delete_enquiries"   ON client_enquiries;
+DROP POLICY IF EXISTS "anyone_can_submit"       ON client_enquiries;
+DROP POLICY IF EXISTS "team_can_read"           ON client_enquiries;
+DROP POLICY IF EXISTS "team_can_update"         ON client_enquiries;
+DROP POLICY IF EXISTS "team_can_delete"         ON client_enquiries;
 
-                    ALTER TABLE client_enquiries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE client_enquiries ENABLE ROW LEVEL SECURITY;
 
-                    CREATE POLICY "anyone_can_submit" ON client_enquiries
-                    FOR INSERT TO public WITH CHECK (true);
-                    CREATE POLICY "team_can_read"   ON client_enquiries FOR SELECT TO authenticated USING (true);
-                    CREATE POLICY "team_can_update" ON client_enquiries FOR UPDATE TO authenticated USING (true);
-                    CREATE POLICY "team_can_delete" ON client_enquiries FOR DELETE TO authenticated USING (true);
+CREATE POLICY "anyone_can_submit" ON client_enquiries
+FOR INSERT TO public WITH CHECK (true);
+CREATE POLICY "team_can_read"   ON client_enquiries FOR SELECT TO authenticated USING (true);
+CREATE POLICY "team_can_update" ON client_enquiries FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "team_can_delete" ON client_enquiries FOR DELETE TO authenticated USING (true);
 
-                    -- Step 2 — make sure anonymous visitors can READ stock
-                    DROP POLICY IF EXISTS "anon_read_stock" ON stock;
-                    CREATE POLICY "anon_read_stock" ON stock
-                    FOR SELECT TO public USING (true);
-                    DROP POLICY IF EXISTS "anon_read_stock_lists" ON stock_lists;
-                    CREATE POLICY "anon_read_stock_lists" ON stock_lists
-                    FOR SELECT TO public USING (true);
+-- Step 2 — make sure anonymous visitors can READ stock
+DROP POLICY IF EXISTS "anon_read_stock" ON stock;
+CREATE POLICY "anon_read_stock" ON stock
+FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "anon_read_stock_lists" ON stock_lists;
+CREATE POLICY "anon_read_stock_lists" ON stock_lists
+FOR SELECT TO public USING (true);
 
-                    -- Step 3 — site_settings table (WhatsApp, branding, etc.)
-                    CREATE TABLE IF NOT EXISTS site_settings (
-                    key text PRIMARY KEY,
-                    value text,
-                    updated_at timestamptz DEFAULT now()
-                    );
-                    ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
-                    DROP POLICY IF EXISTS "anon_read_settings" ON site_settings;
-                    DROP POLICY IF EXISTS "auth_manage_settings" ON site_settings;
-                    CREATE POLICY "anon_read_settings" ON site_settings FOR SELECT TO public USING (true);
-                    CREATE POLICY "auth_manage_settings" ON site_settings FOR ALL TO authenticated USING (true);
+-- Step 3 — site_settings table (WhatsApp, branding, etc.)
+CREATE TABLE IF NOT EXISTS site_settings (
+  key text PRIMARY KEY,
+  value text,
+  updated_at timestamptz DEFAULT now()
+);
+ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_read_settings" ON site_settings;
+DROP POLICY IF EXISTS "auth_manage_settings" ON site_settings;
+CREATE POLICY "anon_read_settings" ON site_settings FOR SELECT TO public USING (true);
+CREATE POLICY "auth_manage_settings" ON site_settings FOR ALL TO authenticated USING (true);
 
-                    -- Verification
-                    SELECT policyname, cmd, roles FROM pg_policies
-                    WHERE tablename = 'client_enquiries' ORDER BY policyname;</pre>
+-- Step 4 — stock list visibility
+ALTER TABLE stock_lists ADD COLUMN IF NOT EXISTS is_public boolean DEFAULT true;
+DROP POLICY IF EXISTS "auth_manage_stock_lists" ON stock_lists;
+CREATE POLICY "auth_manage_stock_lists" ON stock_lists
+FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- Verification
+SELECT policyname, cmd, roles FROM pg_policies
+WHERE tablename = 'client_enquiries' ORDER BY policyname;</pre>
             </div>
             <div class="modal-ft">
                 <div class="spacer"></div>
@@ -3362,8 +3371,28 @@
         document.title = CONFIG.companyName + ' — Stock Catalogue & Enquiry';
 
         const sb = supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
-        const APP_VERSION = 'public-catalog v10 (marketing suite)';
+        const APP_VERSION = 'public-catalog v11 (stock lists)';
         console.log('%c' + APP_VERSION, 'color:#1456a0;font-weight:bold;font-size:13px');
+
+        // ── Public stock list filtering ────────────────────────────────
+        let publicListIds = null;
+        let lastPublicListFetch = 0;
+
+        async function fetchPublicListIds() {
+            if (publicListIds && Date.now() - lastPublicListFetch < 10000) return publicListIds;
+            try {
+                const { data: sample } = await sb.from('stock').select('list_id').limit(1);
+                if (!sample) { publicListIds = null; return null; }
+            } catch { publicListIds = null; return null; }
+            const { data, error } = await sb.from('stock_lists').select('id').eq('is_public', true).limit(100);
+            if (error) { console.warn('[fetchPublicListIds]', error); return null; }
+            publicListIds = (data || []).map(l => l.id);
+            lastPublicListFetch = Date.now();
+            return publicListIds;
+        }
+
+        function invalidatePublicListCache() { publicListIds = null; }
+        // ────────────────────────────────────────────────────────────────
 
         let allItems = [];
         let dedupedItems = [];
@@ -3372,7 +3401,7 @@
         let currentTab = 'stock';
         let isSubmitting = false;
         let whatsappSettings = { number: CONFIG.whatsappNumber, message: CONFIG.whatsappMessage };
-let socialProofSettings = { lastEnqMinutes: 0, weekBoost: 0 };
+        let socialProofSettings = { lastEnqMinutes: 0, weekBoost: 0 };
 
         const CART_KEY = 'pub_catalogue_cart_v1';
         const CONTACT_KEY = 'pub_catalogue_contact_v1';
@@ -3401,20 +3430,16 @@ let socialProofSettings = { lastEnqMinutes: 0, weekBoost: 0 };
             localStorage.setItem('pub_theme', t);
         }
         (() => {
-            const t = localStorage.getItem('pub_theme') || (window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' :
-                'light');
+            const t = localStorage.getItem('pub_theme') || (window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light');
             document.documentElement.setAttribute('data-theme', t);
-            setTimeout(() => { const b = document.getElementById('darkBtn'); if (b) b.textContent = t === 'dark' ? '☀' :
-                    '🌙'; }, 30);
+            setTimeout(() => { const b = document.getElementById('darkBtn'); if (b) b.textContent = t === 'dark' ? '☀' : '🌙'; }, 30);
         })();
 
-        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;',
-            "'": '&#39;' }[c]));
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
         function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
-        function fmtNum(n) { if (n == null || n == '') return '—'; const num = Number(n); if (isNaN(num)) return n; return num
-                .toLocaleString('en-US', { maximumFractionDigits: 2 }); }
+        function fmtNum(n) { if (n == null || n == '') return '—'; const num = Number(n); if (isNaN(num)) return n; return num.toLocaleString('en-US', { maximumFractionDigits: 2 }); }
 
         function inferCategory(productType) {
             const t = (productType || '').toLowerCase();
@@ -3462,8 +3487,7 @@ let socialProofSettings = { lastEnqMinutes: 0, weekBoost: 0 };
                     if ((s.alternatives || '').length > (g.alternatives || '').length) g.alternatives = s.alternatives;
                     if (s.featured) g.featured = true;
                     if (!g.marketing_tag && s.marketing_tag) g.marketing_tag = s.marketing_tag;
-                    if (s.lead_time_days != null && (g.lead_time_days == null || s.lead_time_days < g.lead_time_days)) g
-                        .lead_time_days = s.lead_time_days;
+                    if (s.lead_time_days != null && (g.lead_time_days == null || s.lead_time_days < g.lead_time_days)) g.lead_time_days = s.lead_time_days;
                 }
             }
             return [...groups.values()];
@@ -3488,10 +3512,8 @@ let socialProofSettings = { lastEnqMinutes: 0, weekBoost: 0 };
         function leadTimeDisplay(days) {
             if (days == null || days === '' || isNaN(Number(days))) return '';
             const d = Number(days);
-            if (d <= 0)
-            return `<span class="lead-time ready"><span class="lt-icon">✓</span>Ready to ship</span>`;
-            if (d <= 7)
-            return `<span class="lead-time"><span class="lt-icon">📦</span>Ships in ${d}d</span>`;
+            if (d <= 0) return `<span class="lead-time ready"><span class="lt-icon">✓</span>Ready to ship</span>`;
+            if (d <= 7) return `<span class="lead-time"><span class="lt-icon">📦</span>Ships in ${d}d</span>`;
             return `<span class="lead-time"><span class="lt-icon">🚚</span>Ships in ${d}d</span>`;
         }
 
@@ -3506,8 +3528,7 @@ let socialProofSettings = { lastEnqMinutes: 0, weekBoost: 0 };
             for (let i = 0; i < STOCK_COLUMN_TIERS.length; i++) {
                 const cols = STOCK_COLUMN_TIERS[i];
                 const { error } = await sb.from('stock').select(cols).limit(1);
-                if (!error) { stockColumns = cols;
-                    console.log('[initStock] ✓ tier ' + (i + 1) + ' columns:', cols); break; }
+                if (!error) { stockColumns = cols; console.log('[initStock] ✓ tier ' + (i + 1) + ' columns:', cols); break; }
                 lastError = error;
                 console.warn('[initStock] tier ' + (i + 1) + ' failed:', error.message || error, '(code:', error.code + ')');
             }
@@ -3525,18 +3546,29 @@ let socialProofSettings = { lastEnqMinutes: 0, weekBoost: 0 };
             </div>`;
                 return;
             }
+
+            // Fetch public list IDs – if the column exists, we'll filter; if not, show everything.
+            const lists = await fetchPublicListIds();
+
+            const baseCountQuery = () => {
+                let q = sb.from('stock').select('id', { count: 'exact', head: true }).or('available.is.null,available.neq.no');
+                if (lists && lists.length) q = q.in('list_id', lists);
+                return q;
+            };
+
             try {
-                const { count } = await sb.from('stock').select('id', { count: 'exact', head: true }).or(
-                    'available.is.null,available.neq.no');
+                const { count } = await baseCountQuery();
                 totalAvailableCount = count || 0;
             } catch (e) { totalAvailableCount = 0; }
+
             try {
                 const grades = new Set();
                 let page = 0;
                 const size = 1000;
                 while (page < 25) {
-                    const { data, error } = await sb.from('stock').select('grade').or('available.is.null,available.neq.no')
-                        .range(page * size, page * size + size - 1);
+                    let query = sb.from('stock').select('grade').or('available.is.null,available.neq.no').range(page * size, page * size + size - 1);
+                    if (lists && lists.length) query = query.in('list_id', lists);
+                    const { data, error } = await query;
                     if (error) break;
                     if (!data || !data.length) break;
                     data.forEach(r => { if (r.grade) grades.add(r.grade.trim()); });
@@ -3545,11 +3577,12 @@ let socialProofSettings = { lastEnqMinutes: 0, weekBoost: 0 };
                 }
                 totalUniqueGrades = grades.size;
             } catch (e) { totalUniqueGrades = null; }
+
             renderStats();
             renderResults();
             loadPromoBanner();
             if (CONFIG.showFeatured) loadFeaturedProducts();
-loadSocialProofSettings().then(() => { if (CONFIG.showSocialProof || CONFIG.showActivityTicker) loadRecentActivity(); });
+            loadSocialProofSettings().then(() => { if (CONFIG.showSocialProof || CONFIG.showActivityTicker) loadRecentActivity(); });
             loadWhatsAppSettings();
             if (CONFIG.showExitIntent) setupExitIntent();
             if (!CONFIG.showNotifyMe) document.getElementById('notifyShell').style.display = 'none';
@@ -3559,8 +3592,7 @@ loadSocialProofSettings().then(() => { if (CONFIG.showSocialProof || CONFIG.show
         async function loadPromoBanner() {
             if (localStorage.getItem('pub_banner_dismissed_id')) {}
             try {
-                const { data, error } = await sb.from('promo_banners').select('*').eq('active', true).order('created_at', {
-                    ascending: false }).limit(5);
+                const { data, error } = await sb.from('promo_banners').select('*').eq('active', true).order('created_at', { ascending: false }).limit(5);
                 if (error) { console.warn('[loadPromoBanner]', error.message); return; }
                 const now = new Date();
                 const live = (data || []).find(b => !b.expires_at || new Date(b.expires_at) > now);
@@ -3575,22 +3607,18 @@ loadSocialProofSettings().then(() => { if (CONFIG.showSocialProof || CONFIG.show
         function renderPromoBanner(b) {
             const el = document.getElementById('promoBanner');
             el.className = 'promo-banner show color-' + (b.color || 'blue');
-            const cta = b.cta_text && b.cta_url ?
-                `<a class="pb-cta" href="${esc(b.cta_url)}" target="_blank" rel="noopener">${esc(b.cta_text)}</a>` : '';
-            el.innerHTML =
-                `<span class="pb-msg">${esc(b.message)}</span>${cta}<button class="pb-close" onclick="dismissBanner('${b.id}')" title="Dismiss">×</button>`;
+            const cta = b.cta_text && b.cta_url ? `<a class="pb-cta" href="${esc(b.cta_url)}" target="_blank" rel="noopener">${esc(b.cta_text)}</a>` : '';
+            el.innerHTML = `<span class="pb-msg">${esc(b.message)}</span>${cta}<button class="pb-close" onclick="dismissBanner('${b.id}')" title="Dismiss">×</button>`;
         }
 
-        function dismissBanner(id) { localStorage.setItem('pub_banner_dismissed_id', id);
-            document.getElementById('promoBanner').classList.remove('show'); }
+        function dismissBanner(id) { localStorage.setItem('pub_banner_dismissed_id', id); document.getElementById('promoBanner').classList.remove('show'); }
 
         let featuredItems = [];
         async function loadFeaturedProducts() {
             if (!stockColumns) return;
             if (!stockColumns.includes('featured')) return;
             try {
-                const { data, error } = await sb.from('stock').select(stockColumns).eq('featured', true).or(
-                    'available.is.null,available.neq.no').limit(24);
+                const { data, error } = await sb.from('stock').select(stockColumns).eq('featured', true).or('available.is.null,available.neq.no').limit(24);
                 if (error) { console.warn('[loadFeatured]', error.message); return; }
                 if (!data || !data.length) return;
                 featuredItems = dedupeStock(data);
@@ -3606,10 +3634,8 @@ loadSocialProofSettings().then(() => { if (CONFIG.showSocialProof || CONFIG.show
             shell.classList.remove('hidden');
             const cartIds = new Set();
             cart.stock.forEach(c => { (c.stock_ids || [c.stock_id]).forEach(id => cartIds.add(id)); });
-            document.getElementById('featuredGrid').innerHTML = featuredItems.slice(0, 8).map(s => renderCard(s, s._stock_ids
-                .some(id => cartIds.has(id)))).join('');
-            document.getElementById('featuredSub').textContent =
-                `${featuredItems.length} featured product${featuredItems.length!==1?'s':''} · curated for quick decision`;
+            document.getElementById('featuredGrid').innerHTML = featuredItems.slice(0, 8).map(s => renderCard(s, s._stock_ids.some(id => cartIds.has(id)))).join('');
+            document.getElementById('featuredSub').textContent = `${featuredItems.length} featured product${featuredItems.length!==1?'s':''} · curated for quick decision`;
         }
 
         async function loadRecentActivity() {
@@ -3633,7 +3659,11 @@ loadSocialProofSettings().then(() => { if (CONFIG.showSocialProof || CONFIG.show
             document.getElementById('tickerShell').classList.add('show');
         }
 
-function renderSocialProof(data) {
+        let socialProofRealLast = 0;
+        let socialProofRealWeek = 0;
+        let spTickStarted = false;
+
+        function renderSocialProof(data) {
             socialProofRealLast = data.length ? new Date(data[0].created_at).getTime() : 0;
             const weekAgo = Date.now() - 7 * 86400000;
             socialProofRealWeek = data.filter(d => new Date(d.created_at).getTime() > weekAgo).length;
@@ -3658,9 +3688,7 @@ function renderSocialProof(data) {
 
         async function loadSocialProofSettings() {
             try {
-                const { data, error } = await sb.from('site_settings').select('key,value').in('key', [
-                    'social_proof_last_enq_anchor', 'social_proof_week_boost'
-                ]);
+                const { data, error } = await sb.from('site_settings').select('key,value').in('key', ['social_proof_last_enq_anchor', 'social_proof_week_boost']);
                 if (error) { console.warn('[loadSocialProof]', error.message); return; }
                 (data || []).forEach(row => {
                     if (row.key === 'social_proof_last_enq_anchor') {
@@ -3677,20 +3705,17 @@ function renderSocialProof(data) {
             const cat = document.getElementById('ntfCategory').value;
             const msg = document.getElementById('ntfMsg');
             msg.classList.add('show');
-            if (!email || !validEmail(email)) { msg.textContent = '✗ Please enter a valid email address.';
-                msg.style.color = '#ffd0d0'; return; }
+            if (!email || !validEmail(email)) { msg.textContent = '✗ Please enter a valid email address.'; msg.style.color = '#ffd0d0'; return; }
             const btn = document.getElementById('ntfBtn');
             btn.disabled = true;
             btn.textContent = '…';
-            const { error } = await sb.from('subscribers').insert({ email, categories: cat ? [cat] : null,
-                source: 'public_catalogue_notify' });
+            const { error } = await sb.from('subscribers').insert({ email, categories: cat ? [cat] : null, source: 'public_catalogue_notify' });
             btn.disabled = false;
             btn.textContent = 'Subscribe';
             if (error) {
                 msg.textContent = '✗ Couldn\'t subscribe: ' + error.message;
                 msg.style.color = '#ffd0d0';
-                if (/relation .* does not exist/i.test(error.message || '')) msg.textContent =
-                    '✗ Subscribers table not set up yet. Please contact us directly.';
+                if (/relation .* does not exist/i.test(error.message || '')) msg.textContent = '✗ Subscribers table not set up yet. Please contact us directly.';
                 return;
             }
             msg.textContent = '✓ You\'re subscribed! We\'ll email you when matching new stock arrives.';
@@ -3700,17 +3725,12 @@ function renderSocialProof(data) {
 
         async function loadWhatsAppSettings() {
             try {
-                const { data, error } = await sb.from('site_settings').select('key,value').in('key', ['whatsapp_number',
-                    'whatsapp_message'
-                ]);
-                if (error) { console.warn('[loadWhatsApp] DB fetch failed, using CONFIG fallback:', error.message);
-                    applyWhatsApp(); return; }
+                const { data, error } = await sb.from('site_settings').select('key,value').in('key', ['whatsapp_number', 'whatsapp_message']);
+                if (error) { console.warn('[loadWhatsApp] DB fetch failed, using CONFIG fallback:', error.message); applyWhatsApp(); return; }
                 if (data) {
                     data.forEach(row => {
-                        if (row.key === 'whatsapp_number') whatsappSettings.number = row.value || CONFIG
-                            .whatsappNumber;
-                        if (row.key === 'whatsapp_message') whatsappSettings.message = row.value || CONFIG
-                            .whatsappMessage;
+                        if (row.key === 'whatsapp_number') whatsappSettings.number = row.value || CONFIG.whatsappNumber;
+                        if (row.key === 'whatsapp_message') whatsappSettings.message = row.value || CONFIG.whatsappMessage;
                     });
                 }
             } catch (e) { console.warn('[loadWhatsApp]', e); }
@@ -3729,14 +3749,11 @@ function renderSocialProof(data) {
                 fab.href = '#';
                 fab.title = 'WhatsApp not configured yet';
                 fab.style.opacity = '0.5';
-                fab.onclick = (e) => { e.preventDefault();
-                    showToast('WhatsApp number not configured yet', 'info'); };
+                fab.onclick = (e) => { e.preventDefault(); showToast('WhatsApp number not configured yet', 'info'); };
             }
         }
 
-        function setupWhatsApp() {
-            applyWhatsApp();
-        }
+        function setupWhatsApp() { applyWhatsApp(); }
 
         function setupExitIntent() {
             if (sessionStorage.getItem('pub_exit_shown')) return;
@@ -3754,42 +3771,28 @@ function renderSocialProof(data) {
 
         function dismissExitIntent() { document.getElementById('exitToast').classList.remove('show'); }
 
-        function openPdfGate() { document.getElementById('pdfGateModal').classList.add('open');
-            document.body.style.overflow = 'hidden';
-            setTimeout(() => document.getElementById('pdfEmail').focus(), 60); }
-
-        function closePdfGate() { document.getElementById('pdfGateModal').classList.remove('open');
-            document.body.style.overflow = '';
-            document.getElementById('pdfMsg').innerHTML = ''; }
+        function openPdfGate() { document.getElementById('pdfGateModal').classList.add('open'); document.body.style.overflow = 'hidden'; setTimeout(() => document.getElementById('pdfEmail').focus(), 60); }
+        function closePdfGate() { document.getElementById('pdfGateModal').classList.remove('open'); document.body.style.overflow = ''; document.getElementById('pdfMsg').innerHTML = ''; }
 
         async function downloadFeaturedPdf() {
             const email = document.getElementById('pdfEmail').value.trim();
             const name = document.getElementById('pdfName').value.trim();
             const company = document.getElementById('pdfCompany').value.trim();
             const msg = document.getElementById('pdfMsg');
-            if (!email || !validEmail(email)) { msg.innerHTML =
-                    `<div class="banner red"><span>⚠</span><div>Please enter a valid email.</div></div>`; return; }
+            if (!email || !validEmail(email)) { msg.innerHTML = `<div class="banner red"><span>⚠</span><div>Please enter a valid email.</div></div>`; return; }
             msg.innerHTML = '';
             const btn = document.getElementById('pdfDlBtn');
             btn.disabled = true;
             btn.textContent = 'Generating…';
-            try { await sb.from('subscribers').insert({ email, name: name || null, company: company || null, source: 'pdf_download',
-                    notes: 'Downloaded featured products PDF' }); } catch (e) { console.warn('[pdf lead]', e); }
-            try { await generatePDF();
-                closePdfGate();
-                showToast('✓ PDF downloaded. Thanks for your interest!', 'success'); } catch (e) { msg.innerHTML =
-                    `<div class="banner red"><span>⚠</span><div>PDF generation failed: ${esc(e.message||e)}</div></div>`; } finally { btn
-                    .disabled = false;
-                btn.textContent = '📥 Download PDF'; }
+            try { await sb.from('subscribers').insert({ email, name: name || null, company: company || null, source: 'pdf_download', notes: 'Downloaded featured products PDF' }); } catch (e) { console.warn('[pdf lead]', e); }
+            try { await generatePDF(); closePdfGate(); showToast('✓ PDF downloaded. Thanks for your interest!', 'success'); } catch (e) { msg.innerHTML = `<div class="banner red"><span>⚠</span><div>PDF generation failed: ${esc(e.message||e)}</div></div>`; } finally { btn.disabled = false; btn.textContent = '📥 Download PDF'; }
         }
 
         async function generatePDF() {
             if (!window.jspdf) { throw new Error('PDF library not loaded'); }
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-            const pageW = 210,
-                pageH = 297,
-                marginX = 15;
+            const pageW = 210, pageH = 297, marginX = 15;
             let y = 18;
             doc.setFillColor(20, 86, 160);
             doc.rect(0, 0, pageW, 26, 'F');
@@ -3799,8 +3802,7 @@ function renderSocialProof(data) {
             doc.setFont('helvetica', 'normal').setFontSize(10);
             doc.text('Featured Stock Catalogue', marginX, 21);
             doc.setFontSize(9);
-            doc.text(new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' }), pageW -
-                marginX, 14, { align: 'right' });
+            doc.text(new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' }), pageW - marginX, 14, { align: 'right' });
             y = 36;
             doc.setTextColor(20, 20, 20);
             doc.setFont('helvetica', 'bold').setFontSize(13);
@@ -3825,17 +3827,13 @@ function renderSocialProof(data) {
             doc.setFont('helvetica', 'normal').setFontSize(9);
             doc.setTextColor(40, 40, 40);
             for (const item of featuredItems) {
-                if (y > pageH - 25) { doc.addPage();
-                    y = 20; }
+                if (y > pageH - 25) { doc.addPage(); y = 20; }
                 const cat = item.product_category || inferCategory(item.product_type || '');
-                let d1 = item.thickness,
-                    d2 = item.width,
-                    d3 = item.length;
+                let d1 = item.thickness, d2 = item.width, d3 = item.length;
                 if (cat === 'profile' && item.section) d1 = item.section;
                 const dim = [d1, d2, d3].filter(Boolean).join(' × ') || '—';
                 const avail = item._quantity_total != null ? `${fmtNum(item._quantity_total)} ${item.unit||''}` : 'In stock';
-                const lt = item.lead_time_days == null ? '—' : item.lead_time_days <= 0 ? 'Ready' :
-                    `${item.lead_time_days}d`;
+                const lt = item.lead_time_days == null ? '—' : item.lead_time_days <= 0 ? 'Ready' : `${item.lead_time_days}d`;
                 const tag = (item.marketing_tag || '').toUpperCase();
                 const trunc = (s, max) => { s = String(s || ''); return s.length > max ? s.slice(0, max - 1) + '…' : s; };
                 doc.text(trunc(item.grade, 18), marginX + 2, y);
@@ -3843,21 +3841,14 @@ function renderSocialProof(data) {
                 doc.text(trunc(dim, 22), marginX + 70, y);
                 doc.text(trunc(avail, 15), marginX + 115, y);
                 doc.text(trunc(lt, 14), marginX + 145, y);
-                if (tag) { doc.setFont('helvetica', 'bold').setFontSize(8);
-                    doc.setTextColor(204, 51, 51);
-                    doc.text(trunc(tag, 12), marginX + 175, y);
-                    doc.setFont('helvetica', 'normal').setFontSize(9);
-                    doc.setTextColor(40, 40, 40); }
+                if (tag) { doc.setFont('helvetica', 'bold').setFontSize(8); doc.setTextColor(204, 51, 51); doc.text(trunc(tag, 12), marginX + 175, y); doc.setFont('helvetica', 'normal').setFontSize(9); doc.setTextColor(40, 40, 40); }
                 y += 7;
                 doc.setDrawColor(235, 235, 233);
                 doc.line(marginX, y - 2, pageW - marginX, y - 2);
             }
             const totalPages = doc.internal.getNumberOfPages();
-            for (let p = 1; p <= totalPages; p++) { doc.setPage(p);
-                doc.setFontSize(8).setTextColor(150, 150, 150);
-                doc.text(`${CONFIG.companyName}  ·  Featured Catalogue  ·  Page ${p} of ${totalPages}`, pageW / 2, pageH - 8, { align: 'center' }); }
-            const fname =
-                `${CONFIG.companyName.replace(/[^a-z0-9]+/gi,'_')}_featured_${new Date().toISOString().slice(0,10)}.pdf`;
+            for (let p = 1; p <= totalPages; p++) { doc.setPage(p); doc.setFontSize(8).setTextColor(150, 150, 150); doc.text(`${CONFIG.companyName}  ·  Featured Catalogue  ·  Page ${p} of ${totalPages}`, pageW / 2, pageH - 8, { align: 'center' }); }
+            const fname = `${CONFIG.companyName.replace(/[^a-z0-9]+/gi,'_')}_featured_${new Date().toISOString().slice(0,10)}.pdf`;
             doc.save(fname);
         }
 
@@ -3865,10 +3856,7 @@ function renderSocialProof(data) {
             if (!stockColumns) return;
             const f = getFilters();
             const noSearchInput = !(f.name || f.thick || f.width || f.length);
-            if (noSearchInput) { allItems = [];
-                dedupedItems = [];
-                hasSearched = false;
-                renderResults(); return; }
+            if (noSearchInput) { allItems = []; dedupedItems = []; hasSearched = false; renderResults(); return; }
             isSearching = true;
             renderResults();
             const hasCategory = stockColumns.includes('product_category');
@@ -3890,13 +3878,30 @@ function renderSocialProof(data) {
             if (f.width) { const w = Number(f.width); if (!isNaN(w)) q = q.gte('width', w - 50).lte('width', w + 50); }
             if (f.length) { const l = Number(f.length); if (!isNaN(l)) q = q.gte('length', l - 100).lte('length', l + 100); }
             q = q.or('available.is.null,available.neq.no').limit(500);
+
+            // Restrict to public stock lists (if list_id column exists)
+            const lists = await fetchPublicListIds();
+            if (lists && lists.length) q = q.in('list_id', lists);
+            else if (lists && !lists.length) {
+                isSearching = false;
+                hasSearched = true;
+                document.getElementById('resultsCount').textContent = '0 items';
+                document.getElementById('resultsArea').innerHTML = `
+            <div class="empty">
+                <div class="icon">🔒</div>
+                <h3>No stock available at this time</h3>
+                <p>Our team is updating the catalogue. Please check back later or submit a sourcing request.</p>
+                <button class="btn btn-purple btn-sm" style="margin-top:14px" onclick="openCart();switchTab('research');showCustomForm();">+ Sourcing request</button>
+            </div>`;
+                return;
+            }
+
             const { data, error } = await q;
             isSearching = false;
             hasSearched = true;
             if (error) {
                 const msg = [error.message, error.details, error.hint, error.code].filter(Boolean).join(' · ');
-                document.getElementById('resultsArea').innerHTML =
-                    `<div class="empty"><div class="icon">⚠</div><h3>Search failed</h3><p style="font-family:var(--mono);font-size:11px;word-break:break-word">${esc(msg)}</p></div>`;
+                document.getElementById('resultsArea').innerHTML = `<div class="empty"><div class="icon">⚠</div><h3>Search failed</h3><p style="font-family:var(--mono);font-size:11px;word-break:break-word">${esc(msg)}</p></div>`;
                 return;
             }
             let rows = data || [];
@@ -3907,10 +3912,8 @@ function renderSocialProof(data) {
         }
 
         function renderStats() {
-            document.getElementById('statTotal').textContent = totalAvailableCount != null ? totalAvailableCount.toLocaleString(
-                'en-US') : '—';
-            document.getElementById('statGrades').textContent = totalUniqueGrades != null ? totalUniqueGrades.toLocaleString(
-                'en-US') : '—';
+            document.getElementById('statTotal').textContent = totalAvailableCount != null ? totalAvailableCount.toLocaleString('en-US') : '—';
+            document.getElementById('statGrades').textContent = totalUniqueGrades != null ? totalUniqueGrades.toLocaleString('en-US') : '—';
         }
 
         function getFilters() {
@@ -3924,58 +3927,35 @@ function renderSocialProof(data) {
             };
         }
 
-        function clearFilters() { ['fName', 'fThick', 'fWidth', 'fLength'].forEach(id => document.getElementById(id).value =
-                '');
-            document.getElementById('fCategory').value = '';
-            updateDimLabels();
-            searchStock(); }
-
-        function updateDimLabels() { const cat = document.getElementById('fCategory').value || 'flat';
-            const lbls = DIM_LABELS[cat] || DIM_LABELS.flat;
-            document.getElementById('fThick').placeholder = lbls[0];
-            document.getElementById('fWidth').placeholder = lbls[1];
-            document.getElementById('fLength').placeholder = lbls[2]; }
+        function clearFilters() { ['fName', 'fThick', 'fWidth', 'fLength'].forEach(id => document.getElementById(id).value = ''); document.getElementById('fCategory').value = ''; updateDimLabels(); searchStock(); }
+        function updateDimLabels() { const cat = document.getElementById('fCategory').value || 'flat'; const lbls = DIM_LABELS[cat] || DIM_LABELS.flat; document.getElementById('fThick').placeholder = lbls[0]; document.getElementById('fWidth').placeholder = lbls[1]; document.getElementById('fLength').placeholder = lbls[2]; }
         let filterDebounce = null;
-
-        function onFilterChange() { clearTimeout(filterDebounce);
-            filterDebounce = setTimeout(searchStock, 280); }
+        function onFilterChange() { clearTimeout(filterDebounce); filterDebounce = setTimeout(searchStock, 280); }
 
         function filterItems() {
             const f = getFilters();
             const n = f.name.toLowerCase();
             const nNorm = n.replace(/[-\s]/g, '');
             return dedupedItems.filter(s => {
-                if (f.cat) { const sCat = s.product_category || inferCategory(s.product_type || ''); if (sCat !== f
-                        .cat) return false; }
+                if (f.cat) { const sCat = s.product_category || inferCategory(s.product_type || ''); if (sCat !== f.cat) return false; }
                 if (f.thick && Math.abs(Number(s.thickness) - Number(f.thick)) > 1) return false;
                 if (f.width && Math.abs(Number(s.width) - Number(f.width)) > 50) return false;
                 if (f.length && Math.abs(Number(s.length) - Number(f.length)) > 100) return false;
-                if (n) { const fields = [s.grade, s.product_type, s.alternatives, s.section].map(x => (x || '')
-                        .toLowerCase());
-                    const fieldsNorm = fields.map(x => x.replace(/[-\s]/g, ''));
-                    const hit = fieldsNorm.some(x => x.includes(nNorm)) || fields.some(x => x.includes(n)); if (!hit)
-                        return false; }
+                if (n) { const fields = [s.grade, s.product_type, s.alternatives, s.section].map(x => (x || '').toLowerCase()); const fieldsNorm = fields.map(x => x.replace(/[-\s]/g, '')); const hit = fieldsNorm.some(x => x.includes(nNorm)) || fields.some(x => x.includes(n)); if (!hit) return false; }
                 return true;
             });
         }
-
-        function sortItems(items, sortKey) { return [...items].sort((a, b) => { let av = a[sortKey] ?? '',
-                bv = b[sortKey] ?? ''; if (!isNaN(Number(av)) && !isNaN(Number(bv)) && av !== '' && bv !== '') return Number(
-                    bv) - Number(av); return String(av).localeCompare(String(bv)); }); }
 
         function renderResults() {
             const f = getFilters();
             const noSearchInput = !(f.name || f.thick || f.width || f.length);
             const area = document.getElementById('resultsArea');
             if (CONFIG.showFeatured) renderFeatured();
-            if (isSearching) { document.getElementById('resultsCount').textContent = 'Searching…';
-                area.innerHTML = `<div class="loading"><div class="spinner"></div><div>Searching…</div></div>`; return; }
+            if (isSearching) { document.getElementById('resultsCount').textContent = 'Searching…'; area.innerHTML = `<div class="loading"><div class="spinner"></div><div>Searching…</div></div>`; return; }
             if (noSearchInput) {
-                const catLabels = { flat: '📐 Flat / Plate / Coil', pipe: '⭕ Pipe / Tube', profile: '🔷 Profile / Beam',
-                    bar: '🔵 Bar / Rod', other: '📦 Other' };
+                const catLabels = { flat: '📐 Flat / Plate / Coil', pipe: '⭕ Pipe / Tube', profile: '🔷 Profile / Beam', bar: '🔵 Bar / Rod', other: '📦 Other' };
                 const hasCatOnly = !!f.cat;
-                document.getElementById('resultsCount').textContent = hasCatOnly ?
-                    'Filter set — now enter a grade or dimensions' : 'Type a grade, type, or dimensions';
+                document.getElementById('resultsCount').textContent = hasCatOnly ? 'Filter set — now enter a grade or dimensions' : 'Type a grade, type, or dimensions';
                 area.innerHTML = `
             <div class="empty">
                 <div class="icon">🔎</div>
@@ -3987,15 +3967,11 @@ function renderSocialProof(data) {
             }
             let items = filterItems();
             items = [...items].sort((a, b) => {
-                    let av, bv;
-                    if (f.sort === 'quantity') { av = a._quantity_total || 0;
-                        bv = b._quantity_total || 0; return bv - av; }
-                    av = a[f.sort] ?? '';
-                    bv = b[f.sort] ?? ''; if (!isNaN(Number(av)) && !isNaN(Number(bv)) && av !== '' && bv !== '') return Number(
-                        bv) - Number(av); return String(av).localeCompare(String(bv));
-                }),
-                document.getElementById('resultsCount').textContent = items.length ?
-                `${items.length} product${items.length!==1?'s':''} match` : 'No matches';
+                let av, bv;
+                if (f.sort === 'quantity') { av = a._quantity_total || 0; bv = b._quantity_total || 0; return bv - av; }
+                av = a[f.sort] ?? ''; bv = b[f.sort] ?? ''; if (!isNaN(Number(av)) && !isNaN(Number(bv)) && av !== '' && bv !== '') return Number(bv) - Number(av); return String(av).localeCompare(String(bv));
+            });
+            document.getElementById('resultsCount').textContent = items.length ? `${items.length} product${items.length!==1?'s':''} match` : 'No matches';
             if (!items.length) { area.innerHTML = `
             <div class="empty">
                 <div class="icon">🔍</div>
@@ -4005,36 +3981,23 @@ function renderSocialProof(data) {
             </div>`; return; }
             const cartIds = new Set();
             cart.stock.forEach(c => { (c.stock_ids || [c.stock_id]).forEach(id => cartIds.add(id)); });
-            area.innerHTML =
-                `<div class="grid">${items.map(s => renderCard(s, s._stock_ids.some(id => cartIds.has(id)))).join('')}</div>`;
+            area.innerHTML = `<div class="grid">${items.map(s => renderCard(s, s._stock_ids.some(id => cartIds.has(id)))).join('')}</div>`;
         }
 
         function renderCard(s, isInCart) {
             const cat = s.product_category || inferCategory(s.product_type || '');
             const lbls = DIM_LABELS[cat] || DIM_LABELS.flat;
             let d1, d2, d3;
-            if (cat === 'profile') { d1 = s.section || (s.thickness ? s.thickness + '' : '');
-                d2 = s.width;
-                d3 = s.length; } else { d1 = s.thickness;
-                d2 = s.width;
-                d3 = s.length; }
+            if (cat === 'profile') { d1 = s.section || (s.thickness ? s.thickness + '' : ''); d2 = s.width; d3 = s.length; } else { d1 = s.thickness; d2 = s.width; d3 = s.length; }
             const dims = [
-                d1 ?
-                `<span class="dim-chip"><span class="lbl">${lbls[0]}</span><span class="val">${esc(d1)}</span></span>` :
-                '',
-                d2 ?
-                `<span class="dim-chip"><span class="lbl">${lbls[1]}</span><span class="val">${esc(d2)}</span></span>` :
-                '',
-                d3 ?
-                `<span class="dim-chip"><span class="lbl">${lbls[2]}</span><span class="val">${esc(d3)}</span></span>` :
-                '',
+                d1 ? `<span class="dim-chip"><span class="lbl">${lbls[0]}</span><span class="val">${esc(d1)}</span></span>` : '',
+                d2 ? `<span class="dim-chip"><span class="lbl">${lbls[1]}</span><span class="val">${esc(d2)}</span></span>` : '',
+                d3 ? `<span class="dim-chip"><span class="lbl">${lbls[2]}</span><span class="val">${esc(d3)}</span></span>` : '',
             ].filter(Boolean).join('');
             const totalQty = s._quantity_total != null ? s._quantity_total : s.quantity;
-            const qty = totalQty != null && totalQty !== '' ? `<b>${fmtNum(totalQty)}</b> ${esc(s.unit||'ton')} avail.` :
-                'In stock';
+            const qty = totalQty != null && totalQty !== '' ? `<b>${fmtNum(totalQty)}</b> ${esc(s.unit||'ton')} avail.` : 'In stock';
             const tag = (s.marketing_tag || '').toUpperCase();
-            const badge = TAG_STYLES[tag] ?
-                `<div class="mkt-badge tag-${tag}">${TAG_STYLES[tag].icon} ${TAG_STYLES[tag].label}</div>` : '';
+            const badge = TAG_STYLES[tag] ? `<div class="mkt-badge tag-${tag}">${TAG_STYLES[tag].icon} ${TAG_STYLES[tag].label}</div>` : '';
             const ltHtml = leadTimeDisplay(s.lead_time_days);
             const featuredCls = s.featured ? ' featured-card' : '';
             return `<div class="card${featuredCls} ${isInCart?'in-cart':''}" data-id="${esc(s.id)}">
@@ -4047,48 +4010,20 @@ function renderSocialProof(data) {
     </div>`;
         }
 
-        function loadCart() { try { const raw = localStorage.getItem(CART_KEY); if (raw) { cart = JSON.parse(raw);
-                    cart.stock = cart.stock || [];
-                    cart.custom = cart.custom || []; } } catch (e) { cart = { stock: [], custom: [] }; } }
-
+        function loadCart() { try { const raw = localStorage.getItem(CART_KEY); if (raw) { cart = JSON.parse(raw); cart.stock = cart.stock || []; cart.custom = cart.custom || []; } } catch (e) { cart = { stock: [], custom: [] }; } }
         function saveCart() { try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch (e) {} }
-
-        function loadContact() { try { const raw = localStorage.getItem(CONTACT_KEY); if (raw) { const c = JSON.parse(raw);
-                    ['cName', 'cEmail', 'cCompany', 'cPhone', 'cCountry'].forEach(k => { if (c[k]) document.getElementById(k)
-                        .value = c[k]; }); } } catch (e) {} }
-
-        function saveContact() { const c = {};
-            ['cName', 'cEmail', 'cCompany', 'cPhone', 'cCountry'].forEach(k => c[k] = document.getElementById(k).value.trim());
-            try { localStorage.setItem(CONTACT_KEY, JSON.stringify(c)); } catch (e) {} }
+        function loadContact() { try { const raw = localStorage.getItem(CONTACT_KEY); if (raw) { const c = JSON.parse(raw); ['cName', 'cEmail', 'cCompany', 'cPhone', 'cCountry'].forEach(k => { if (c[k]) document.getElementById(k).value = c[k]; }); } } catch (e) {} }
+        function saveContact() { const c = {}; ['cName', 'cEmail', 'cCompany', 'cPhone', 'cCountry'].forEach(k => c[k] = document.getElementById(k).value.trim()); try { localStorage.setItem(CONTACT_KEY, JSON.stringify(c)); } catch (e) {} }
 
         function toggleStockItem(id) {
             const idx = cart.stock.findIndex(c => c.stock_id === id);
-            if (idx >= 0) { cart.stock.splice(idx, 1); } else { const item = dedupedItems.find(s => s.id === id); if (!item)
-                    return;
-                const cat = item.product_category || inferCategory(item.product_type || '');
-                cart.stock.push({ stock_id: id, stock_ids: item._stock_ids.slice(), lot_count: item._lot_count || 1,
-                    cart_id: uid(), grade: item.grade || '', product_type: item.product_type || '', product_category: cat,
-                    section: item.section || '', thickness: item.thickness ?? '', width: item.width ?? '',
-                    length: item.length ?? '', unit: item.unit || 'ton', avail_qty: item._quantity_total,
-                    requested_qty: '' }); }
-            saveCart();
-            renderResults();
-            updateCartUI();
+            if (idx >= 0) { cart.stock.splice(idx, 1); } else { const item = dedupedItems.find(s => s.id === id); if (!item) return; const cat = item.product_category || inferCategory(item.product_type || ''); cart.stock.push({ stock_id: id, stock_ids: item._stock_ids.slice(), lot_count: item._lot_count || 1, cart_id: uid(), grade: item.grade || '', product_type: item.product_type || '', product_category: cat, section: item.section || '', thickness: item.thickness ?? '', width: item.width ?? '', length: item.length ?? '', unit: item.unit || 'ton', avail_qty: item._quantity_total, requested_qty: '' }); }
+            saveCart(); renderResults(); updateCartUI();
         }
 
-        function removeStockCartItem(cartId) { cart.stock = cart.stock.filter(c => c.cart_id !== cartId);
-            saveCart();
-            renderResults();
-            renderCartItems();
-            updateCartUI(); }
-
-        function updateStockQty(cartId, qty) { const it = cart.stock.find(c => c.cart_id === cartId); if (it) { it.requested_qty =
-                qty;
-            saveCart(); } }
-
-        function updateStockUnit(cartId, unit) { const it = cart.stock.find(c => c.cart_id === cartId); if (it) { it.unit = unit;
-                saveCart(); } }
-
+        function removeStockCartItem(cartId) { cart.stock = cart.stock.filter(c => c.cart_id !== cartId); saveCart(); renderResults(); renderCartItems(); updateCartUI(); }
+        function updateStockQty(cartId, qty) { const it = cart.stock.find(c => c.cart_id === cartId); if (it) { it.requested_qty = qty; saveCart(); } }
+        function updateStockUnit(cartId, unit) { const it = cart.stock.find(c => c.cart_id === cartId); if (it) { it.unit = unit; saveCart(); } }
         function totalCartCount() { return cart.stock.length + cart.custom.length; }
 
         function updateCartUI() {
@@ -4096,23 +4031,15 @@ function renderSocialProof(data) {
             const cnt = document.getElementById('cartCount');
             const fcnt = document.getElementById('floatCartCount');
             const fc = document.getElementById('floatCart');
-            cnt.textContent = n;
-            cnt.classList.toggle('zero', n === 0);
+            cnt.textContent = n; cnt.classList.toggle('zero', n === 0);
             fcnt.textContent = n;
             fc.classList.toggle('show', n > 0 && !document.getElementById('cartModal').classList.contains('open'));
             document.getElementById('cntStock').textContent = `(${cart.stock.length})`;
             document.getElementById('cntCustom').textContent = `(${cart.custom.length})`;
         }
 
-        function openCart() { document.getElementById('cartModal').classList.add('open');
-            document.getElementById('floatCart').classList.remove('show');
-            document.body.style.overflow = 'hidden';
-            goToStep(1);
-            renderCartItems(); }
-
-        function closeCart() { document.getElementById('cartModal').classList.remove('open');
-            document.body.style.overflow = '';
-            updateCartUI(); }
+        function openCart() { document.getElementById('cartModal').classList.add('open'); document.getElementById('floatCart').classList.remove('show'); document.body.style.overflow = 'hidden'; goToStep(1); renderCartItems(); }
+        function closeCart() { document.getElementById('cartModal').classList.remove('open'); document.body.style.overflow = ''; updateCartUI(); }
 
         function goToStep(n) {
             currentStep = n;
@@ -4120,8 +4047,7 @@ function renderSocialProof(data) {
             document.getElementById('step2Body').style.display = n === 2 ? '' : 'none';
             document.getElementById('successBody').style.display = n === 3 ? '' : 'none';
             document.getElementById('cartFooter').style.display = n === 3 ? 'none' : '';
-            document.getElementById('cartTitle').textContent = n === 1 ? 'Your Enquiry' : n === 2 ? 'Contact Details' :
-                'Sent ✓';
+            document.getElementById('cartTitle').textContent = n === 1 ? 'Your Enquiry' : n === 2 ? 'Contact Details' : 'Sent ✓';
             document.getElementById('footBack').style.display = n === 2 ? '' : 'none';
             document.getElementById('footNext').style.display = n === 1 ? '' : 'none';
             document.getElementById('footSubmit').style.display = n === 2 ? '' : 'none';
@@ -4129,15 +4055,8 @@ function renderSocialProof(data) {
             refreshFooter();
         }
 
-        function refreshFooter() { const n = totalCartCount();
-            document.getElementById('footMeta').textContent = n === 0 ? 'No items yet' : `${n} item${n>1?'s':''}`;
-            document.getElementById('footNext').disabled = n === 0; }
-
-        function switchTab(tab) { currentTab = tab;
-            document.getElementById('tabFromStock').classList.toggle('active', tab === 'stock');
-            document.getElementById('tabResearch').classList.toggle('active', tab === 'research');
-            document.getElementById('paneStock').style.display = tab === 'stock' ? '' : 'none';
-            document.getElementById('paneResearch').style.display = tab === 'research' ? '' : 'none'; }
+        function refreshFooter() { const n = totalCartCount(); document.getElementById('footMeta').textContent = n === 0 ? 'No items yet' : `${n} item${n>1?'s':''}`; document.getElementById('footNext').disabled = n === 0; }
+        function switchTab(tab) { currentTab = tab; document.getElementById('tabFromStock').classList.toggle('active', tab === 'stock'); document.getElementById('tabResearch').classList.toggle('active', tab === 'research'); document.getElementById('paneStock').style.display = tab === 'stock' ? '' : 'none'; document.getElementById('paneResearch').style.display = tab === 'research' ? '' : 'none'; }
 
         function renderCartItems() {
             const sList = document.getElementById('cartStockList');
@@ -4146,9 +4065,7 @@ function renderSocialProof(data) {
                 const cat = c.product_category || 'other';
                 const lbls = DIM_LABELS[cat] || DIM_LABELS.flat;
                 const dimParts = [];
-                let d1 = c.thickness,
-                    d2 = c.width,
-                    d3 = c.length;
+                let d1 = c.thickness, d2 = c.width, d3 = c.length;
                 if (cat === 'profile' && c.section) d1 = c.section;
                 if (d1) dimParts.push(`${lbls[0]} ${esc(d1)}`);
                 if (d2) dimParts.push(`${lbls[1]} ${esc(d2)}`);
@@ -4195,12 +4112,7 @@ function renderSocialProof(data) {
             setTimeout(() => document.getElementById('cf_grade').focus(), 50);
         }
 
-        function updateCustomDims() { const cat = document.getElementById('cf_cat').value;
-            const lbls = DIM_LABELS[cat] || DIM_LABELS.flat;
-            document.getElementById('cf_dim1_lbl').textContent = lbls[0] + (cat === 'profile' ? '' : ' (mm)');
-            document.getElementById('cf_dim2_lbl').textContent = lbls[1] + ' (mm)';
-            document.getElementById('cf_dim3_lbl').textContent = lbls[2] + ' (mm)'; }
-
+        function updateCustomDims() { const cat = document.getElementById('cf_cat').value; const lbls = DIM_LABELS[cat] || DIM_LABELS.flat; document.getElementById('cf_dim1_lbl').textContent = lbls[0] + (cat === 'profile' ? '' : ' (mm)'); document.getElementById('cf_dim2_lbl').textContent = lbls[1] + ' (mm)'; document.getElementById('cf_dim3_lbl').textContent = lbls[2] + ' (mm)'; }
         function cancelCustomForm() { document.getElementById('customFormWrap').innerHTML = ''; }
 
         function saveCustomItem() {
@@ -4213,29 +4125,14 @@ function renderSocialProof(data) {
             const qty = document.getElementById('cf_qty').value.trim();
             const unit = document.getElementById('cf_unit').value;
             const notes = document.getElementById('cf_notes').value.trim();
-            if (!grade && !type && !d1 && !d2 && !d3) { alert(
-                    'Please give at least a grade, type, or dimensions so we know what to source.'); return; }
-            cart.custom.push({ id: uid(), product_category: cat, grade, product_type: type, dim1: d1, dim2: d2, dim3: d3, qty,
-                unit, notes, is_sourcing: true });
-            saveCart();
-            cancelCustomForm();
-            renderCustomList();
-            updateCartUI();
-            refreshFooter();
+            if (!grade && !type && !d1 && !d2 && !d3) { alert('Please give at least a grade, type, or dimensions so we know what to source.'); return; }
+            cart.custom.push({ id: uid(), product_category: cat, grade, product_type: type, dim1: d1, dim2: d2, dim3: d3, qty, unit, notes, is_sourcing: true });
+            saveCart(); cancelCustomForm(); renderCustomList(); updateCartUI(); refreshFooter();
         }
 
-        function removeCustomItem(id) { cart.custom = cart.custom.filter(c => c.id !== id);
-            saveCart();
-            renderCustomList();
-            updateCartUI();
-            refreshFooter(); }
-
-        function goToContact() { if (totalCartCount() === 0) return;
-            loadContact();
-            goToStep(2); }
-
+        function removeCustomItem(id) { cart.custom = cart.custom.filter(c => c.id !== id); saveCart(); renderCustomList(); updateCartUI(); refreshFooter(); }
+        function goToContact() { if (totalCartCount() === 0) return; loadContact(); goToStep(2); }
         function backToStep1() { goToStep(1); }
-
         function validEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
 
         async function submitEnquiry() {
@@ -4250,113 +4147,75 @@ function renderSocialProof(data) {
             document.getElementById('cName').classList.toggle('error', !name);
             document.getElementById('cEmail').classList.toggle('error', !email || !validEmail(email));
             const msgEl = document.getElementById('submitMsg');
-            if (!name || !email || !validEmail(email)) { msgEl.innerHTML =
-                    `<div class="banner red"><span>⚠</span><div>Please provide your name and a valid email address.</div></div>`
-                ; return; }
+            if (!name || !email || !validEmail(email)) { msgEl.innerHTML = `<div class="banner red"><span>⚠</span><div>Please provide your name and a valid email address.</div></div>`; return; }
             msgEl.innerHTML = '';
             saveContact();
-            const items = [...cart.stock.map(c => ({ source: 'stock', stock_id: c.stock_id, stock_ids: c.stock_ids || [c
-                    .stock_id
-                ], lot_count: c.lot_count || 1, grade: c.grade, product_type: c.product_type, product_category: c
-                .product_category, section: c.section, thickness: c.thickness, width: c.width, length: c.length,
-                requested_qty: c.requested_qty, unit: c.unit })), ...cart.custom.map(c => ({ source: 'sourcing', grade: c
-                .grade, product_type: c.product_type, product_category: c.product_category, dim1: c.dim1, dim2: c.dim2,
-                dim3: c.dim3, requested_qty: c.qty, unit: c.unit, notes: c.notes }))];
+            const items = [...cart.stock.map(c => ({ source: 'stock', stock_id: c.stock_id, stock_ids: c.stock_ids || [c.stock_id], lot_count: c.lot_count || 1, grade: c.grade, product_type: c.product_type, product_category: c.product_category, section: c.section, thickness: c.thickness, width: c.width, length: c.length, requested_qty: c.requested_qty, unit: c.unit })), ...cart.custom.map(c => ({ source: 'sourcing', grade: c.grade, product_type: c.product_type, product_category: c.product_category, dim1: c.dim1, dim2: c.dim2, dim3: c.dim3, requested_qty: c.qty, unit: c.unit, notes: c.notes }))];
             const ref = 'ENQ-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + uid().slice(0, 5).toUpperCase();
             isSubmitting = true;
             const submitBtn = document.getElementById('footSubmit');
             const oldText = submitBtn.textContent;
             submitBtn.disabled = true;
-            submitBtn.innerHTML =
-                '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 6px 0 0"></span>Sending…';
+            submitBtn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 6px 0 0"></span>Sending…';
             try {
-                const payload = { ref, client_name: name, client_email: email, client_company: company || null,
-                    client_phone: phone || null, client_country: country || null, project_ref: project || null,
-                    message: message || null, items: items, item_count: items.length };
+                const payload = { ref, client_name: name, client_email: email, client_company: company || null, client_phone: phone || null, client_country: country || null, project_ref: project || null, message: message || null, items: items, item_count: items.length };
                 const { error } = await sb.from('client_enquiries').insert(payload);
                 if (error) {
                     const tableMissing = /relation .* does not exist|client_enquiries.*not exist/i.test(error.message || '');
-                    if (tableMissing) { document.getElementById('sqlModal').classList.add('open');
-                        msgEl.innerHTML =
-                            `<div class="banner amber"><span>⚙</span><div>One-time database setup needed. The setup SQL has been opened — copy it, run it in Supabase, then try again.</div></div>`
-                        ; } else { const fullMsg = [error.message, error.details, error.hint, error.code].filter(Boolean).join(
-                            ' · ');
-                        msgEl.innerHTML =
-                            `<div class="banner red"><span>⚠</span><div><b>Couldn't send your enquiry.</b><br>${esc(fullMsg)}<br><span style="font-size:10px;opacity:.8">If this keeps happening, please email us directly.</span></div></div>`
-                        ; }
+                    if (tableMissing) { document.getElementById('sqlModal').classList.add('open'); msgEl.innerHTML = `<div class="banner amber"><span>⚙</span><div>One-time database setup needed. The setup SQL has been opened — copy it, run it in Supabase, then try again.</div></div>`; } else { const fullMsg = [error.message, error.details, error.hint, error.code].filter(Boolean).join(' · '); msgEl.innerHTML = `<div class="banner red"><span>⚠</span><div><b>Couldn't send your enquiry.</b><br>${esc(fullMsg)}<br><span style="font-size:10px;opacity:.8">If this keeps happening, please email us directly.</span></div></div>`; }
                     throw error;
                 }
                 document.getElementById('successRef').textContent = 'Reference: ' + ref;
                 cart = { stock: [], custom: [] };
                 saveCart();
                 goToStep(3);
-socialProofRealLast = Date.now();
+                socialProofRealLast = Date.now();
                 if (typeof applySocialProofDisplay === 'function') applySocialProofDisplay();
                 renderResults();
                 updateCartUI();
                 if (adminUser) loadEnquiries();
-            } catch (e) { console.error('[submitEnquiry] caught:', e); } finally { isSubmitting = false;
-                submitBtn.disabled = false;
-                submitBtn.textContent = oldText; }
+            } catch (e) { console.error('[submitEnquiry] caught:', e); } finally { isSubmitting = false; submitBtn.disabled = false; submitBtn.textContent = oldText; }
         }
 
-        function copySQL() { const t = document.getElementById('sqlCode').textContent;
-            navigator.clipboard.writeText(t).then(() => { const btns = document.querySelectorAll('#sqlModal button');
-                const copyBtn = Array.from(btns).find(b => b.textContent.includes('Copy')); if (copyBtn) { const old = copyBtn
-                        .innerHTML;
-                    copyBtn.innerHTML = '✓ Copied';
-                    setTimeout(() => copyBtn.innerHTML = old, 1500); } }); }
+        function copySQL() { const t = document.getElementById('sqlCode').textContent; navigator.clipboard.writeText(t).then(() => { const btns = document.querySelectorAll('#sqlModal button'); const copyBtn = Array.from(btns).find(b => b.textContent.includes('Copy')); if (copyBtn) { const old = copyBtn.innerHTML; copyBtn.innerHTML = '✓ Copied'; setTimeout(() => copyBtn.innerHTML = old, 1500); } }); }
+
         let adminUser = null;
         let enquiries = [];
         let selectedEnqId = null;
 
-        function openAdminLogin() { document.getElementById('loginModal').classList.add('open');
-            document.body.style.overflow = 'hidden';
-            setTimeout(() => document.getElementById('liEmail').focus(), 60); }
+        function openAdminLogin() { document.getElementById('loginModal').classList.add('open'); document.body.style.overflow = 'hidden'; setTimeout(() => document.getElementById('liEmail').focus(), 60); }
+        function closeAdminLogin() { document.getElementById('loginModal').classList.remove('open'); document.body.style.overflow = ''; document.getElementById('liMsg').innerHTML = ''; }
 
-        function closeAdminLogin() { document.getElementById('loginModal').classList.remove('open');
-            document.body.style.overflow = '';
-            document.getElementById('liMsg').innerHTML = ''; }
         async function doAdminLogin() {
             const email = document.getElementById('liEmail').value.trim();
             const pass = document.getElementById('liPass').value;
             const msg = document.getElementById('liMsg');
-            if (!email || !pass) { msg.innerHTML =
-                    `<div class="banner red"><span>⚠</span><div>Please enter email and password.</div></div>`; return; }
+            if (!email || !pass) { msg.innerHTML = `<div class="banner red"><span>⚠</span><div>Please enter email and password.</div></div>`; return; }
             const btn = document.getElementById('liBtn');
-            btn.disabled = true;
-            btn.textContent = 'Signing in…';
-            msg.innerHTML = '';
+            btn.disabled = true; btn.textContent = 'Signing in…'; msg.innerHTML = '';
             const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-            btn.disabled = false;
-            btn.textContent = 'Sign in';
+            btn.disabled = false; btn.textContent = 'Sign in';
             if (error) { msg.innerHTML = `<div class="banner red"><span>⚠</span><div>${esc(error.message)}</div></div>`; return; }
-            closeAdminLogin();
-            onAdminSignedIn(data.user);
+            closeAdminLogin(); onAdminSignedIn(data.user);
         }
-        async function doAdminLogout() { await sb.auth.signOut();
-            adminUser = null;
-            enquiries = [];
-            document.getElementById('adminBanner').classList.remove('show');
-            closeInbox(); }
-        async function onAdminSignedIn(user) { adminUser = user;
-            document.getElementById('adminEmail').textContent = user.email;
-            document.getElementById('adminBanner').classList.add('show');
-            await loadEnquiries(); }
+
+        async function doAdminLogout() { await sb.auth.signOut(); adminUser = null; enquiries = []; document.getElementById('adminBanner').classList.remove('show'); closeInbox(); }
+
+        async function onAdminSignedIn(user) { adminUser = user; document.getElementById('adminEmail').textContent = user.email; document.getElementById('adminBanner').classList.add('show'); await loadEnquiries(); }
+
         sb.auth.getSession().then(({ data: { session } }) => { if (session) onAdminSignedIn(session.user); });
         if (location.hash === '#admin') { setTimeout(openAdminLogin, 50); }
         window.addEventListener('hashchange', () => { if (location.hash === '#admin' && !adminUser) openAdminLogin(); });
+
         async function loadEnquiries() {
             if (!adminUser) return;
-            const { data, error } = await sb.from('client_enquiries').select('*').order('created_at', { ascending: false })
-                .limit(500);
+            const { data, error } = await sb.from('client_enquiries').select('*').order('created_at', { ascending: false }).limit(500);
             if (error) {
                 const tableMissing = /relation .* does not exist|does not exist/i.test(error.message || '');
                 const cnt = document.getElementById('adminEnqCount');
                 cnt.textContent = tableMissing ? '⚠ Setup SQL not run yet' : '⚠ ' + (error.message || 'load failed');
                 cnt.style.background = 'rgba(255,80,80,.45)';
-                const errBox =
-                    `<div style="padding:18px;font-size:12px;color:var(--red-text);background:var(--red-bg);border:1px solid var(--red);border-radius:8px;margin:14px;line-height:1.6"><b>${tableMissing?'The client_enquiries table does not exist yet.':'Could not load enquiries.'}</b><br>${esc(error.message||'')}${tableMissing?`<br><br>Run the one-time setup SQL: <a href="#" onclick="document.getElementById('sqlModal').classList.add('open');return false" style="color:var(--blue);font-weight:600">Show setup SQL →</a>`:''}</div>`;
+                const errBox = `<div style="padding:18px;font-size:12px;color:var(--red-text);background:var(--red-bg);border:1px solid var(--red);border-radius:8px;margin:14px;line-height:1.6"><b>${tableMissing?'The client_enquiries table does not exist yet.':'Could not load enquiries.'}</b><br>${esc(error.message||'')}${tableMissing?`<br><br>Run the one-time setup SQL: <a href="#" onclick="document.getElementById('sqlModal').classList.add('open');return false" style="color:var(--blue);font-weight:600">Show setup SQL →</a>`:''}</div>`;
                 document.getElementById('inboxRows').innerHTML = errBox;
                 document.getElementById('inboxDetail').innerHTML = errBox;
                 return;
@@ -4383,8 +4242,7 @@ socialProofRealLast = Date.now();
         function fmtFullTime(ts) {
             if (!ts) return '—';
             const d = new Date(ts);
-            return d.toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit',
-                minute: '2-digit' });
+            return d.toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
 
         function renderInboxList() {
@@ -4392,22 +4250,22 @@ socialProofRealLast = Date.now();
             const sf = document.getElementById('inboxStatusFilter').value;
             let list = enquiries.slice();
             if (sf) list = list.filter(e => (e.status || 'new') === sf);
-            if (q) list = list.filter(e => { const blob = [e.client_name, e.client_email, e.client_company, e.client_country, e
-                    .message, e.ref, e.project_ref
-                ].map(x => (x || '').toLowerCase()).join(' '); return blob.includes(q); });
+            if (q) list = list.filter(e => { const blob = [e.client_name, e.client_email, e.client_company, e.client_country, e.message, e.ref, e.project_ref].map(x => (x || '').toLowerCase()).join(' '); return blob.includes(q); });
             const rows = document.getElementById('inboxRows');
-            if (!list.length) { rows.innerHTML =
-                    `<div style="padding:30px 16px;font-size:12px;color:var(--text3);text-align:center"><div style="font-size:28px;opacity:.4;margin-bottom:6px">🔍</div>No enquiries${q||sf?' match':' yet'}</div>`
-                ; return; }
-            rows.innerHTML = list.map(e => { const status = e.status || 'new';
+            if (!list.length) { rows.innerHTML = `<div style="padding:30px 16px;font-size:12px;color:var(--text3);text-align:center"><div style="font-size:28px;opacity:.4;margin-bottom:6px">🔍</div>No enquiries${q||sf?' match':' yet'}</div>`; return; }
+            rows.innerHTML = list.map(e => {
+                const status = e.status || 'new';
                 const isUnread = status === 'new';
                 const itct = e.item_count || (e.items ? e.items.length : 0);
-                const inCRM = !!e.lead_id; return `<div class="inbox-row ${isUnread?'unread':''} ${selectedEnqId===e.id?'active':''}" onclick="openEnquiry('${e.id}')">
+                const inCRM = !!e.lead_id;
+                return `<div class="inbox-row ${isUnread?'unread':''} ${selectedEnqId===e.id?'active':''}" onclick="openEnquiry('${e.id}')">
             <div class="ir-line1"><span class="ir-name">${esc(e.client_name||'(no name)')}</span><span class="ir-time">${fmtRelTime(e.created_at)}</span></div>
             <div class="ir-line2">${esc(e.client_company||e.client_email||'—')}</div>
             <div class="ir-line3"><span class="ir-status ${status}">${status}</span><span class="ir-itct">${itct} item${itct!==1?'s':''}</span>${inCRM?`<span class="in-crm-badge">📊 In CRM</span>`:''}</div>
-        </div>`; }).join('');
+        </div>`;
+            }).join('');
         }
+
         async function openEnquiry(id) {
             selectedEnqId = id;
             const e = enquiries.find(x => x.id === id);
@@ -4416,48 +4274,29 @@ socialProofRealLast = Date.now();
             const items = Array.isArray(e.items) ? e.items : [];
             const stockItems = items.filter(i => i.source !== 'sourcing');
             const sourceItems = items.filter(i => i.source === 'sourcing');
-            document.getElementById('inboxDetail').innerHTML =
-                `<div class="inbox-empty"><div class="spinner"></div><p>Loading enquiry details…</p></div>`;
+            document.getElementById('inboxDetail').innerHTML = `<div class="inbox-empty"><div class="spinner"></div><p>Loading enquiry details…</p></div>`;
             const allStockIds = new Set();
-            stockItems.forEach(it => { const ids = it.stock_ids || (it.stock_id ? [it.stock_id] : []);
-                ids.forEach(x => x && allStockIds.add(x)); });
+            stockItems.forEach(it => { const ids = it.stock_ids || (it.stock_id ? [it.stock_id] : []); ids.forEach(x => x && allStockIds.add(x)); });
             const lotInfo = new Map();
             if (allStockIds.size) {
                 const probeCols = ['id,heat_number,quantity,unit', 'id,heat_number,quantity', 'id,heat_number', 'id'];
                 let lots = null;
-                for (const cols of probeCols) { const { data, error } = await sb.from('stock').select(cols).in('id', [
-                        ...allStockIds
-                    ]); if (!error) { lots = data; break; } }
+                for (const cols of probeCols) { const { data, error } = await sb.from('stock').select(cols).in('id', [...allStockIds]); if (!error) { lots = data; break; } }
                 if (lots) lots.forEach(r => lotInfo.set(r.id, r));
             }
             const itemRow = (it, isSrc) => {
                 const cat = it.product_category || inferCategory(it.product_type || '');
-                const dim = isSrc ? [it.dim1, it.dim2, it.dim3].filter(Boolean).join(' × ') : [cat === 'profile' && it.section ?
-                    it.section : it.thickness, it.width, it.length
-                ].filter(Boolean).join(' × ');
+                const dim = isSrc ? [it.dim1, it.dim2, it.dim3].filter(Boolean).join(' × ') : [cat === 'profile' && it.section ? it.section : it.thickness, it.width, it.length].filter(Boolean).join(' × ');
                 let heatCell = '';
-                if (!isSrc) { const ids = it.stock_ids || (it.stock_id ? [it.stock_id] : []);
-                    const lotsForItem = ids.map(id => lotInfo.get(id)).filter(Boolean); if (lotsForItem.length) { const heats =
-                            lotsForItem.map(l => { const h = l.heat_number || '—';
-                            const q = l.quantity != null ? ` (${fmtNum(l.quantity)} ${l.unit||it.unit||''})` : ''; return `<span style="display:inline-block;padding:1px 6px;margin:1px 2px 1px 0;background:var(--surface2);border-radius:4px;font-size:10.5px">${esc(h)}${q}</span>`; })
-                            .join('');
-                        heatCell = heats; } else { heatCell =
-                            `<span style="color:var(--text4);font-size:11px">${ids.length?'no heat data':'—'}</span>`; } }
+                if (!isSrc) { const ids = it.stock_ids || (it.stock_id ? [it.stock_id] : []); const lotsForItem = ids.map(id => lotInfo.get(id)).filter(Boolean); if (lotsForItem.length) { const heats = lotsForItem.map(l => { const h = l.heat_number || '—'; const q = l.quantity != null ? ` (${fmtNum(l.quantity)} ${l.unit||it.unit||''})` : ''; return `<span style="display:inline-block;padding:1px 6px;margin:1px 2px 1px 0;background:var(--surface2);border-radius:4px;font-size:10.5px">${esc(h)}${q}</span>`; }).join(''); heatCell = heats; } else { heatCell = `<span style="color:var(--text4);font-size:11px">${ids.length?'no heat data':'—'}</span>`; } }
                 return `<tr class="${isSrc?'sourcing':''}"><td class="grade">${esc(it.grade||'—')}</td><td>${esc(it.product_type||'')} ${cat?`<span style="font-size:9px;color:var(--text4);text-transform:uppercase">[${cat}]</span>`:''}</td><td>${esc(dim||'—')}</td><td class="qty">${esc(it.requested_qty||'?')} ${esc(it.unit||'')}</td>${isSrc?`<td>${esc(it.notes||'')}</td>`:`<td>${heatCell}</td>`}</tr>`;
             };
-            const stockTbl = stockItems.length ?
-                `<div class="det-section-ttl">📦 From stock (${stockItems.length})</div><table class="itm-tbl"><thead><tr><th>Grade</th><th>Type</th><th>Dimensions</th><th>Qty needed</th><th>Heat / Lots</th></tr></thead><tbody>${stockItems.map(i=>itemRow(i,false)).join('')}</tbody></table>` :
-                '';
-            const srcTbl = sourceItems.length ?
-                `<div class="det-section-ttl">🔮 Sourcing requests (${sourceItems.length})</div><table class="itm-tbl"><thead><tr><th>Grade</th><th>Type</th><th>Dimensions</th><th>Qty needed</th><th>Notes</th></tr></thead><tbody>${sourceItems.map(i=>itemRow(i,true)).join('')}</tbody></table>` :
-                '';
+            const stockTbl = stockItems.length ? `<div class="det-section-ttl">📦 From stock (${stockItems.length})</div><table class="itm-tbl"><thead><tr><th>Grade</th><th>Type</th><th>Dimensions</th><th>Qty needed</th><th>Heat / Lots</th></tr></thead><tbody>${stockItems.map(i=>itemRow(i,false)).join('')}</tbody></table>` : '';
+            const srcTbl = sourceItems.length ? `<div class="det-section-ttl">🔮 Sourcing requests (${sourceItems.length})</div><table class="itm-tbl"><thead><tr><th>Grade</th><th>Type</th><th>Dimensions</th><th>Qty needed</th><th>Notes</th></tr></thead><tbody>${sourceItems.map(i=>itemRow(i,true)).join('')}</tbody></table>` : '';
             const status = e.status || 'new';
-            const mailto = e.client_email ?
-                `mailto:${e.client_email}?subject=${encodeURIComponent('Re: Your enquiry '+(e.ref||''))}` : '#';
+            const mailto = e.client_email ? `mailto:${e.client_email}?subject=${encodeURIComponent('Re: Your enquiry '+(e.ref||''))}` : '#';
             const inCRM = !!e.lead_id;
-            const crmBtn = inCRM ?
-                `<button class="btn btn-sm" style="background:var(--green-bg);color:var(--green-text);border-color:var(--green)" onclick="pushToCRM('${e.id}')" title="Already pushed — click to push as a new lead">✓ In CRM</button>` :
-                `<button class="btn btn-sm btn-green" onclick="pushToCRM('${e.id}')" title="Create a new lead in your CRM with this enquiry's data">→ Push to CRM</button>`;
+            const crmBtn = inCRM ? `<button class="btn btn-sm" style="background:var(--green-bg);color:var(--green-text);border-color:var(--green)" onclick="pushToCRM('${e.id}')" title="Already pushed — click to push as a new lead">✓ In CRM</button>` : `<button class="btn btn-sm btn-green" onclick="pushToCRM('${e.id}')" title="Create a new lead in your CRM with this enquiry's data">→ Push to CRM</button>`;
             document.getElementById('inboxDetail').innerHTML = `
         <div class="det-hd"><div class="det-hd-main"><div class="det-hd-ref">${esc(e.ref||'(no ref)')} · ${fmtFullTime(e.created_at)} ${inCRM?`<span class="in-crm-badge">📊 In CRM</span>`:''}</div><div class="det-hd-name">${esc(e.client_name||'(no name)')}</div>${e.client_company?`<div class="det-hd-co">${esc(e.client_company)}</div>`:''}</div><div class="det-hd-acts">${crmBtn}<select class="status-select" onchange="updateStatus('${e.id}',this.value)" title="Status">${['new','contacted','quoted','closed'].map(s=>`<option value="${s}"${s===status?' selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}</select><a class="btn btn-sm btn-blue" href="${mailto}">✉ Reply</a><button class="btn btn-sm" onclick="copyEnquiry('${e.id}')" title="Copy as text">📋</button><button class="btn btn-sm" onclick="deleteEnquiry('${e.id}')" style="color:var(--red-text)" title="Delete">🗑</button></div></div>
         <div class="det-grid"><div class="det-fld"><div class="lbl">Email</div><div class="val"><a href="mailto:${esc(e.client_email||'')}">${esc(e.client_email||'—')}</a></div></div><div class="det-fld"><div class="lbl">Phone</div><div class="val">${e.client_phone?`<a href="tel:${esc(e.client_phone)}">${esc(e.client_phone)}</a>`:'—'}</div></div><div class="det-fld"><div class="lbl">Company</div><div class="val">${esc(e.client_company||'—')}</div></div><div class="det-fld"><div class="lbl">Country</div><div class="val">${esc(e.client_country||'—')}</div></div>${e.project_ref?`<div class="det-fld" style="grid-column:1/-1"><div class="lbl">Project / Reference</div><div class="val">${esc(e.project_ref)}</div></div>`:''}</div>
@@ -4465,304 +4304,138 @@ socialProofRealLast = Date.now();
         ${stockTbl}${srcTbl}
         ${!stockItems.length&&!sourceItems.length?`<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">No items in this enquiry</div>`:''}`;
         }
-        async function updateStatus(id, status) { const { error } = await sb.from('client_enquiries').update({ status }).eq('id',
-                id); if (error) { alert('Failed to update status: ' + error.message); return; }
-            const e = enquiries.find(x => x.id === id); if (e) e.status = status;
-            const newCount = enquiries.filter(x => (x.status || 'new') === 'new').length;
-            document.getElementById('adminEnqCount').textContent = `${newCount} new · ${enquiries.length} total`;
-            renderInboxList(); }
-        async function deleteEnquiry(id) { if (!confirm('Delete this enquiry permanently? This cannot be undone.')) return;
-            const { error } = await sb.from('client_enquiries').delete().eq('id', id); if (error) { alert(
-                    'Failed to delete: ' + error.message); return; }
-            enquiries = enquiries.filter(x => x.id !== id); if (selectedEnqId === id) { selectedEnqId = null;
-                document.getElementById('inboxDetail').innerHTML =
-                    `<div class="inbox-empty"><div class="icon">📭</div><p>Select an enquiry to view details</p></div>`; }
-            const newCount = enquiries.filter(x => (x.status || 'new') === 'new').length;
-            document.getElementById('adminEnqCount').textContent = `${newCount} new · ${enquiries.length} total`;
-            renderInboxList(); }
+
+        async function updateStatus(id, status) { const { error } = await sb.from('client_enquiries').update({ status }).eq('id', id); if (error) { alert('Failed to update status: ' + error.message); return; } const e = enquiries.find(x => x.id === id); if (e) e.status = status; const newCount = enquiries.filter(x => (x.status || 'new') === 'new').length; document.getElementById('adminEnqCount').textContent = `${newCount} new · ${enquiries.length} total`; renderInboxList(); }
+
+        async function deleteEnquiry(id) { if (!confirm('Delete this enquiry permanently? This cannot be undone.')) return; const { error } = await sb.from('client_enquiries').delete().eq('id', id); if (error) { alert('Failed to delete: ' + error.message); return; } enquiries = enquiries.filter(x => x.id !== id); if (selectedEnqId === id) { selectedEnqId = null; document.getElementById('inboxDetail').innerHTML = `<div class="inbox-empty"><div class="icon">📭</div><p>Select an enquiry to view details</p></div>`; } const newCount = enquiries.filter(x => (x.status || 'new') === 'new').length; document.getElementById('adminEnqCount').textContent = `${newCount} new · ${enquiries.length} total`; renderInboxList(); }
+
         async function copyEnquiry(id) {
-            const e = enquiries.find(x => x.id === id);
-            if (!e) return;
+            const e = enquiries.find(x => x.id === id); if (!e) return;
             const items = Array.isArray(e.items) ? e.items : [];
             const allStockIds = new Set();
-            items.filter(i => i.source !== 'sourcing').forEach(it => { const ids = it.stock_ids || (it.stock_id ? [it.stock_id] :
-                    []);
-                ids.forEach(x => x && allStockIds.add(x)); });
-            const lotInfo = new Map(); if (allStockIds.size) { const probeCols = ['id,heat_number,quantity,unit',
-                    'id,heat_number,quantity', 'id,heat_number', 'id'
-                ]; for (const cols of probeCols) { const { data, error } = await sb.from('stock').select(cols).in('id', [
-                        ...allStockIds
-                    ]); if (!error) { data.forEach(r => lotInfo.set(r.id, r)); break; } } }
+            items.filter(i => i.source !== 'sourcing').forEach(it => { const ids = it.stock_ids || (it.stock_id ? [it.stock_id] : []); ids.forEach(x => x && allStockIds.add(x)); });
+            const lotInfo = new Map(); if (allStockIds.size) { const probeCols = ['id,heat_number,quantity,unit', 'id,heat_number,quantity', 'id,heat_number', 'id']; for (const cols of probeCols) { const { data, error } = await sb.from('stock').select(cols).in('id', [...allStockIds]); if (!error) { data.forEach(r => lotInfo.set(r.id, r)); break; } } }
             const lines = [
                 `Enquiry: ${e.ref||''}`, `Date: ${fmtFullTime(e.created_at)}`, `Status: ${e.status||'new'}`, ``,
                 `Client: ${e.client_name||''}${e.client_company?' / '+e.client_company:''}`,
                 `Email: ${e.client_email||''}`, `Phone: ${e.client_phone||''}`,
                 `Country: ${e.client_country||''}`, e.project_ref ? `Project: ${e.project_ref}` : null, ``,
-                e.message ? `Message:\n${e.message}\n` : null, `Items (${items.length}):`, ...items.map((i, idx) => { const cat =
-                        i.product_category || inferCategory(i.product_type || '');
-                    const dim = i.source === 'sourcing' ? [i.dim1, i.dim2, i.dim3].filter(Boolean).join(' × ') : [cat ===
-                        'profile' && i.section ? i.section : i.thickness, i.width, i.length
-                    ].filter(Boolean).join(' × ');
-                    let heatStr = ''; if (i.source !== 'sourcing') { const ids = i.stock_ids || (i.stock_id ? [i.stock_id] :
-                            []);
-                        const lots = ids.map(id => lotInfo.get(id)).filter(Boolean); if (lots.length) { heatStr =
-                                '  Heat/Lots: ' + lots.map(l =>
-                                    `${l.heat_number||'—'}${l.quantity!=null?' ('+fmtNum(l.quantity)+' '+(l.unit||'')+')':''}`
-                                    ).join(', '); } }
-                    const tag = i.source === 'sourcing' ? 'SOURCING' : 'STOCK';
-                    const main =
-                        `  ${idx+1}. [${tag}] ${i.grade||'?'} ${i.product_type||''} — ${dim||'—'} — ${i.requested_qty||'?'} ${i.unit||''}${i.notes?' — '+i.notes:''}`
-                    ; return heatStr ? main + '\n' + heatStr : main; })
+                e.message ? `Message:\n${e.message}\n` : null, `Items (${items.length}):`,
+                ...items.map((i, idx) => { const cat = i.product_category || inferCategory(i.product_type || ''); const dim = i.source === 'sourcing' ? [i.dim1, i.dim2, i.dim3].filter(Boolean).join(' × ') : [cat === 'profile' && i.section ? i.section : i.thickness, i.width, i.length].filter(Boolean).join(' × '); let heatStr = ''; if (i.source !== 'sourcing') { const ids = i.stock_ids || (i.stock_id ? [i.stock_id] : []); const lots = ids.map(id => lotInfo.get(id)).filter(Boolean); if (lots.length) { heatStr = '  Heat/Lots: ' + lots.map(l => `${l.heat_number||'—'}${l.quantity!=null?' ('+fmtNum(l.quantity)+' '+(l.unit||'')+')':''}`).join(', '); } } const tag = i.source === 'sourcing' ? 'SOURCING' : 'STOCK'; const main = `  ${idx+1}. [${tag}] ${i.grade||'?'} ${i.product_type||''} — ${dim||'—'} — ${i.requested_qty||'?'} ${i.unit||''}${i.notes?' — '+i.notes:''}`; return heatStr ? main + '\n' + heatStr : main; })
             ].filter(x => x !== null).join('\n');
             navigator.clipboard.writeText(lines).then(() => { showToast('✓ Enquiry copied to clipboard', 'info'); });
         }
 
-        function openInbox() { if (!adminUser) return;
-            document.getElementById('inboxModal').classList.add('open');
-            document.body.style.overflow = 'hidden'; if (!enquiries.length) loadEnquiries(); }
+        function openInbox() { if (!adminUser) return; document.getElementById('inboxModal').classList.add('open'); document.body.style.overflow = 'hidden'; if (!enquiries.length) loadEnquiries(); }
+        function closeInbox() { document.getElementById('inboxModal').classList.remove('open'); document.body.style.overflow = ''; }
 
-        function closeInbox() { document.getElementById('inboxModal').classList.remove('open');
-            document.body.style.overflow = ''; }
         async function pushToCRM(enquiryId) {
             if (!adminUser) { showToast('You need to be logged in', 'error'); return; }
-            const e = enquiries.find(x => x.id === enquiryId);
-            if (!e) return;
-            if (e.lead_id) { if (!confirm(
-                        'This enquiry has already been pushed to CRM as a lead.\n\nPush again as a brand-new lead?'))
-                return; }
+            const e = enquiries.find(x => x.id === enquiryId); if (!e) return;
+            if (e.lead_id) { if (!confirm('This enquiry has already been pushed to CRM as a lead.\n\nPush again as a brand-new lead?')) return; }
             const items = Array.isArray(e.items) ? e.items : [];
             const allStockIds = new Set();
-            items.filter(i => i.source !== 'sourcing').forEach(it => { const ids = it.stock_ids || (it.stock_id ? [it.stock_id] :
-                    []);
-                ids.forEach(x => x && allStockIds.add(x)); });
-            const lotInfo = new Map(); if (allStockIds.size) { const probeCols = ['id,heat_number,quantity,unit',
-                    'id,heat_number,quantity', 'id,heat_number', 'id'
-                ]; for (const cols of probeCols) { const { data, error } = await sb.from('stock').select(cols).in('id', [
-                        ...allStockIds
-                    ]); if (!error) { data.forEach(r => lotInfo.set(r.id, r)); break; } } }
-            const products = items.map(it => { const cat = it.product_category || inferCategory(it.product_type || '');
-                const isSrc = it.source === 'sourcing'; return { type: it.product_type || '', grade: it.grade || '',
-                    name: it.grade || it.product_type || '', thick: isSrc ? (it.dim1 || '') : (cat === 'profile' ? (it
-                        .section || '') : (it.thickness ?? '')), width: isSrc ? (it.dim2 || '') : (it.width ?? ''),
-                    length: isSrc ? (it.dim3 || '') : (it.length ?? ''), reqQty: it.requested_qty || '',
-                    unit: it.unit || 'ton' }; });
+            items.filter(i => i.source !== 'sourcing').forEach(it => { const ids = it.stock_ids || (it.stock_id ? [it.stock_id] : []); ids.forEach(x => x && allStockIds.add(x)); });
+            const lotInfo = new Map(); if (allStockIds.size) { const probeCols = ['id,heat_number,quantity,unit', 'id,heat_number,quantity', 'id,heat_number', 'id']; for (const cols of probeCols) { const { data, error } = await sb.from('stock').select(cols).in('id', [...allStockIds]); if (!error) { data.forEach(r => lotInfo.set(r.id, r)); break; } } }
+            const products = items.map(it => { const cat = it.product_category || inferCategory(it.product_type || ''); const isSrc = it.source === 'sourcing'; return { type: it.product_type || '', grade: it.grade || '', name: it.grade || it.product_type || '', thick: isSrc ? (it.dim1 || '') : (cat === 'profile' ? (it.section || '') : (it.thickness ?? '')), width: isSrc ? (it.dim2 || '') : (it.width ?? ''), length: isSrc ? (it.dim3 || '') : (it.length ?? ''), reqQty: it.requested_qty || '', unit: it.unit || 'ton' }; });
             const stockCount = items.filter(i => i.source !== 'sourcing').length;
             const sourcingCount = items.filter(i => i.source === 'sourcing').length;
-            const noteLines = [`📨 Auto-imported from public catalogue`, `Reference: ${e.ref||'—'}`,
-                `Items: ${items.length} total (${stockCount} from stock, ${sourcingCount} sourcing requests)`
-            ];
+            const noteLines = [`📨 Auto-imported from public catalogue`, `Reference: ${e.ref||'—'}`, `Items: ${items.length} total (${stockCount} from stock, ${sourcingCount} sourcing requests)`];
             if (e.client_country) noteLines.push(`Country: ${e.client_country}`);
             if (e.project_ref) noteLines.push(`Project: ${e.project_ref}`);
             if (e.message) { noteLines.push('', '📝 Client message:', e.message); }
-            const stockSubItems = items.filter(i => i.source !== 'sourcing'); if (stockSubItems.length && lotInfo.size) {
-                noteLines.push('', '🏷️ Stock lots referenced:');
-                stockSubItems.forEach((i, idx) => { const ids = i.stock_ids || (i.stock_id ? [i.stock_id] : []);
-                    const lots = ids.map(id => lotInfo.get(id)).filter(Boolean); if (!lots.length) return;
-                    const lotStr = lots.map(l =>
-                        `Heat ${l.heat_number||'—'}${l.quantity!=null?' ('+fmtNum(l.quantity)+' '+(l.unit||'')+')':''}`).join(
-                        ', ');
-                    noteLines.push(`  ${idx+1}. ${i.grade||'?'} ${i.product_type||''} — ${lotStr}`); });
-            }
-            const srcItems = items.filter(i => i.source === 'sourcing'); if (srcItems.length) {
-                noteLines.push('', '🔮 Sourcing requests:');
-                srcItems.forEach((i, idx) => { const dim = [i.dim1, i.dim2, i.dim3].filter(Boolean).join(' × ') || '—';
-                    noteLines.push(
-                        `  ${idx+1}. ${i.grade||'?'} ${i.product_type||''} — ${dim} — ${i.requested_qty||'?'} ${i.unit||''}${i.notes?' ('+i.notes+')':''}`
-                        ); });
-            }
+            const stockSubItems = items.filter(i => i.source !== 'sourcing'); if (stockSubItems.length && lotInfo.size) { noteLines.push('', '🏷️ Stock lots referenced:'); stockSubItems.forEach((i, idx) => { const ids = i.stock_ids || (i.stock_id ? [i.stock_id] : []); const lots = ids.map(id => lotInfo.get(id)).filter(Boolean); if (!lots.length) return; const lotStr = lots.map(l => `Heat ${l.heat_number||'—'}${l.quantity!=null?' ('+fmtNum(l.quantity)+' '+(l.unit||'')+')':''}`).join(', '); noteLines.push(`  ${idx+1}. ${i.grade||'?'} ${i.product_type||''} — ${lotStr}`); }); }
+            const srcItems = items.filter(i => i.source === 'sourcing'); if (srcItems.length) { noteLines.push('', '🔮 Sourcing requests:'); srcItems.forEach((i, idx) => { const dim = [i.dim1, i.dim2, i.dim3].filter(Boolean).join(' × ') || '—'; noteLines.push(`  ${idx+1}. ${i.grade||'?'} ${i.product_type||''} — ${dim} — ${i.requested_qty||'?'} ${i.unit||''}${i.notes?' ('+i.notes+')':''}`); }); }
             const now = new Date();
-            const ts = now.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + now
-                .toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            const ts = now.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
             const notesArr = [{ ts, text: noteLines.join('\n') }];
-            const lead = { name: e.client_name || 'Unnamed', company: e.client_company || '—', email: e.client_email || '',
-                phone: e.client_phone || '', products: products, value: 0, stage: 'Lead / Prospect', priority: 'Medium',
-                owner: (adminUser.email || '').split('@')[0] || '—', deadline: null, notes: JSON.stringify(notesArr),
-                user_id: adminUser.id, user_email: adminUser.email, created_by: adminUser.id,
-                created_by_email: adminUser.email, assigned_to_email: null };
+            const lead = { name: e.client_name || 'Unnamed', company: e.client_company || '—', email: e.client_email || '', phone: e.client_phone || '', products: products, value: 0, stage: 'Lead / Prospect', priority: 'Medium', owner: (adminUser.email || '').split('@')[0] || '—', deadline: null, notes: JSON.stringify(notesArr), user_id: adminUser.id, user_email: adminUser.email, created_by: adminUser.id, created_by_email: adminUser.email, assigned_to_email: null };
             const { data: inserted, error } = await sb.from('leads').insert(lead).select('id').single();
-            if (error) { const fullMsg = [error.message, error.details, error.hint, error.code].filter(Boolean).join(' · ');
-                showToast('Couldn\'t create lead: ' + fullMsg, 'error'); return; }
+            if (error) { const fullMsg = [error.message, error.details, error.hint, error.code].filter(Boolean).join(' · '); showToast('Couldn\'t create lead: ' + fullMsg, 'error'); return; }
             const leadId = inserted?.id;
             const updates = { lead_id: leadId }; if ((e.status || 'new') === 'new') updates.status = 'contacted';
-            const { error: upErr } = await sb.from('client_enquiries').update(updates).eq('id', enquiryId); if (upErr) { console
-                .warn('[pushToCRM] enquiry update failed:', upErr); }
+            const { error: upErr } = await sb.from('client_enquiries').update(updates).eq('id', enquiryId); if (upErr) { console.warn('[pushToCRM] enquiry update failed:', upErr); }
             e.lead_id = leadId; if (updates.status) e.status = updates.status;
-            renderInboxList();
-            openEnquiry(enquiryId);
+            renderInboxList(); openEnquiry(enquiryId);
             showToast('✓ Lead created in CRM — open your sales pipeline to see it', 'success');
         }
+
         let mkStockCache = [];
         let mkSubsCache = [];
+        let mkListsCache = [];
         let mkCurrentTab = 'featured';
 
-        function openMarketing() { if (!adminUser) return;
-            document.getElementById('marketingModal').classList.add('open');
-            document.body.style.overflow = 'hidden';
-            switchMkTab('featured'); }
+        function openMarketing() { if (!adminUser) return; document.getElementById('marketingModal').classList.add('open'); document.body.style.overflow = 'hidden'; switchMkTab('featured'); }
+        function closeMarketing() { document.getElementById('marketingModal').classList.remove('open'); document.body.style.overflow = ''; }
 
-        function closeMarketing() { document.getElementById('marketingModal').classList.remove('open');
-            document.body.style.overflow = ''; }
-
-function switchMkTab(tab) {
+        function switchMkTab(tab) {
             mkCurrentTab = tab;
-            ['featured', 'banner', 'social', 'subs', 'whatsapp'].forEach(t => {
-                document.getElementById('mkTab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('active', t ===
-                    tab);
-                document.getElementById('mkPane' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = (t === tab) ? '' :
-                    'none';
+            ['featured', 'banner', 'social', 'subs', 'whatsapp', 'lists'].forEach(t => {
+                document.getElementById('mkTab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('active', t === tab);
+                document.getElementById('mkPane' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = (t === tab) ? '' : 'none';
             });
             document.getElementById('mkSaveBtn').style.display = tab === 'banner' ? '' : 'none';
             document.getElementById('mkClearBannerBtn').style.display = tab === 'banner' ? '' : 'none';
             document.getElementById('mkWaSaveBtn').style.display = tab === 'whatsapp' ? '' : 'none';
-            
+            document.getElementById('mkSpSaveBtn').style.display = tab === 'social' ? '' : 'none';
             if (tab === 'featured') loadMkStock();
             if (tab === 'banner') loadMkBanner();
             if (tab === 'social') loadMkSocialProof();
             if (tab === 'subs') loadMkSubscribers();
             if (tab === 'whatsapp') loadMkWhatsapp();
+            if (tab === 'lists') loadMkLists();
         }
+
         async function loadMkStock() {
             const list = document.getElementById('mkStockList');
             list.innerHTML = `<div class="loading"><div class="spinner"></div><div>Loading stock…</div></div>`;
             try {
                 const cols = (stockColumns || 'id,grade,product_type,thickness,width,length,quantity,unit') + ',created_at';
                 const safeCols = cols.split(',').filter(c => c.trim()).join(',');
-                const { data, error } = await sb.from('stock').select(safeCols).order('created_at', { ascending: false })
-                    .limit(1000);
+                const { data, error } = await sb.from('stock').select(safeCols).order('created_at', { ascending: false }).limit(1000);
                 if (error) {
-                    const { data: d2, error: e2 } = await sb.from('stock').select(stockColumns ||
-                        'id,grade,product_type,thickness,width,length').limit(1000); if (e2) { list.innerHTML =
-                            `<div style="padding:20px;color:var(--red-text);font-size:12px">${esc(e2.message)}</div>`; return; }
+                    const { data: d2, error: e2 } = await sb.from('stock').select(stockColumns || 'id,grade,product_type,thickness,width,length').limit(1000);
+                    if (e2) { list.innerHTML = `<div style="padding:20px;color:var(--red-text);font-size:12px">${esc(e2.message)}</div>`; return; }
                     mkStockCache = d2 || [];
                 } else { mkStockCache = data || []; }
                 renderMkStockList();
-            } catch (e) { list.innerHTML =
-                `<div style="padding:20px;color:var(--red-text);font-size:12px">${esc(e.message||e)}</div>`; }
+            } catch (e) { list.innerHTML = `<div style="padding:20px;color:var(--red-text);font-size:12px">${esc(e.message||e)}</div>`; }
         }
 
         function renderMkStockList() {
             const q = (document.getElementById('mkStockSearch').value || '').toLowerCase().trim();
             let items = mkStockCache;
-            if (q) { items = items.filter(s => { const blob = [s.grade, s.product_type, s.thickness, s.width, s.length].map(x =>
-                        String(x || '').toLowerCase()).join(' '); return blob.includes(q); }); }
+            if (q) { items = items.filter(s => { const blob = [s.grade, s.product_type, s.thickness, s.width, s.length].map(x => String(x || '').toLowerCase()).join(' '); return blob.includes(q); }); }
             items = items.slice(0, 250);
             const list = document.getElementById('mkStockList');
-            if (!items.length) { list.innerHTML =
-                    `<div class="mk-empty-tab"><div class="icon">🔍</div><h4>No stock found</h4><p>${q?'Try a different search term.':'No items in your stock table yet.'}</p></div>`
-                ; return; }
-            list.innerHTML = items.map(s => { const dim = [s.thickness, s.width, s.length].filter(Boolean).join(' × ') || '—';
+            if (!items.length) { list.innerHTML = `<div class="mk-empty-tab"><div class="icon">🔍</div><h4>No stock found</h4><p>${q?'Try a different search term.':'No items in your stock table yet.'}</p></div>`; return; }
+            list.innerHTML = items.map(s => {
+                const dim = [s.thickness, s.width, s.length].filter(Boolean).join(' × ') || '—';
                 const tag = s.marketing_tag || '';
-                const lt = s.lead_time_days != null ? s.lead_time_days : ''; return `<div class="mk-stock-row ${s.featured?'featured':''}" data-id="${esc(s.id)}">
+                const lt = s.lead_time_days != null ? s.lead_time_days : '';
+                return `<div class="mk-stock-row ${s.featured?'featured':''}" data-id="${esc(s.id)}">
             <div class="mk-stock-info"><div class="mk-stock-grade">${esc(s.grade||'(no grade)')}</div><div class="mk-stock-meta">${esc(s.product_type||'')} · ${esc(dim)} · ${fmtNum(s.quantity)} ${esc(s.unit||'')}</div></div>
             <button class="mk-toggle ${s.featured?'on':''}" onclick="toggleFeatured('${esc(s.id)}')" title="Show on landing page">${s.featured?'★':'☆'}</button>
             <select class="mk-tag-select" onchange="setMkTag('${esc(s.id)}',this.value)" title="Marketing tag"><option value="">No tag</option><option ${tag==='HOT'?'selected':''}>HOT</option><option ${tag==='URGENT'?'selected':''}>URGENT</option><option ${tag==='NEW'?'selected':''}>NEW</option><option ${tag==='CLEARANCE'?'selected':''}>CLEARANCE</option><option ${tag==='IMMEDIATE'?'selected':''}>IMMEDIATE</option></select>
             <input class="mk-lead-input" type="number" min="0" max="999" placeholder="Days" value="${esc(lt)}" onchange="setMkLeadTime('${esc(s.id)}',this.value)" title="Lead time in days (0 = ready)">
-        </div>`; }).join('');
+        </div>`;
+            }).join('');
         }
-        async function toggleFeatured(id) { const item = mkStockCache.find(s => s.id === id); if (!item) return;
-            const newVal = !item.featured;
-            const { error } = await sb.from('stock').update({ featured: newVal }).eq('id', id); if (error) { showToast(
-                    'Update failed: ' + error.message, 'error'); return; }
-            item.featured = newVal;
-            renderMkStockList();
-            showToast(newVal ? '✓ Added to featured' : '✓ Removed from featured', 'success'); if (CONFIG.showFeatured)
-            loadFeaturedProducts(); }
-        async function setMkTag(id, tag) { const val = tag || null;
-            const { error } = await sb.from('stock').update({ marketing_tag: val }).eq('id', id); if (error) { showToast(
-                    'Update failed: ' + error.message, 'error'); return; }
-            const item = mkStockCache.find(s => s.id === id); if (item) item.marketing_tag = val;
-            showToast(val ? `✓ Tagged ${val}` : '✓ Tag removed', 'success'); if (CONFIG.showFeatured) loadFeaturedProducts(); }
-        async function setMkLeadTime(id, val) { const num = val === '' ? null : Math.max(0, Math.min(999, Math.floor(Number(
-                val)))); if (val !== '' && isNaN(num)) { showToast('Enter a number 0–999', 'error'); return; }
-            const { error } = await sb.from('stock').update({ lead_time_days: num }).eq('id', id); if (error) { showToast(
-                    'Update failed: ' + error.message, 'error'); return; }
-            const item = mkStockCache.find(s => s.id === id); if (item) item.lead_time_days = num;
-            showToast('✓ Lead time updated', 'success'); if (CONFIG.showFeatured) loadFeaturedProducts(); }
-        async function loadMkBanner() { updateBannerPreview();
-            const { data, error } = await sb.from('promo_banners').select('*').eq('active', true).order('created_at', {
-                ascending: false }).limit(1); if (error) { document.getElementById('mkBannerMsg').innerHTML =
-                    `<div class="banner red"><span>⚠</span><div>${esc(error.message)}</div></div>`; return; }
-            const b = (data || [])[0]; if (b) { document.getElementById('mkBnMsg').value = b.message || '';
-                document.getElementById('mkBnCtaText').value = b.cta_text || '';
-                document.getElementById('mkBnCtaUrl').value = b.cta_url || '';
-                document.getElementById('mkBnColor').value = b.color || 'blue'; if (b.expires_at) { const dt = new Date(b
-                        .expires_at);
-                    const tzo = dt.getTimezoneOffset() * 60000;
-                    document.getElementById('mkBnExpires').value = new Date(dt - tzo).toISOString().slice(0, 16); }
-                updateBannerPreview(); } }
 
-        function updateBannerPreview() { const msg = document.getElementById('mkBnMsg').value.trim();
-            const ctaT = document.getElementById('mkBnCtaText').value.trim();
-            const color = document.getElementById('mkBnColor').value;
-            const prev = document.getElementById('mkBannerPreview');
-            prev.className = 'mk-banner-preview color-' + color;
-            prev.innerHTML = msg ?
-                `<span>${esc(msg)}</span>${ctaT?` <span style="background:rgba(255,255,255,.2);padding:3px 10px;border-radius:99px;margin-left:8px;font-size:11px;font-weight:700">${esc(ctaT)}</span>`:''}` :
-                '<span style="opacity:.5">Banner preview will appear here</span>'; }
-        async function saveBanner() { const message = document.getElementById('mkBnMsg').value.trim(); if (!message) { showToast(
-                    'Banner message is required', 'error'); return; }
-            const cta_text = document.getElementById('mkBnCtaText').value.trim() || null;
-            const cta_url = document.getElementById('mkBnCtaUrl').value.trim() || null;
-            const color = document.getElementById('mkBnColor').value || 'blue';
-            const expRaw = document.getElementById('mkBnExpires').value;
-            const expires_at = expRaw ? new Date(expRaw).toISOString() : null;
-            await sb.from('promo_banners').update({ active: false }).eq('active', true);
-            const { error } = await sb.from('promo_banners').insert({ message, cta_text, cta_url, color, active: true,
-                expires_at }); if (error) { showToast('Save failed: ' + error.message, 'error'); return; }
-            showToast('✓ Banner published', 'success');
-            localStorage.removeItem('pub_banner_dismissed_id');
-            loadPromoBanner(); }
-        async function clearBanner() { if (!confirm('Hide the active banner?')) return;
-            const { error } = await sb.from('promo_banners').update({ active: false }).eq('active', true); if (error) { showToast(
-                    'Failed: ' + error.message, 'error'); return; }
-            document.getElementById('promoBanner').classList.remove('show');
-            activeBanner = null;
-            ['mkBnMsg', 'mkBnCtaText', 'mkBnCtaUrl', 'mkBnExpires'].forEach(id => document.getElementById(id).value = '');
-            updateBannerPreview();
-            showToast('✓ Banner hidden', 'success'); }
-        async function loadMkSubscribers() { const list = document.getElementById('mkSubsList');
-            list.innerHTML = `<div class="loading"><div class="spinner"></div><div>Loading…</div></div>`;
-            const { data, error } = await sb.from('subscribers').select('*').order('created_at', { ascending: false }).limit(
-            500); if (error) { list.innerHTML = `<div style="padding:20px;color:var(--red-text);font-size:12px">${esc(error.message)}</div>`
-            ; return; }
-            mkSubsCache = data || [];
-            document.getElementById('mkSubsCount').textContent =
-                `${mkSubsCache.length} subscriber${mkSubsCache.length!==1?'s':''}`; if (!mkSubsCache.length) { list.innerHTML =
-                    `<div class="mk-empty-tab"><div class="icon">📭</div><h4>No subscribers yet</h4><p>People who sign up via the "notify me" form or download the PDF catalog will appear here.</p></div>`
-                ; return; }
-            list.innerHTML = mkSubsCache.map(s => { const cats = (s.categories || []).map(c =>
-                    `<span class="mk-sub-cat">${esc(c)}</span>`).join(''); return `<div class="mk-sub-row">
-            <div class="mk-sub-info"><div class="mk-sub-name">${esc(s.name||s.email)}</div><div class="mk-sub-email">${esc(s.email)}${s.company?` · ${esc(s.company)}`:''}</div><div class="mk-sub-meta">${fmtRelTime(s.created_at)} · ${esc(s.source||'')}${s.notes?` · ${esc(s.notes)}`:''}</div></div>
-            <div class="mk-sub-cats">${cats}</div>
-            <button class="ci-rm" onclick="deleteSubscriber('${s.id}')" title="Delete">×</button>
-        </div>`; }).join(''); }
-        async function deleteSubscriber(id) { if (!confirm('Delete this subscriber?')) return;
-            const { error } = await sb.from('subscribers').delete().eq('id', id); if (error) { showToast('Failed: ' + error
-                    .message, 'error'); return; }
-            mkSubsCache = mkSubsCache.filter(s => s.id !== id);
-            loadMkSubscribers(); }
+        async function toggleFeatured(id) { const item = mkStockCache.find(s => s.id === id); if (!item) return; const newVal = !item.featured; const { error } = await sb.from('stock').update({ featured: newVal }).eq('id', id); if (error) { showToast('Update failed: ' + error.message, 'error'); return; } item.featured = newVal; renderMkStockList(); showToast(newVal ? '✓ Added to featured' : '✓ Removed from featured', 'success'); if (CONFIG.showFeatured) loadFeaturedProducts(); }
+        async function setMkTag(id, tag) { const val = tag || null; const { error } = await sb.from('stock').update({ marketing_tag: val }).eq('id', id); if (error) { showToast('Update failed: ' + error.message, 'error'); return; } const item = mkStockCache.find(s => s.id === id); if (item) item.marketing_tag = val; showToast(val ? `✓ Tagged ${val}` : '✓ Tag removed', 'success'); if (CONFIG.showFeatured) loadFeaturedProducts(); }
+        async function setMkLeadTime(id, val) { const num = val === '' ? null : Math.max(0, Math.min(999, Math.floor(Number(val)))); if (val !== '' && isNaN(num)) { showToast('Enter a number 0–999', 'error'); return; } const { error } = await sb.from('stock').update({ lead_time_days: num }).eq('id', id); if (error) { showToast('Update failed: ' + error.message, 'error'); return; } const item = mkStockCache.find(s => s.id === id); if (item) item.lead_time_days = num; showToast('✓ Lead time updated', 'success'); if (CONFIG.showFeatured) loadFeaturedProducts(); }
 
-        function exportSubscribersCsv() { if (!mkSubsCache.length) { showToast('No subscribers to export', 'info'); return; }
-            const rows = [
-                ['date', 'email', 'name', 'company', 'categories', 'grades_of_interest', 'notes', 'source']
-            ];
-            mkSubsCache.forEach(s => rows.push([s.created_at, s.email, s.name || '', s.company || '', (s.categories || []).join(
-                    '|'), s.grades_of_interest || '', s.notes || '', s.source || ''
-            ]));
-            const csv = rows.map(r => r.map(c => `"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `subscribers_${new Date().toISOString().slice(0,10)}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast('✓ CSV downloaded', 'success'); }
+        async function loadMkBanner() { updateBannerPreview(); const { data, error } = await sb.from('promo_banners').select('*').eq('active', true).order('created_at', { ascending: false }).limit(1); if (error) { document.getElementById('mkBannerMsg').innerHTML = `<div class="banner red"><span>⚠</span><div>${esc(error.message)}</div></div>`; return; } const b = (data || [])[0]; if (b) { document.getElementById('mkBnMsg').value = b.message || ''; document.getElementById('mkBnCtaText').value = b.cta_text || ''; document.getElementById('mkBnCtaUrl').value = b.cta_url || ''; document.getElementById('mkBnColor').value = b.color || 'blue'; if (b.expires_at) { const dt = new Date(b.expires_at); const tzo = dt.getTimezoneOffset() * 60000; document.getElementById('mkBnExpires').value = new Date(dt - tzo).toISOString().slice(0, 16); } updateBannerPreview(); } }
 
-async function loadMkSocialProof() {
-            document.getElementById('mkSpAnchorPreview').textContent = socialProofSettings.lastEnqAnchor
-                ? fmtRelTime(new Date(socialProofSettings.lastEnqAnchor).toISOString())
-                : '— never refreshed';
+        function updateBannerPreview() { const msg = document.getElementById('mkBnMsg').value.trim(); const ctaT = document.getElementById('mkBnCtaText').value.trim(); const color = document.getElementById('mkBnColor').value; const prev = document.getElementById('mkBannerPreview'); prev.className = 'mk-banner-preview color-' + color; prev.innerHTML = msg ? `<span>${esc(msg)}</span>${ctaT?` <span style="background:rgba(255,255,255,.2);padding:3px 10px;border-radius:99px;margin-left:8px;font-size:11px;font-weight:700">${esc(ctaT)}</span>`:''}` : '<span style="opacity:.5">Banner preview will appear here</span>'; }
+
+        async function saveBanner() { const message = document.getElementById('mkBnMsg').value.trim(); if (!message) { showToast('Banner message is required', 'error'); return; } const cta_text = document.getElementById('mkBnCtaText').value.trim() || null; const cta_url = document.getElementById('mkBnCtaUrl').value.trim() || null; const color = document.getElementById('mkBnColor').value || 'blue'; const expRaw = document.getElementById('mkBnExpires').value; const expires_at = expRaw ? new Date(expRaw).toISOString() : null; await sb.from('promo_banners').update({ active: false }).eq('active', true); const { error } = await sb.from('promo_banners').insert({ message, cta_text, cta_url, color, active: true, expires_at }); if (error) { showToast('Save failed: ' + error.message, 'error'); return; } showToast('✓ Banner published', 'success'); localStorage.removeItem('pub_banner_dismissed_id'); loadPromoBanner(); }
+
+        async function clearBanner() { if (!confirm('Hide the active banner?')) return; const { error } = await sb.from('promo_banners').update({ active: false }).eq('active', true); if (error) { showToast('Failed: ' + error.message, 'error'); return; } document.getElementById('promoBanner').classList.remove('show'); activeBanner = null; ['mkBnMsg', 'mkBnCtaText', 'mkBnCtaUrl', 'mkBnExpires'].forEach(id => document.getElementById(id).value = ''); updateBannerPreview(); showToast('✓ Banner hidden', 'success'); }
+
+        async function loadMkSocialProof() {
+            document.getElementById('mkSpAnchorPreview').textContent = socialProofSettings.lastEnqAnchor ? fmtRelTime(new Date(socialProofSettings.lastEnqAnchor).toISOString()) : '— never refreshed';
             document.getElementById('mkSpBoostPreview').textContent = socialProofSettings.weekBoost || 0;
             updateSpPreview();
         }
@@ -4782,10 +4455,7 @@ async function loadMkSocialProof() {
                 return true;
             } catch (e) {
                 console.error('[saveSp]', e);
-                if (/relation .* does not exist/i.test(e.message || '')) {
-                    showToast('site_settings table missing. Run the setup SQL first.', 'error');
-                    document.getElementById('sqlModal').classList.add('open');
-                } else { showToast('Save failed: ' + (e.message || e), 'error'); }
+                if (/relation .* does not exist/i.test(e.message || '')) { showToast('site_settings table missing. Run the setup SQL first.', 'error'); document.getElementById('sqlModal').classList.add('open'); } else { showToast('Save failed: ' + (e.message || e), 'error'); }
                 return false;
             }
         }
@@ -4797,8 +4467,7 @@ async function loadMkSocialProof() {
             socialProofSettings.lastEnqAnchor = now;
             document.getElementById('mkSpAnchorPreview').textContent = fmtRelTime(new Date(now).toISOString());
             showToast('✓ Last-enquiry timer reset to "just now"', 'success');
-            applySocialProofDisplay();
-            updateSpPreview();
+            applySocialProofDisplay(); updateSpPreview();
         }
 
         async function bumpWeekBoost() {
@@ -4808,8 +4477,7 @@ async function loadMkSocialProof() {
             socialProofSettings.weekBoost = newVal;
             document.getElementById('mkSpBoostPreview').textContent = newVal;
             showToast('✓ Week boost +1 (now ' + newVal + ')', 'success');
-            applySocialProofDisplay();
-            updateSpPreview();
+            applySocialProofDisplay(); updateSpPreview();
         }
 
         async function resetWeekBoost() {
@@ -4819,14 +4487,10 @@ async function loadMkSocialProof() {
             socialProofSettings.weekBoost = 0;
             document.getElementById('mkSpBoostPreview').textContent = 0;
             showToast('✓ Week boost reset', 'success');
-            applySocialProofDisplay();
-            updateSpPreview();
+            applySocialProofDisplay(); updateSpPreview();
         }
-        async function loadMkWhatsapp() {
-            document.getElementById('mkWaNumber').value = whatsappSettings.number || '';
-            document.getElementById('mkWaMessage').value = whatsappSettings.message || '';
-            updateWaPreview();
-        }
+
+        function loadMkWhatsapp() { document.getElementById('mkWaNumber').value = whatsappSettings.number || ''; document.getElementById('mkWaMessage').value = whatsappSettings.message || ''; updateWaPreview(); }
 
         function updateWaPreview() {
             const num = document.getElementById('mkWaNumber').value.trim();
@@ -4834,15 +4498,7 @@ async function loadMkSocialProof() {
             const badge = document.getElementById('waPreviewBadge');
             const link = document.getElementById('waPreviewLink');
             const clean = num.replace(/[^\d]/g, '');
-            if (clean) {
-                badge.className = 'wa-preview-badge';
-                badge.textContent = '💬 Chat on WhatsApp';
-                link.textContent = `wa.me/${clean}?text=${encodeURIComponent(msg||'Hello')}`;
-            } else {
-                badge.className = 'wa-preview-badge inactive';
-                badge.textContent = '💬 WhatsApp (no number set)';
-                link.textContent = 'Enter a number above';
-            }
+            if (clean) { badge.className = 'wa-preview-badge'; badge.textContent = '💬 Chat on WhatsApp'; link.textContent = `wa.me/${clean}?text=${encodeURIComponent(msg||'Hello')}`; } else { badge.className = 'wa-preview-badge inactive'; badge.textContent = '💬 WhatsApp (no number set)'; link.textContent = 'Enter a number above'; }
         }
 
         async function saveWhatsappSettings() {
@@ -4851,51 +4507,105 @@ async function loadMkSocialProof() {
             const msg = document.getElementById('mkWaMessage').value.trim();
             const clean = num.replace(/[^\d]/g, '');
             if (!clean) { showToast('Please enter a valid WhatsApp number', 'error'); return; }
-
-            const upsert = async (key, value) => {
-                const { error } = await sb.from('site_settings').upsert({ key, value }, { onConflict: 'key' });
-                if (error) throw error;
-            };
-
+            const upsert = async (key, value) => { const { error } = await sb.from('site_settings').upsert({ key, value }, { onConflict: 'key' }); if (error) throw error; };
             try {
                 await upsert('whatsapp_number', num);
                 await upsert('whatsapp_message', msg || CONFIG.whatsappMessage);
-                whatsappSettings.number = num;
-                whatsappSettings.message = msg || CONFIG.whatsappMessage;
+                whatsappSettings.number = num; whatsappSettings.message = msg || CONFIG.whatsappMessage;
                 applyWhatsApp();
                 showToast('✓ WhatsApp settings saved — button is now live', 'success');
             } catch (e) {
                 console.error('[saveWhatsapp]', e);
-                if (/relation .* does not exist/i.test(e.message || '')) {
-                    showToast('site_settings table missing. Run the setup SQL first.', 'error');
-                    document.getElementById('sqlModal').classList.add('open');
-                } else {
-                    showToast('Save failed: ' + (e.message || e), 'error');
-                }
+                if (/relation .* does not exist/i.test(e.message || '')) { showToast('site_settings table missing. Run the setup SQL first.', 'error'); document.getElementById('sqlModal').classList.add('open'); } else { showToast('Save failed: ' + (e.message || e), 'error'); }
             }
         }
 
-        function showToast(msg, kind) { const wrap = document.getElementById('toastWrap');
-            const t = document.createElement('div');
-            t.className = 'toast' + (kind === 'error' ? ' error' : kind === 'info' ? ' info' : '');
-            t.textContent = msg;
-            wrap.appendChild(t);
-            setTimeout(() => t.remove(), 4000); }
+        // ── Stock Lists management ──────────────────────────────────────
+        async function loadMkLists() {
+            const listEl = document.getElementById('mkListsList');
+            listEl.innerHTML = `<div class="loading"><div class="spinner"></div><div>Loading lists…</div></div>`;
+            const { data, error } = await sb.from('stock_lists').select('*').limit(500);
+            if (error) { listEl.innerHTML = `<div style="padding:20px;color:var(--red-text);font-size:12px">${esc(error.message)}</div>`; return; }
+            mkListsCache = data || [];
+            if (!mkListsCache.length) {
+                listEl.innerHTML = `<div class="mk-empty-tab"><div class="icon">📋</div><h4>No stock lists found</h4><p>Create supplier lists first, then return here to manage their visibility.</p></div>`;
+                return;
+            }
+            renderMkLists();
+        }
+
+        function renderMkLists() {
+            const listEl = document.getElementById('mkListsList');
+            listEl.innerHTML = mkListsCache.map(list => {
+                const isPublic = list.is_public !== false;
+                return `
+            <div class="mk-sub-row">
+                <div class="mk-sub-info">
+                    <div class="mk-sub-name">${esc(list.name || list.id)}</div>
+                    <div class="mk-sub-meta">${list.description ? esc(list.description) : ''} · Created ${fmtRelTime(list.created_at)}</div>
+                </div>
+                <button class="mk-toggle ${isPublic ? 'on' : ''}" onclick="toggleListPublic('${list.id}')" title="${isPublic ? 'Public – click to hide' : 'Private – click to show'}">${isPublic ? '👁' : '🚫'}</button>
+            </div>`;
+            }).join('');
+        }
+
+        async function toggleListPublic(listId) {
+            const list = mkListsCache.find(l => l.id === listId);
+            if (!list) return;
+            const newVal = list.is_public === false ? true : false;
+            const { error } = await sb.from('stock_lists').update({ is_public: newVal }).eq('id', listId);
+            if (error) { showToast('Update failed: ' + error.message, 'error'); return; }
+            list.is_public = newVal;
+            invalidatePublicListCache();
+            renderMkLists();
+            showToast(newVal ? `✓ "${list.name}" is now visible to clients` : `✓ "${list.name}" is now hidden`, 'success');
+        }
+        // ────────────────────────────────────────────────────────────────
+
+        async function loadMkSubscribers() {
+            const list = document.getElementById('mkSubsList');
+            list.innerHTML = `<div class="loading"><div class="spinner"></div><div>Loading…</div></div>`;
+            const { data, error } = await sb.from('subscribers').select('*').order('created_at', { ascending: false }).limit(500);
+            if (error) { list.innerHTML = `<div style="padding:20px;color:var(--red-text);font-size:12px">${esc(error.message)}</div>`; return; }
+            mkSubsCache = data || [];
+            document.getElementById('mkSubsCount').textContent = `${mkSubsCache.length} subscriber${mkSubsCache.length!==1?'s':''}`;
+            if (!mkSubsCache.length) { list.innerHTML = `<div class="mk-empty-tab"><div class="icon">📭</div><h4>No subscribers yet</h4><p>People who sign up via the "notify me" form or download the PDF catalog will appear here.</p></div>`; return; }
+            list.innerHTML = mkSubsCache.map(s => {
+                const cats = (s.categories || []).map(c => `<span class="mk-sub-cat">${esc(c)}</span>`).join('');
+                return `<div class="mk-sub-row">
+            <div class="mk-sub-info"><div class="mk-sub-name">${esc(s.name||s.email)}</div><div class="mk-sub-email">${esc(s.email)}${s.company?` · ${esc(s.company)}`:''}</div><div class="mk-sub-meta">${fmtRelTime(s.created_at)} · ${esc(s.source||'')}${s.notes?` · ${esc(s.notes)}`:''}</div></div>
+            <div class="mk-sub-cats">${cats}</div>
+            <button class="ci-rm" onclick="deleteSubscriber('${s.id}')" title="Delete">×</button>
+        </div>`;
+            }).join('');
+        }
+
+        async function deleteSubscriber(id) { if (!confirm('Delete this subscriber?')) return; const { error } = await sb.from('subscribers').delete().eq('id', id); if (error) { showToast('Failed: ' + error.message, 'error'); return; } mkSubsCache = mkSubsCache.filter(s => s.id !== id); loadMkSubscribers(); }
+
+        function exportSubscribersCsv() {
+            if (!mkSubsCache.length) { showToast('No subscribers to export', 'info'); return; }
+            const rows = [['date', 'email', 'name', 'company', 'categories', 'grades_of_interest', 'notes', 'source']];
+            mkSubsCache.forEach(s => rows.push([s.created_at, s.email, s.name || '', s.company || '', (s.categories || []).join('|'), s.grades_of_interest || '', s.notes || '', s.source || '']));
+            const csv = rows.map(r => r.map(c => `"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `subscribers_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+            URL.revokeObjectURL(url);
+            showToast('✓ CSV downloaded', 'success');
+        }
+
+        function showToast(msg, kind) { const wrap = document.getElementById('toastWrap'); const t = document.createElement('div'); t.className = 'toast' + (kind === 'error' ? ' error' : kind === 'info' ? ' info' : ''); t.textContent = msg; wrap.appendChild(t); setTimeout(() => t.remove(), 4000); }
+
         loadCart();
         updateCartUI();
         updateDimLabels();
         initStock();
-        ['cName', 'cEmail'].forEach(id => { document.addEventListener('DOMContentLoaded', () => { const el = document
-                .getElementById(id); if (el) el.addEventListener('input', () => el.classList.remove('error')); }); });
-        setTimeout(() => { ['cName', 'cEmail'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener(
-                    'input', () => el.classList.remove('error')); }); }, 50);
-        document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (document.getElementById('sqlModal')
-                .classList.contains('open')) { document.getElementById('sqlModal').classList.remove('open'); } else if (document
-                .getElementById('pdfGateModal').classList.contains('open')) { closePdfGate(); } else if (document.getElementById(
-                    'marketingModal').classList.contains('open')) { closeMarketing(); } else if (document.getElementById(
-                    'loginModal').classList.contains('open')) { closeAdminLogin(); } else if (document.getElementById('inboxModal')
-                .classList.contains('open')) { closeInbox(); } else if (document.getElementById('cartModal').classList.contains(
-                'open')) { closeCart(); } });
+        ['cName', 'cEmail'].forEach(id => { document.addEventListener('DOMContentLoaded', () => { const el = document.getElementById(id); if (el) el.addEventListener('input', () => el.classList.remove('error')); }); });
+        setTimeout(() => { ['cName', 'cEmail'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', () => el.classList.remove('error')); }); }, 50);
+        document.addEventListener('keydown', e => {
+            if (e.key !== 'Escape') return;
+            if (document.getElementById('sqlModal').classList.contains('open')) { document.getElementById('sqlModal').classList.remove('open'); } else if (document.getElementById('pdfGateModal').classList.contains('open')) { closePdfGate(); } else if (document.getElementById('marketingModal').classList.contains('open')) { closeMarketing(); } else if (document.getElementById('loginModal').classList.contains('open')) { closeAdminLogin(); } else if (document.getElementById('inboxModal').classList.contains('open')) { closeInbox(); } else if (document.getElementById('cartModal').classList.contains('open')) { closeCart(); }
+        });
         setupWhatsApp();
     </script>
 </body>
