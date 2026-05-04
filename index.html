@@ -389,10 +389,15 @@ main{padding:12px;max-width:1400px;margin:0 auto;width:100%}
         <div class="smp-loading">Enter a product above and click Match Stock</div>
       </div>
     </div>
+    <!-- ─── NEW: Always visible Make Offer & Make Enquiry ─── -->
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
       <button class="btn-match" onclick="runStockMatch()">🔍 Match stock</button>
-      <button class="btn-match" style="background:var(--green-bg);border-color:var(--green);color:var(--green-text)" onclick="exportOffer()">📄 Export offer</button>
+      <button class="btn-match" id="btnMakeOffer" onclick="makeOfferFromLead()"
+              style="background:var(--green-bg);border-color:var(--green);color:var(--green-text)">💰 Make Offer</button>
+      <button class="btn-match" id="btnMakeEnquiry" onclick="makeEnquiryFromLead()"
+              style="background:var(--amber-bg);border-color:var(--amber);color:var(--amber-text)">📄 Make Enquiry</button>
     </div>
+    <!-- ─────────────────────────────────────────────────── -->
 
     <div class="fsec">Deal info</div>
     <div class="form-row"><label class="form-label">Deal value ($)</label><input class="form-input" type="number" id="fValue"></div>
@@ -626,7 +631,7 @@ async function runStockMatch(){
       </div>`;
     return;
   }
-  // Routing decision: every requested product must have at least one priced match → "Make Offer"
+  // Routing decision: every requested product must have at least one priced match → “Make Offer”
   const norm=s=>(s||'').toLowerCase().replace(/[-\s]+/g,'');
   const allPriced=prods.every(p=>{
     const gk=norm(p.grade||p.name);
@@ -1025,60 +1030,58 @@ function exportCSV(){
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 
-// ── Export Offer (Excel) with seller contact info ──
-function exportOffer(){
-  const lead={
-    name:document.getElementById('fName').value.trim()||'—',
-    company:document.getElementById('fCompany').value.trim()||'—',
-    email:document.getElementById('fEmail').value.trim()||'—',
-    owner:document.getElementById('fOwner').value.trim()||'—',
-    deadline:document.getElementById('fDeadline').value||'—',
-    value:document.getElementById('fValue').value||'0',
-  };
-  // Seller contact from profile
-  const sellerEmail=currentUser?.email||'—';
-  const sellerName=userProfile?.display_name||userProfile?.full_name||lead.owner;
-  const sellerPhone=userProfile?.phone||'';
+// ── NEW: Always-visible Make Offer / Make Enquiry ──
+function makeOfferFromLead(){ initiateHandoff('offer'); }
+function makeEnquiryFromLead(){ initiateHandoff('enquiry'); }
 
-  const prods=getProductsFromForm();
-  const matched=prods.length?matchStock(prods):[];
-  const today=new Date().toLocaleDateString('en-GB');
-  const offerNo='OFF-'+Date.now().toString().slice(-6);
-
-  const rows=[
-    ['SALES OFFER','','','','','','','','','','',''],
-    ['','','','','','','','','','','',''],
-    ['Offer To:',lead.name,'','','','','Offer No:',offerNo,'','','',''],
-    ['Company:',lead.company,'','','','','Date:',today,'','','',''],
-    ['Email:',lead.email,'','','','','Prepared by:',sellerName,'','','',''],
-    ['Valid Until:',lead.deadline,'','','','','Seller email:',sellerEmail,'','','',''],
-    ['','','','','','','Seller phone:',sellerPhone,'','','',''],
-    ['','','','','','','','','','','',''],
-    ['#','Product Type','Grade','Thickness(mm)','Width(mm)','Length(mm)','Req. Qty','Unit','Offer $/ton','Total ($)','Origin','Supplier','Notes'],
-  ];
-  prods.forEach((p,i)=>{
-    const bestMatch=matched.find(m=>(m.grade||'').toLowerCase().includes((p.grade||'').toLowerCase())||(p.grade||'').toLowerCase().includes((m.grade||'').toLowerCase()));
-    rows.push([i+1,p.type||bestMatch?.product_type||'',p.grade||'',p.thick||'',p.width||'',p.length||'',p.reqQty||'',p.unit||'ton',bestMatch?.buy_price?Number(bestMatch.buy_price):'',bestMatch?.buy_price&&p.reqQty?Number(bestMatch.buy_price)*Number(p.reqQty):'',bestMatch?.origin||'',bestMatch?.supplier||'',bestMatch?'Stock match: '+bestMatch.grade:'']);
+function initiateHandoff(type){
+  const prods = getProductsFromForm();
+  if(!prods.length){ alert('Add at least one product first.'); return; }
+  const norm = s => (s||'').toLowerCase().replace(/[-\s]+/g,'');
+  const lines = prods.map(p => {
+    const gk = norm(p.grade || p.name);
+    const best = lastMatchResults.find(m => {
+      const mg = norm(m.grade), eg = norm(m.enquiredProduct);
+      return mg === gk || eg === gk || mg.includes(gk) || gk.includes(mg);
+    }) || null;
+    return {
+      grade: p.grade || p.name || '', type: p.type || best?.product_type || '',
+      thick: p.thick || '', width: p.width || '', length: p.length || '',
+      reqQty: p.reqQty || '', unit: p.unit || 'ton',
+      heat_number: p.heat_number || p.heat || best?.heat_number || '',
+      matched: best ? {
+        buy_price: Number(best.buy_price)||0,
+        supplier: best.supplier||'',
+        origin: best.origin||'',
+        product_type: best.product_type||'',
+        product_category: best.product_category||'',
+        listName: best._listName||'',
+        stock_quantity: best.quantity||0,
+        heat_number: best.heat_number||''
+      } : null
+    };
   });
-  if(!prods.length) for(let i=0;i<3;i++) rows.push([i+1,'','','','','','','ton','','','','','']);
-  rows.push(['','','','','','','','','TOTAL','=SUM(J10:J'+(rows.length+1)+')','','','']);
-  rows.push(['','','','','','','','','','','','','']);
-  rows.push(['Terms:','','','','','','','','','','','','']);
-  rows.push(['Payment:','','','','','','','','','','','','']);
-  rows.push(['Delivery:','','','','','','','','','','','','']);
-  rows.push(['Incoterms:','','','','','','','','','','','','']);
-
-  const wb=window.XLSX?XLSX.utils.book_new():null;
-  if(!wb){alert('XLSX library not loaded');return;}
-  const ws=XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols']=[{wch:4},{wch:14},{wch:12},{wch:11},{wch:11},{wch:11},{wch:8},{wch:7},{wch:12},{wch:12},{wch:12},{wch:14},{wch:22}];
-  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:11}}];
-  XLSX.utils.book_append_sheet(wb,ws,'Offer');
-  XLSX.writeFile(wb,'offer_'+lead.company.replace(/[^a-zA-Z0-9]/g,'_')+'.xlsx');
+  const handoff = {
+    source: 'crm',
+    type: type,           // force 'offer' or 'enquiry' regardless of stock pricing
+    leadId: editingId,
+    leadName: document.getElementById('fName').value.trim()||'',
+    client: {
+      name:    document.getElementById('fName').value.trim(),
+      company: document.getElementById('fCompany').value.trim(),
+      email:   document.getElementById('fEmail').value.trim(),
+      phone:   document.getElementById('fPhone').value.trim()
+    },
+    lines: lines,
+    createdAt: Date.now()
+  };
+  localStorage.setItem('sp_pending_handoff', JSON.stringify(handoff));
+  window.location.href = 'stock.html';
 }
+
+// ── (keep the original proceedFromMatchPanel for the stock‑match panel) ──
 function proceedFromMatchPanel(){
   if(!lastMatchProducts.length){ alert('Add products and match stock first.'); return; }
-  // Build one handoff line per requested product. If a stock match exists, attach it.
   const norm=s=>(s||'').toLowerCase().replace(/[-\s]+/g,'');
   const lines=lastMatchProducts.map(p=>{
     const gk=norm(p.grade||p.name);
@@ -1103,7 +1106,6 @@ function proceedFromMatchPanel(){
       } : null
     };
   });
-  // Routing: every product needs a priced match → Offer; otherwise → Enquiry (which handles mixed PO/RFQ)
   const allPriced = lines.length>0 && lines.every(l=>l.matched && l.matched.buy_price>0);
   const handoff={
     source:'crm', type: allPriced?'offer':'enquiry',
@@ -1121,6 +1123,7 @@ function proceedFromMatchPanel(){
   localStorage.setItem('sp_pending_handoff', JSON.stringify(handoff));
   window.location.href = 'stock.html';
 }
+
 document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
 </script>
 
