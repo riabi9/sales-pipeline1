@@ -1,0 +1,1695 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#185FA5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Email Drafts – Steel Platform</title>
+    <style>
+        :root {
+            --bg: #f5f5f3;
+            --surface: #fff;
+            --surface2: #ebebea;
+            --border: #e5e5e3;
+            --border2: #d0d0cc;
+            --text: #1a1a1a;
+            --text2: #555;
+            --text3: #888;
+            --text4: #bbb;
+            --blue: #185FA5;
+            --blue-bg: #E6F1FB;
+            --blue-light: #B5D4F4;
+            --green: #1D9E75;
+            --green-bg: #E1F5EE;
+            --green-text: #0F6E56;
+            --red: #E24B4A;
+            --red-bg: #FCEBEB;
+            --red-text: #A32D2D;
+            --amber: #EF9F27;
+            --amber-bg: #FAEEDA;
+            --amber-text: #854F0B;
+            --purple: #7F77DD;
+            --purple-bg: #EEEDFE;
+            --purple-text: #534AB7;
+            --sidebar-w: 200px;
+        }
+        [data-theme="dark"] {
+            --bg: #111110;
+            --surface: #1c1c1a;
+            --surface2: #252523;
+            --border: #2e2e2c;
+            --border2: #3a3a38;
+            --text: #f0f0ee;
+            --text2: #c0c0bc;
+            --text3: #888;
+            --text4: #555;
+            --blue: #378ADD;
+            --blue-bg: #0C2A45;
+            --blue-light: #185FA5;
+            --green: #1D9E75;
+            --green-bg: #0a2e22;
+            --green-text: #5DCAA5;
+            --red: #E24B4A;
+            --red-bg: #2e0f0f;
+            --red-text: #f09595;
+            --amber: #EF9F27;
+            --amber-bg: #2e1f05;
+            --amber-text: #FAC775;
+            --purple: #AFA9EC;
+            --purple-bg: #1e1b3a;
+            --purple-text: #AFA9EC;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.2s, border-color 0.2s, color 0.15s;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── Sidebar ── */
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: var(--sidebar-w);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 150;
+            transition: transform 0.25s;
+        }
+        .sidebar-logo {
+            padding: 16px 14px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .sidebar-logo-text {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--blue);
+        }
+        .sidebar-logo-sub {
+            font-size: 10px;
+            color: var(--text4);
+            margin-top: 1px;
+        }
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 0;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 14px;
+            font-size: 13px;
+            color: var(--text2);
+            text-decoration: none;
+            border-radius: 0;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-family: inherit;
+        }
+        .nav-item:hover {
+            background: var(--surface2);
+            color: var(--text);
+        }
+        .nav-item.active {
+            background: var(--blue-bg);
+            color: var(--blue);
+            font-weight: 600;
+        }
+        .nav-item .nav-icon {
+            font-size: 15px;
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .nav-section {
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--text4);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            padding: 10px 14px 4px;
+        }
+        .sidebar-footer {
+            padding: 10px 14px;
+            border-top: 1px solid var(--border);
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 140;
+        }
+        @media(max-width:768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .sidebar-overlay.open {
+                display: block;
+            }
+            .main-content {
+                margin-left: 0 !important;
+            }
+        }
+
+        /* ── Main content ── */
+        .main-content {
+            margin-left: var(--sidebar-w);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .topbar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 14px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            gap: 8px;
+        }
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .menu-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            background: var(--surface2);
+            color: var(--text);
+            cursor: pointer;
+            font-size: 16px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        @media(max-width:768px) {
+            .menu-btn {
+                display: flex;
+            }
+        }
+        .page-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .hbtn {
+            height: 30px;
+            padding: 0 10px;
+            border: 1px solid var(--border2);
+            border-radius: 7px;
+            font-size: 12px;
+            background: var(--surface);
+            color: var(--text);
+            cursor: pointer;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .hbtn:hover {
+            background: var(--surface2);
+        }
+        .hbtn.active,
+        .hbtn-blue {
+            border-color: var(--blue);
+            color: var(--blue);
+            background: var(--blue-bg);
+        }
+        .hbtn-blue:hover {
+            background: var(--blue-light);
+            color: #fff;
+        }
+        .hbtn-green {
+            border-color: var(--green);
+            color: var(--green-text);
+            background: var(--green-bg);
+        }
+        .hbtn-green:hover {
+            background: var(--green);
+            color: #fff;
+        }
+        .hbtn-icon {
+            width: 30px;
+            padding: 0;
+            font-size: 15px;
+        }
+        main {
+            padding: 12px;
+            max-width: 1500px;
+            margin: 0 auto;
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Layout: two-panel ── */
+        .email-layout {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            min-height: 0;
+        }
+        @media(max-width:900px) {
+            .email-layout {
+                flex-direction: column;
+            }
+        }
+        .drafts-panel {
+            width: 280px;
+            flex-shrink: 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        @media(max-width:900px) {
+            .drafts-panel {
+                width: 100%;
+                max-height: 260px;
+            }
+        }
+        .drafts-panel-header {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .drafts-panel-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text2);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .drafts-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 6px;
+        }
+        .draft-item {
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            margin-bottom: 4px;
+            position: relative;
+        }
+        .draft-item:hover {
+            background: var(--surface2);
+            border-color: var(--border);
+        }
+        .draft-item.active {
+            background: var(--blue-bg);
+            border-color: var(--blue-light);
+        }
+        .draft-item-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .draft-item-meta {
+            font-size: 10px;
+            color: var(--text4);
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .draft-item-lang {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 10px;
+            background: var(--purple-bg);
+            color: var(--purple-text);
+        }
+        .draft-item-count {
+            font-size: 10px;
+            color: var(--text3);
+        }
+        .draft-item-actions {
+            display: none;
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            gap: 3px;
+        }
+        .draft-item:hover .draft-item-actions {
+            display: flex;
+        }
+        .draft-item-btn {
+            width: 24px;
+            height: 24px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            background: var(--surface);
+            cursor: pointer;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text3);
+            font-family: inherit;
+        }
+        .draft-item-btn:hover {
+            background: var(--red-bg);
+            color: var(--red-text);
+            border-color: var(--red);
+        }
+        .draft-item-btn.dup:hover {
+            background: var(--blue-bg);
+            color: var(--blue);
+            border-color: var(--blue);
+        }
+
+        /* ── Editor panel ── */
+        .editor-panel {
+            flex: 1;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+        }
+        .editor-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .editor-tab {
+            padding: 10px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: var(--text3);
+            font-family: inherit;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+        }
+        .editor-tab.active {
+            color: var(--blue);
+            border-bottom-color: var(--blue);
+        }
+        .editor-tab:hover {
+            color: var(--text);
+        }
+        .editor-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .form-row {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .form-label {
+            font-size: 11px;
+            color: var(--text3);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .form-input {
+            width: 100%;
+            height: 36px;
+            border: 1px solid var(--border2);
+            border-radius: 8px;
+            padding: 0 10px;
+            font-size: 13px;
+            background: var(--surface);
+            color: var(--text);
+            font-family: inherit;
+            outline: none;
+        }
+        .form-input:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px var(--blue-bg);
+        }
+        textarea.form-input {
+            height: auto;
+            padding: 8px 10px;
+            line-height: 1.5;
+            resize: vertical;
+            min-height: 100px;
+        }
+        select.form-input {
+            cursor: pointer;
+        }
+        .form-row-inline {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+        .form-row-inline .form-row {
+            flex: 1;
+        }
+        .badge-sm {
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            display: inline-block;
+        }
+        .badge-info {
+            background: var(--blue-bg);
+            color: var(--blue);
+        }
+        .badge-warn {
+            background: var(--amber-bg);
+            color: var(--amber-text);
+        }
+
+        /* ── Recipients table ── */
+        .recipient-list {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .recipient-list th {
+            text-align: left;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text4);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            padding: 6px 8px;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        .recipient-list td {
+            padding: 6px 8px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        .recipient-list input {
+            width: 100%;
+            height: 30px;
+            border: 1px solid transparent;
+            border-radius: 5px;
+            padding: 0 6px;
+            font-size: 12px;
+            background: transparent;
+            color: var(--text);
+            font-family: inherit;
+            outline: none;
+        }
+        .recipient-list input:focus {
+            border-color: var(--blue);
+            background: var(--surface);
+            box-shadow: 0 0 0 2px var(--blue-bg);
+        }
+        .recipient-list .btn-remove-recip {
+            width: 24px;
+            height: 24px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            background: var(--surface2);
+            cursor: pointer;
+            font-size: 11px;
+            color: var(--text3);
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .recipient-list .btn-remove-recip:hover {
+            background: var(--red-bg);
+            color: var(--red-text);
+            border-color: var(--red);
+        }
+        .recipients-empty {
+            text-align: center;
+            padding: 30px;
+            color: var(--text4);
+            font-size: 13px;
+        }
+        .paste-area {
+            width: 100%;
+            min-height: 60px;
+            border: 1px dashed var(--border2);
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 12px;
+            background: var(--surface2);
+            color: var(--text2);
+            font-family: inherit;
+            resize: vertical;
+            outline: none;
+        }
+        .paste-area:focus {
+            border-color: var(--blue);
+            background: var(--surface);
+        }
+        .help-text {
+            font-size: 10px;
+            color: var(--text4);
+            margin-top: 2px;
+            line-height: 1.4;
+        }
+
+        /* ── Preview ── */
+        .preview-box {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            color: var(--text);
+            max-height: 350px;
+            overflow-y: auto;
+            font-family: inherit;
+        }
+        .preview-box .placeholder-highlight {
+            background: var(--amber-bg);
+            color: var(--amber-text);
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+        .preview-meta {
+            font-size: 11px;
+            color: var(--text3);
+            margin-bottom: 8px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .preview-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ── Queue modal ── */
+        .queue-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            padding: 16px;
+        }
+        .queue-card {
+            background: var(--surface);
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            padding: 20px;
+            max-width: 520px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .queue-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+        .queue-progress {
+            font-size: 12px;
+            color: var(--text3);
+            margin-bottom: 12px;
+        }
+        .queue-body-preview {
+            background: var(--surface2);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 12px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            max-height: 180px;
+            overflow-y: auto;
+            margin-bottom: 12px;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .queue-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--text);
+            color: var(--bg);
+            padding: 10px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 400;
+            pointer-events: none;
+            animation: toastIn 0.3s ease, toastOut 0.3s ease 2.2s forwards;
+            max-width: 90vw;
+            text-align: center;
+        }
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        @keyframes toastOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+        }
+
+        /* ── Confirm dialog ── */
+        .confirm-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 350;
+            padding: 16px;
+        }
+        .confirm-card {
+            background: var(--surface);
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            padding: 20px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        .confirm-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+        .confirm-text {
+            font-size: 13px;
+            color: var(--text2);
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+        .confirm-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+        .btn-cancel {
+            height: 34px;
+            padding: 0 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+            background: transparent;
+            color: var(--text2);
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-danger {
+            height: 34px;
+            padding: 0 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            background: var(--red);
+            color: #fff;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: inherit;
+        }
+        .btn-primary {
+            height: 34px;
+            padding: 0 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            background: var(--blue);
+            color: #fff;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: inherit;
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--surface2);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 4px;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text4);
+        }
+        .empty-state-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        .empty-state-text {
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+        .empty-state-sub {
+            font-size: 11px;
+            color: var(--text4);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-text">⚙️ Steel Platform</div>
+                <div class="sidebar-logo-sub">Export Management Suite</div>
+            </div>
+            <div class="sidebar-nav">
+                <div class="nav-section">Pipeline</div>
+                <a class="nav-item" href="dashboard.html"><span class="nav-icon">📊</span>Dashboard</a>
+                <a class="nav-item" href="index.html"><span class="nav-icon">📋</span>CRM / Leads</a>
+                <div class="nav-section">Inventory</div>
+                <a class="nav-item" href="stock.html"><span class="nav-icon">📦</span>Stock</a>
+                <a class="nav-item" href="procurement.html"><span class="nav-icon">🛒</span>Procurement</a>
+                <div class="nav-section">Operations</div>
+                <a class="nav-item" href="logistics.html"><span class="nav-icon">🚢</span>Logistics</a>
+                <a class="nav-item" href="documents.html"><span class="nav-icon">📄</span>Documents</a>
+                <div class="nav-section">Finance</div>
+                <a class="nav-item" href="bookkeeping.html"><span class="nav-icon">💰</span>Bookkeeping</a>
+                <div class="nav-section">Tools</div>
+                <a class="nav-item active" href="email-drafts.html"><span class="nav-icon">✉️</span>Email Drafts</a>
+                <a class="nav-item" href="converter.html"><span class="nav-icon">⚡</span>Grade Converter</a>
+                <a class="nav-item" href="tools.html"><span class="nav-icon">🔧</span>Tools</a>
+                <a class="nav-item" href="news.html"><span class="nav-icon">📰</span>News</a>
+                <div class="nav-section">Team</div>
+                <a class="nav-item" href="cont.html"><span class="nav-icon">👥</span>Contacts</a>
+                <a class="nav-item" href="team.html"><span class="nav-icon">🧑‍💼</span>Team</a>
+            </div>
+            <div class="sidebar-footer">
+                <button class="hbtn" onclick="toggleDark()" style="width:100%;margin-bottom:6px" id="darkBtn">🌙 Dark mode</button>
+                <a href="index.html" style="text-decoration:none"><button class="hbtn" style="width:100%">← Back to CRM</button></a>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <div class="main-content">
+            <div class="topbar">
+                <div class="topbar-left">
+                    <button class="menu-btn" onclick="openSidebar()">☰</button>
+                    <span class="page-title">✉️ Email Drafts</span>
+                </div>
+                <div class="topbar-right">
+                    <button class="hbtn hbtn-blue" onclick="createNewDraft()">+ New draft</button>
+                    <button class="hbtn" onclick="exportAllCSV()">📥 CSV all</button>
+                </div>
+            </div>
+            <main>
+                <div class="email-layout">
+                    <!-- Drafts list -->
+                    <div class="drafts-panel" id="draftsPanel">
+                        <div class="drafts-panel-header">
+                            <span class="drafts-panel-title">📁 Saved drafts</span>
+                            <span style="font-size:10px;color:var(--text4)" id="draftCount">0</span>
+                        </div>
+                        <div class="drafts-list" id="draftsList">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📝</div>
+                                <div class="empty-state-text">No drafts yet</div>
+                                <div class="empty-state-sub">Create your first email draft</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Editor panel -->
+                    <div class="editor-panel" id="editorPanel">
+                        <div class="editor-tabs">
+                            <button class="editor-tab active" data-tab="compose" onclick="switchTab('compose')">✏️ Compose</button>
+                            <button class="editor-tab" data-tab="recipients" onclick="switchTab('recipients')">👥 Recipients <span id="recipCountBadge" style="font-size:10px;color:var(--text4)">(0)</span></button>
+                            <button class="editor-tab" data-tab="preview" onclick="switchTab('preview')">👁 Preview</button>
+                            <button class="editor-tab" data-tab="send" onclick="switchTab('send')">📤 Send</button>
+                        </div>
+                        <div class="editor-body" id="editorBody">
+                            <!-- Compose tab -->
+                            <div id="tab-compose" class="tab-content" style="display:flex;flex-direction:column;gap:10px;">
+                                <div class="form-row-inline">
+                                    <div class="form-row"><label class="form-label">Draft name</label><input class="form-input" id="draftName" placeholder="e.g. Cold outreach EN"></div>
+                                    <div class="form-row" style="max-width:100px"><label class="form-label">Language</label><select class="form-input" id="draftLang"><option value="EN">EN</option><option value="FR">FR</option><option value="DE">DE</option><option value="ES">ES</option><option value="IT">IT</option><option value="PT">PT</option><option value="AR">AR</option><option value="ZH">ZH</option><option value="RU">RU</option><option value="Other">Other</option></select></div>
+                                </div>
+                                <div class="form-row"><label class="form-label">Subject line <span style="font-weight:400;color:var(--text4)">(use
+                                            {{Name}}, {{Company}}, {{Email}} for personalization)</span></label><input class="form-input" id="draftSubject" placeholder="e.g. Steel supply inquiry – {{Company}}"></div>
+                                <div class="form-row" style="flex:1"><label class="form-label">Email body <span style="font-weight:400;color:var(--text4)">(placeholders: {{Name}},
+                                            {{Company}}, {{Email}})</span></label><textarea class="form-input" id="draftBody" placeholder="Dear {{Name}}," style="flex:1;min-height:180px;font-size:13px;line-height:1.6"></textarea></div>
+                                <div class="form-row-inline">
+                                    <div class="form-row"><label class="form-label">CC</label><input class="form-input" id="draftCC" placeholder="cc@company.com (comma-separated)"></div>
+                                    <div class="form-row"><label class="form-label">BCC</label><input class="form-input" id="draftBCC" placeholder="bcc@company.com (comma-separated)"></div>
+                                </div>
+                                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                                    <button class="hbtn hbtn-blue" onclick="saveCurrentDraft()">💾 Save draft</button>
+                                    <span style="font-size:10px;color:var(--text4)" id="saveStatus"></span>
+                                </div>
+                            </div>
+
+                            <!-- Recipients tab -->
+                            <div id="tab-recipients" class="tab-content" style="display:none;flex-direction:column;gap:10px;">
+                                <div class="form-row">
+                                    <label class="form-label">📋 Paste recipients (one per line: Name, Email, Company)</label>
+                                    <textarea class="paste-area" id="pasteRecipients" placeholder="John Doe, john@acme.com, ACME Inc.
+                                        Jane Smith, jane@steelcorp.com, SteelCorp
+                                        bob@example.com
+                                        Alice, alice@factory.com"></textarea>
+                                    <span class="help-text">Format: <strong>Name, Email, Company</strong> — Name and Company are optional. One entry per line. Separate with commas, tabs, or semicolons.</span>
+                                </div>
+                                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                                    <button class="hbtn hbtn-blue" onclick="parsePastedRecipients()">➕ Add from paste</button>
+                                    <button class="hbtn" onclick="addEmptyRecipient()">+ Add one row</button>
+                                    <button class="hbtn" onclick="clearAllRecipients()" style="color:var(--red-text);border-color:var(--red)">Clear all</button>
+                                </div>
+                                <div style="overflow-x:auto">
+                                    <table class="recipient-list" id="recipientTable">
+                                        <thead><tr><th style="width:28px"></th><th>Name</th><th>Email</th><th>Company</th><th style="width:32px"></th></tr></thead>
+                                        <tbody id="recipientTbody"></tbody>
+                                    </table>
+                                    <div class="recipients-empty" id="recipientsEmpty">No recipients added yet. Paste a list above or add rows manually.</div>
+                                </div>
+                            </div>
+
+                            <!-- Preview tab -->
+                            <div id="tab-preview" class="tab-content" style="display:none;flex-direction:column;gap:10px;">
+                                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                                    <span style="font-size:12px;color:var(--text3)">Preview with recipient:</span>
+                                    <select class="form-input" id="previewRecipient" onchange="updatePreview()" style="width:auto;min-width:180px;height:32px"></select>
+                                    <span style="font-size:10px;color:var(--text4)">(or see how placeholders look)</span>
+                                </div>
+                                <div class="preview-meta" id="previewMeta"></div>
+                                <div class="preview-box" id="previewBox"></div>
+                            </div>
+
+                            <!-- Send tab -->
+                            <div id="tab-send" class="tab-content" style="display:none;flex-direction:column;gap:12px;">
+                                <div style="background:var(--blue-bg);border-radius:10px;padding:12px 14px;border:1px solid var(--blue-light)">
+                                    <div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:4px">📤 Outlook integration</div>
+                                    <div style="font-size:11px;color:var(--text2);line-height:1.5">
+                                        Clicking a button below will open Outlook (your default mail client) with a <strong>pre-filled draft</strong>.
+                                        You just need to review and click <strong>Send</strong> in Outlook.
+                                    </div>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                                    <div style="background:var(--surface2);border-radius:10px;padding:14px;border:1px solid
+                                        var(--border);display:flex;flex-direction:column;gap:8px">
+                                        <div style="font-size:13px;font-weight:700;color:var(--text)">📧 Bulk – One email to all</div>
+                                        <div style="font-size:11px;color:var(--text3)">All recipients in BCC. Same subject & body for everyone. Placeholders will be removed.</div>
+                                        <button class="hbtn hbtn-green" onclick="sendBulkOutlook()" style="margin-top:auto">🚀 Open in Outlook</button>
+                                    </div>
+                                    <div style="background:var(--surface2);border-radius:10px;padding:14px;border:1px solid
+                                        var(--border);display:flex;flex-direction:column;gap:8px">
+                                        <div style="font-size:13px;font-weight:700;color:var(--text)">👤 Personalized – One by one</div>
+                                        <div style="font-size:11px;color:var(--text3)">Each recipient gets a personalized email. You'll click through a queue – one Outlook window at a time.</div>
+                                        <button class="hbtn hbtn-blue" onclick="startPersonalizedQueue()" style="margin-top:auto">🔄 Start queue</button>
+                                    </div>
+                                </div>
+                                <div style="background:var(--surface2);border-radius:10px;padding:14px;border:1px solid
+                                    var(--border);display:flex;flex-direction:column;gap:8px">
+                                    <div style="font-size:13px;font-weight:700;color:var(--text)">📋 Copy for manual paste</div>
+                                    <div style="font-size:11px;color:var(--text3)">Copy the full email content to your clipboard, then paste into Outlook manually.</div>
+                                    <button class="hbtn" onclick="copyToClipboard()">📋 Copy to clipboard</button>
+                                </div>
+                                <div style="font-size:10px;color:var(--text4);text-align:center">
+                                    ⚠️ <code>mailto:</code> links have a ~2000-character limit. For long emails, use Copy to Clipboard or split into shorter messages.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Queue modal -->
+    <div id="queueOverlay" class="queue-overlay" style="display:none">
+        <div class="queue-card">
+            <div class="queue-title">📤 Personalized send queue</div>
+            <div class="queue-progress" id="queueProgress"></div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px"><strong>To:</strong> <span id="queueRecipientInfo"></span></div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px"><strong>Subject:</strong> <span id="queueSubject"></span></div>
+            <div class="queue-body-preview" id="queueBodyPreview"></div>
+            <div class="queue-actions">
+                <button class="btn-cancel" onclick="skipInQueue()">⏭ Skip</button>
+                <button class="btn-cancel" onclick="closeQueue()">✕ Close</button>
+                <button class="btn-primary" id="queueOpenBtn" onclick="openCurrentInQueue()">📧 Open in Outlook →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm dialog -->
+    <div id="confirmOverlay" class="confirm-overlay" style="display:none">
+        <div class="confirm-card">
+            <div class="confirm-title" id="confirmTitle">Confirm</div>
+            <div class="confirm-text" id="confirmText"></div>
+            <div class="confirm-actions">
+                <button class="btn-cancel" onclick="closeConfirm()">Cancel</button>
+                <button class="btn-danger" id="confirmDangerBtn" onclick="confirmAction()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════ STORAGE ═══════════════
+        const STORAGE_KEY = 'sp_email_drafts';
+        let drafts = [];
+        let currentDraftId = null;
+        let currentTab = 'compose';
+        let recipients = []; // [{name, email, company}]
+        let queueIndex = 0;
+        let queueList = [];
+        let pendingConfirmCallback = null;
+
+        function loadDrafts() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                drafts = raw ? JSON.parse(raw) : [];
+            } catch (e) {
+                drafts = [];
+            }
+        }
+
+        function saveAllDrafts() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(drafts));
+        }
+
+        function findDraft(id) { return drafts.find(d => d.id === id); }
+
+        function getCurrentDraft() { return currentDraftId ? findDraft(currentDraftId) : null; }
+
+        // ═══════════════ DARK MODE ═══════════════
+        function toggleDark() {
+            const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+            document.getElementById('darkBtn').textContent = t === 'dark' ? '☀️ Light mode' : '🌙 Dark mode';
+            localStorage.setItem('theme', t);
+        }
+        (() => {
+            const s = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', s);
+            if (s === 'dark') document.getElementById('darkBtn').textContent = '☀️ Light mode';
+        })();
+
+        // ═══════════════ SIDEBAR ═══════════════
+        function openSidebar() {
+            document.getElementById('sidebar').classList.add('open');
+            document.getElementById('sidebarOverlay').classList.add('open');
+        }
+
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('open');
+        }
+
+        // ═══════════════ TOAST ═══════════════
+        function showToast(msg) {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            const el = document.createElement('div');
+            el.className = 'toast';
+            el.textContent = msg;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 2600);
+        }
+
+        // ═══════════════ CONFIRM ═══════════════
+        function showConfirm(title, text, callback) {
+            document.getElementById('confirmTitle').textContent = title;
+            document.getElementById('confirmText').textContent = text;
+            document.getElementById('confirmOverlay').style.display = 'flex';
+            pendingConfirmCallback = callback;
+        }
+
+        function closeConfirm() {
+            document.getElementById('confirmOverlay').style.display = 'none';
+            pendingConfirmCallback = null;
+        }
+
+        function confirmAction() {
+            if (pendingConfirmCallback) pendingConfirmCallback();
+            closeConfirm();
+        }
+
+        // ═══════════════ RECIPIENTS ═══════════════
+        function renderRecipientTable() {
+            const tbody = document.getElementById('recipientTbody');
+            const empty = document.getElementById('recipientsEmpty');
+            const badge = document.getElementById('recipCountBadge');
+            badge.textContent = '(' + recipients.length + ')';
+            if (recipients.length === 0) {
+                tbody.innerHTML = '';
+                empty.style.display = 'block';
+            } else {
+                empty.style.display = 'none';
+                tbody.innerHTML = recipients.map((r, i) => `
+                    <tr>
+                        <td style="text-align:center;color:var(--text4);font-size:10px">${i + 1}</td>
+                        <td><input value="${escapeHtml(r.name || '')}" placeholder="Name" data-idx="${i}" data-field="name" onchange="updateRecipientField(${i},'name',this.value)"></td>
+                        <td><input value="${escapeHtml(r.email || '')}" placeholder="email@..." data-idx="${i}" data-field="email" onchange="updateRecipientField(${i},'email',this.value)"></td>
+                        <td><input value="${escapeHtml(r.company || '')}" placeholder="Company" data-idx="${i}" data-field="company" onchange="updateRecipientField(${i},'company',this.value)"></td>
+                        <td><button class="btn-remove-recip" onclick="removeRecipient(${i})" title="Remove">×</button></td>
+                    </tr>
+                `).join('');
+            }
+            updatePreviewDropdown();
+        }
+
+        function updateRecipientField(idx, field, value) {
+            if (idx >= 0 && idx < recipients.length) {
+                recipients[idx][field] = value;
+                saveRecipientsToDraft();
+            }
+        }
+
+        function removeRecipient(idx) {
+            recipients.splice(idx, 1);
+            saveRecipientsToDraft();
+            renderRecipientTable();
+        }
+
+        function addEmptyRecipient() {
+            recipients.push({ name: '', email: '', company: '' });
+            saveRecipientsToDraft();
+            renderRecipientTable();
+        }
+
+        function clearAllRecipients() {
+            showConfirm('Clear all recipients?', 'This will remove all ' + recipients.length +
+                ' recipient(s) from this draft.', () => {
+                    recipients = [];
+                    saveRecipientsToDraft();
+                    renderRecipientTable();
+                    showToast('All recipients cleared');
+                });
+        }
+
+        function parsePastedRecipients() {
+            const raw = document.getElementById('pasteRecipients').value.trim();
+            if (!raw) { showToast('Paste some recipient data first'); return; }
+            const lines = raw.split(/[\n\r]+/).filter(l => l.trim());
+            let added = 0;
+            lines.forEach(line => {
+                // Split by comma, tab, or semicolon
+                const parts = line.split(/[,\t;]+/).map(s => s.trim()).filter(Boolean);
+                if (parts.length === 0) return;
+                let name = '',
+                    email = '',
+                    company = '';
+                // Heuristic: find the part with @ as email
+                const emailIdx = parts.findIndex(p => p.includes('@'));
+                if (emailIdx >= 0) {
+                    email = parts[emailIdx];
+                    if (emailIdx > 0) name = parts[0];
+                    if (parts.length > emailIdx + 1) company = parts[emailIdx + 1];
+                    if (emailIdx > 1 && parts.length > emailIdx + 1) {
+                        name = parts.slice(0, emailIdx).join(' ');
+                        company = parts.slice(emailIdx + 1).join(' ');
+                    }
+                } else if (parts.length === 1) {
+                    email = parts[0];
+                } else if (parts.length === 2) {
+                    name = parts[0];
+                    email = parts[1];
+                } else {
+                    name = parts[0];
+                    email = parts[1];
+                    company = parts.slice(2).join(' ');
+                }
+                if (email) {
+                    recipients.push({ name, email, company });
+                    added++;
+                }
+            });
+            if (added > 0) {
+                saveRecipientsToDraft();
+                renderRecipientTable();
+                document.getElementById('pasteRecipients').value = '';
+                showToast('Added ' + added + ' recipient(s)');
+            } else {
+                showToast('No valid emails found in pasted data');
+            }
+        }
+
+        function saveRecipientsToDraft() {
+            const d = getCurrentDraft();
+            if (d) {
+                d.recipients = [...recipients];
+                d.updatedAt = new Date().toISOString();
+                saveAllDrafts();
+            }
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // ═══════════════ PREVIEW ═══════════════
+        function updatePreviewDropdown() {
+            const sel = document.getElementById('previewRecipient');
+            const cur = sel.value;
+            sel.innerHTML = '<option value="">-- No recipient (show placeholders) --</option>';
+            recipients.forEach((r, i) => {
+                const label = [r.name, r.email, r.company].filter(Boolean).join(' – ') || 'Recipient ' + (
+                    i + 1);
+                sel.innerHTML += `<option value="${i}"${String(i)===cur?' selected':''}>${escapeHtml(label)}</option>`;
+            });
+            updatePreview();
+        }
+
+        function updatePreview() {
+            const idx = document.getElementById('previewRecipient').value;
+            const subject = document.getElementById('draftSubject').value || '(no subject)';
+            const body = document.getElementById('draftBody').value || '(no body)';
+            const meta = document.getElementById('previewMeta');
+            const box = document.getElementById('previewBox');
+            let r = null;
+            if (idx !== '' && idx !== null && recipients[parseInt(idx)]) {
+                r = recipients[parseInt(idx)];
+            }
+            const filledSubject = fillPlaceholders(subject, r);
+            const filledBody = fillPlaceholders(body, r);
+            meta.innerHTML = r ?
+                `<span>📧 <strong>To:</strong> ${escapeHtml(r.email)}</span><span>👤 ${escapeHtml(r.name||'—')}</span><span>🏢 ${escapeHtml(r.company||'—')}</span>` :
+                '<span style="color:var(--text4)">Select a recipient to see personalized preview</span>';
+            // Highlight remaining placeholders
+            const displayBody = r ? filledBody : body.replace(/\{\{(\w+)\}\}/g,
+                '<span class="placeholder-highlight">{{$1}}</span>');
+            box.innerHTML = r ? escapeHtml(filledBody).replace(/\n/g, '<br>') : displayBody.replace(/\n/g, '<br>');
+            document.getElementById('previewMeta').style.display = r ? 'flex' : 'block';
+        }
+
+        function fillPlaceholders(text, recipient) {
+            if (!text) return '';
+            let result = text;
+            if (recipient) {
+                result = result.replace(/\{\{Name\}\}/gi, recipient.name || '');
+                result = result.replace(/\{\{Company\}\}/gi, recipient.company || '');
+                result = result.replace(/\{\{Email\}\}/gi, recipient.email || '');
+            }
+            // Remove any remaining placeholders
+            result = result.replace(/\{\{\w+\}\}/g, '');
+            // Clean up double spaces and orphaned commas
+            result = result.replace(/  +/g, ' ').replace(/,\s*,/g, ',').replace(/^,\s*/, '');
+            return result;
+        }
+
+        // ═══════════════ DRAFT MANAGEMENT ═══════════════
+        function generateId() { return 'draft_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8); }
+
+        function createNewDraft() {
+            const d = {
+                id: generateId(),
+                name: 'New draft',
+                language: 'EN',
+                subject: '',
+                body: '',
+                cc: '',
+                bcc: '',
+                recipients: [],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            drafts.unshift(d);
+            saveAllDrafts();
+            selectDraft(d.id);
+            renderDraftsList();
+            showToast('New draft created');
+        }
+
+        function duplicateDraft(id) {
+            const orig = findDraft(id);
+            if (!orig) return;
+            const d = {
+                ...orig,
+                id: generateId(),
+                name: (orig.name || 'Draft') + ' (copy)',
+                recipients: orig.recipients ? orig.recipients.map(r => ({ ...r })) : [],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            drafts.unshift(d);
+            saveAllDrafts();
+            selectDraft(d.id);
+            renderDraftsList();
+            showToast('Draft duplicated');
+        }
+
+        function deleteDraft(id) {
+            const d = findDraft(id);
+            if (!d) return;
+            showConfirm('Delete draft?', 'Delete "' + (d.name || 'Untitled') + '"? This cannot be undone.', () => {
+                drafts = drafts.filter(dr => dr.id !== id);
+                if (currentDraftId === id) {
+                    currentDraftId = null;
+                    recipients = [];
+                    clearEditor();
+                }
+                saveAllDrafts();
+                renderDraftsList();
+                renderRecipientTable();
+                showToast('Draft deleted');
+            });
+        }
+
+        function selectDraft(id) {
+            // Save current first
+            saveCurrentDraftSilent();
+            currentDraftId = id;
+            const d = findDraft(id);
+            if (!d) return;
+            // Load into editor
+            document.getElementById('draftName').value = d.name || '';
+            document.getElementById('draftLang').value = d.language || 'EN';
+            document.getElementById('draftSubject').value = d.subject || '';
+            document.getElementById('draftBody').value = d.body || '';
+            document.getElementById('draftCC').value = d.cc || '';
+            document.getElementById('draftBCC').value = d.bcc || '';
+            recipients = d.recipients ? d.recipients.map(r => ({ ...r })) : [];
+            renderRecipientTable();
+            renderDraftsList();
+            switchTab('compose');
+            document.getElementById('saveStatus').textContent = '';
+        }
+
+        function saveCurrentDraft() {
+            const d = getCurrentDraft();
+            if (!d) {
+                // Create new draft from current editor content
+                if (!document.getElementById('draftName').value.trim() &&
+                    !document.getElementById('draftSubject').value.trim() &&
+                    !document.getElementById('draftBody').value.trim() &&
+                    recipients.length === 0) {
+                    showToast('Nothing to save yet');
+                    return;
+                }
+                const newD = {
+                    id: generateId(),
+                    name: document.getElementById('draftName').value.trim() || 'Untitled draft',
+                    language: document.getElementById('draftLang').value,
+                    subject: document.getElementById('draftSubject').value,
+                    body: document.getElementById('draftBody').value,
+                    cc: document.getElementById('draftCC').value,
+                    bcc: document.getElementById('draftBCC').value,
+                    recipients: [...recipients],
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                drafts.unshift(newD);
+                currentDraftId = newD.id;
+                saveAllDrafts();
+                renderDraftsList();
+                document.getElementById('saveStatus').textContent = '✓ Saved';
+                setTimeout(() => { document.getElementById('saveStatus').textContent = ''; }, 2000);
+                showToast('Draft saved');
+                return;
+            }
+            d.name = document.getElementById('draftName').value.trim() || 'Untitled draft';
+            d.language = document.getElementById('draftLang').value;
+            d.subject = document.getElementById('draftSubject').value;
+            d.body = document.getElementById('draftBody').value;
+            d.cc = document.getElementById('draftCC').value;
+            d.bcc = document.getElementById('draftBCC').value;
+            d.recipients = [...recipients];
+            d.updatedAt = new Date().toISOString();
+            saveAllDrafts();
+            renderDraftsList();
+            document.getElementById('saveStatus').textContent = '✓ Saved';
+            setTimeout(() => { document.getElementById('saveStatus').textContent = ''; }, 2000);
+            showToast('Draft saved');
+        }
+
+        function saveCurrentDraftSilent() {
+            const d = getCurrentDraft();
+            if (!d) return;
+            d.name = document.getElementById('draftName').value.trim() || 'Untitled draft';
+            d.language = document.getElementById('draftLang').value;
+            d.subject = document.getElementById('draftSubject').value;
+            d.body = document.getElementById('draftBody').value;
+            d.cc = document.getElementById('draftCC').value;
+            d.bcc = document.getElementById('draftBCC').value;
+            d.recipients = [...recipients];
+            d.updatedAt = new Date().toISOString();
+            saveAllDrafts();
+        }
+
+        function clearEditor() {
+            document.getElementById('draftName').value = '';
+            document.getElementById('draftLang').value = 'EN';
+            document.getElementById('draftSubject').value = '';
+            document.getElementById('draftBody').value = '';
+            document.getElementById('draftCC').value = '';
+            document.getElementById('draftBCC').value = '';
+            recipients = [];
+            document.getElementById('saveStatus').textContent = '';
+        }
+
+        function renderDraftsList() {
+            const container = document.getElementById('draftsList');
+            const count = document.getElementById('draftCount');
+            count.textContent = drafts.length + ' draft' + (drafts.length !== 1 ? 's' : '');
+            if (drafts.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <div class="empty-state-text">No drafts yet</div>
+                        <div class="empty-state-sub">Create your first email draft</div>
+                    </div>`;
+                return;
+            }
+            container.innerHTML = drafts.map(d => {
+                const isActive = d.id === currentDraftId;
+                const recCount = (d.recipients || []).length;
+                const dateStr = d.updatedAt ? new Date(d.updatedAt).toLocaleDateString('en-GB', { day: 'numeric',
+                    month: 'short' }) : '';
+                return `
+                    <div class="draft-item${isActive?' active':''}" onclick="selectDraft('${d.id}')">
+                        <div class="draft-item-name">${escapeHtml(d.name||'Untitled')}</div>
+                        <div class="draft-item-meta">
+                            <span class="draft-item-lang">${escapeHtml(d.language||'EN')}</span>
+                            ${recCount>0?`<span class="draft-item-count">${recCount} recipient${recCount!==1?'s':''}</span>`:''}
+                            ${dateStr?`<span>${dateStr}</span>`:''}
+                        </div>
+                        <div class="draft-item-actions" onclick="event.stopPropagation()">
+                            <button class="draft-item-btn dup" onclick="duplicateDraft('${d.id}')" title="Duplicate">⧉</button>
+                            <button class="draft-item-btn" onclick="deleteDraft('${d.id}')" title="Delete">🗑</button>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        // ═══════════════ TABS ═══════════════
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`[data-tab="${tab}"]`)?.classList.add('active');
+            ['compose', 'recipients', 'preview', 'send'].forEach(t => {
+                document.getElementById('tab-' + t).style.display = t === tab ? 'flex' : 'none';
+            });
+            if (tab === 'preview') updatePreviewDropdown();
+            if (tab === 'recipients') renderRecipientTable();
+            if (tab === 'send') {
+                // Silently save before showing send options
+                saveCurrentDraftSilent();
+            }
+        }
+
+        // ═══════════════ OUTLOOK INTEGRATION ═══════════════
+        function buildMailtoUrl(to, subject, body, cc, bcc) {
+            let url = 'mailto:' + encodeURIComponent(to);
+            const params = [];
+            if (subject) params.push('subject=' + encodeURIComponent(subject));
+            if (body) params.push('body=' + encodeURIComponent(body));
+            if (cc) params.push('cc=' + encodeURIComponent(cc));
+            if (bcc) params.push('bcc=' + encodeURIComponent(bcc));
+            if (params.length) url += '?' + params.join('&');
+            return url;
+        }
+
+        function sendBulkOutlook() {
+            saveCurrentDraftSilent();
+            const d = getCurrentDraft();
+            if (!d) { showToast('Save your draft first'); return; }
+            const emails = recipients.filter(r => r.email).map(r => r.email);
+            if (emails.length === 0) { showToast('Add at least one recipient with an email address'); return; }
+            const subject = d.subject || '';
+            const body = fillPlaceholders(d.body || '', null);
+            const cc = d.cc || '';
+            const bcc = emails.join(',');
+            const url = buildMailtoUrl('', subject, body, cc, bcc);
+            if (url.length > 2000) {
+                showToast('⚠️ Email is long – consider using Copy to Clipboard instead');
+            }
+            // Open Outlook
+            window.location.href = url;
+            showToast('📤 Opening Outlook with ' + emails.length + ' recipient(s) in BCC');
+        }
+
+        function startPersonalizedQueue() {
+            saveCurrentDraftSilent();
+            const d = getCurrentDraft();
+            if (!d) { showToast('Save your draft first'); return; }
+            const validRecipients = recipients.filter(r => r.email);
+            if (validRecipients.length === 0) { showToast('Add at least one recipient with an email address'); return; }
+            queueList = validRecipients;
+            queueIndex = 0;
+            showQueueItem();
+            document.getElementById('queueOverlay').style.display = 'flex';
+        }
+
+        function showQueueItem() {
+            if (queueIndex >= queueList.length) {
+                closeQueue();
+                showToast('✅ All personalized emails queued!');
+                return;
+            }
+            const d = getCurrentDraft();
+            const r = queueList[queueIndex];
+            const subject = fillPlaceholders(d.subject || '', r);
+            const body = fillPlaceholders(d.body || '', r);
+            document.getElementById('queueProgress').textContent =
+                'Email ' + (queueIndex + 1) + ' of ' + queueList.length;
+            document.getElementById('queueRecipientInfo').textContent =
+                [r.name, r.email, r.company].filter(Boolean).join(' – ');
+            document.getElementById('queueSubject').textContent = subject || '(no subject)';
+            document.getElementById('queueBodyPreview').textContent = body || '(no body)';
+            document.getElementById('queueOpenBtn').textContent = '📧 Open in Outlook →';
+        }
+
+        function openCurrentInQueue() {
+            if (queueIndex >= queueList.length) return;
+            const d = getCurrentDraft();
+            const r = queueList[queueIndex];
+            const subject = fillPlaceholders(d.subject || '', r);
+            const body = fillPlaceholders(d.body || '', r);
+            const cc = d.cc || '';
+            const bcc = d.bcc || '';
+            const url = buildMailtoUrl(r.email, subject, body, cc, bcc);
+            if (url.length > 2000) {
+                showToast('⚠️ Email is long – consider using Copy to Clipboard instead');
+            }
+            window.location.href = url;
+            showToast('📤 Opened for: ' + r.email);
+            // Advance queue
+            queueIndex++;
+            setTimeout(() => {
+                if (queueIndex < queueList.length) {
+                    showQueueItem();
+                } else {
+                    closeQueue();
+                    showToast('✅ All done! ' + queueList.length + ' email(s) sent to Outlook.');
+                }
+            }, 600);
+        }
+
+        function skipInQueue() {
+            queueIndex++;
+            if (queueIndex >= queueList.length) {
+                closeQueue();
+                showToast('✅ Queue complete');
+            } else {
+                showQueueItem();
+            }
+        }
+
+        function closeQueue() {
+            document.getElementById('queueOverlay').style.display = 'none';
+            queueList = [];
+            queueIndex = 0;
+        }
+
+        function copyToClipboard() {
+            saveCurrentDraftSilent();
+            const d = getCurrentDraft();
+            if (!d) { showToast('Save your draft first'); return; }
+            const subject = d.subject || '(no subject)';
+            const body = d.body || '';
+            const text = 'Subject: ' + subject + '\n\n' + body;
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('📋 Email content copied to clipboard');
+                }).catch(() => {
+                    fallbackCopy(text);
+                });
+            } else {
+                fallbackCopy(text);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy');
+                showToast('📋 Copied!'); } catch (e) { showToast('Copy failed – please select and copy manually'); }
+            document.body.removeChild(ta);
+        }
+
+        function exportAllCSV() {
+            saveCurrentDraftSilent();
+            const allRecipients = [];
+            drafts.forEach(d => {
+                (d.recipients || []).forEach(r => {
+                    if (r.email) {
+                        allRecipients.push({
+                            draft: d.name || 'Untitled',
+                            language: d.language || 'EN',
+                            name: r.name || '',
+                            email: r.email,
+                            company: r.company || '',
+                            subject: fillPlaceholders(d.subject || '', r),
+                            body: fillPlaceholders(d.body || '', r).replace(/\n/g,
+                                ' | ').slice(0, 200)
+                        });
+                    }
+                });
+            });
+            if (allRecipients.length === 0) { showToast('No recipients across all drafts to export'); return; }
+            const headers = ['Draft', 'Language', 'Name', 'Email', 'Company', 'Subject', 'Body Preview'];
+            const csv = [headers.join(','), ...allRecipients.map(r =>
+                [r.draft, r.language, r.name, r.email, r.company, r.subject, r.body].map(v =>
+                    '"' + (v || '').replace(/"/g, '""') + '"').join(',')
+            )].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'email_drafts_export.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('📥 CSV exported with ' + allRecipients.length + ' entries');
+        }
+
+        // ═══════════════ KEYBOARD SHORTCUTS ═══════════════
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveCurrentDraft();
+            }
+        });
+
+        // ═══════════════ INIT ═══════════════
+        function init() {
+            loadDrafts();
+            renderDraftsList();
+            renderRecipientTable();
+            switchTab('compose');
+            // Auto-select first draft if none selected
+            if (drafts.length > 0 && !currentDraftId) {
+                selectDraft(drafts[0].id);
+            }
+            // Close modals on overlay click
+            document.getElementById('queueOverlay').addEventListener('click', function(e) {
+                if (e.target === this) closeQueue();
+            });
+            document.getElementById('confirmOverlay').addEventListener('click', function(e) {
+                if (e.target === this) closeConfirm();
+            });
+            // Escape to close modals
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    if (document.getElementById('queueOverlay').style.display === 'flex') closeQueue();
+                    if (document.getElementById('confirmOverlay').style.display === 'flex') closeConfirm();
+                }
+            });
+        }
+
+        init();
+        console.log('✉️ Email Drafts page ready');
+        console.log('📋 ' + drafts.length + ' draft(s) loaded from localStorage');
+    </script>
+</body>
+</html>
