@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Cebim"/>
-<link rel="manifest" href="./manifest.json"/>
+<!-- PWA manifest only works when hosted on a server, not as a local file -->
 
 <title>Cebim · Gebze Finance</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
@@ -527,6 +527,188 @@ input,select,textarea,button{font-family:var(--font);}
   border-radius:var(--Rs);color:var(--muted);font-weight:700;font-size:.8rem;cursor:pointer;margin-top:4px;
 }
 .theme-reset:active{color:var(--red);border-color:var(--red);}
+
+/* ══ FITNESS PAGE ══ */
+.fit-section{background:var(--s1);border:1px solid var(--b1);border-radius:var(--R);padding:14px;margin-bottom:10px;}
+.fit-section-title{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;}
+.fit-section-title span{font-size:.7rem;color:var(--muted);}
+
+/* Profile strip */
+.fit-profile{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;}
+.fit-stat{background:var(--s2);border:1px solid var(--b1);border-radius:var(--Rs);padding:9px;text-align:center;}
+.fit-stat-lbl{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
+.fit-stat-val{font-family:var(--mono);font-size:.95rem;font-weight:500;color:var(--amber);}
+
+/* Import box */
+.fit-import{background:var(--s2);border:1.5px dashed var(--b2);border-radius:var(--Rs);padding:12px;margin-bottom:10px;}
+.fit-import textarea{width:100%;background:transparent;border:none;color:var(--text);font-size:.8rem;line-height:1.5;outline:none;resize:none;font-family:var(--font);min-height:80px;}
+.fit-import textarea::placeholder{color:var(--muted);}
+.fit-import-actions{display:flex;gap:6px;margin-top:8px;}
+.fit-btn{padding:9px 14px;border-radius:var(--Rx);border:none;font-size:.75rem;font-weight:800;cursor:pointer;transition:all .15s;letter-spacing:-.01em;}
+.fit-btn.amber{background:var(--amber);color:#080a0f;}
+.fit-btn.green{background:var(--green);color:#080a0f;}
+.fit-btn.ghost{background:var(--s3);border:1px solid var(--b2);color:var(--muted2);}
+.fit-btn:active{opacity:.8;transform:scale(.98);}
+.fit-btn.full{width:100%;}
+
+/* Week grid */
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:10px;}
+.day-pill{
+  display:flex;flex-direction:column;align-items:center;padding:7px 2px;
+  border-radius:var(--Rs);border:1px solid var(--b1);background:var(--s2);
+  cursor:pointer;transition:all .12s;
+}
+.day-pill.active{border-color:var(--amber);background:var(--ad);}
+.day-pill.rest{border-color:var(--b1);opacity:.5;}
+.day-pill.done{border-color:var(--green);background:var(--gd);}
+.day-pill-name{font-size:.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+.day-pill.active .day-pill-name{color:var(--amber);}
+.day-pill.done .day-pill-name{color:var(--green);}
+.day-pill-icon{font-size:13px;margin-top:2px;}
+
+/* Exercise list */
+.ex-item{background:var(--s2);border:1px solid var(--b1);border-radius:var(--Rs);padding:11px;margin-bottom:6px;}
+.ex-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.ex-name{font-size:.88rem;font-weight:700;}
+.ex-muscle{font-size:.65rem;color:var(--amber);font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:var(--ad);padding:2px 7px;border-radius:10px;}
+.ex-sets{display:flex;gap:5px;flex-wrap:wrap;}
+.set-box{
+  display:flex;flex-direction:column;align-items:center;
+  background:var(--s3);border:1px solid var(--b1);border-radius:var(--Rx);
+  padding:6px 8px;min-width:64px;cursor:pointer;transition:all .12s;
+}
+.set-box.done{border-color:var(--green);background:var(--gd);}
+.set-box-lbl{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;}
+.set-box-val{font-family:var(--mono);font-size:.82rem;font-weight:500;}
+.set-box.done .set-box-val{color:var(--green);}
+.ex-add-set{padding:5px 10px;background:none;border:1px dashed var(--b2);border-radius:var(--Rx);color:var(--muted);font-size:.7rem;cursor:pointer;margin-top:4px;}
+.ex-add-set:active{border-color:var(--amber);color:var(--amber);}
+
+/* Nutrition panel */
+.macro-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;}
+.macro-card{background:var(--s2);border-radius:var(--Rs);padding:9px;text-align:center;position:relative;overflow:hidden;}
+.macro-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.macro-card.cal::before{background:var(--amber);}
+.macro-card.prot::before{background:var(--green);}
+.macro-card.carb::before{background:var(--blue);}
+.macro-card.fat::before{background:var(--red);}
+.macro-lbl{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;}
+.macro-val{font-family:var(--mono);font-size:.9rem;font-weight:500;}
+.macro-val.cal{color:var(--amber);}
+.macro-val.prot{color:var(--green);}
+.macro-val.carb{color:var(--blue);}
+.macro-val.fat{color:var(--red);}
+.macro-sub{font-size:.58rem;color:var(--muted);margin-top:1px;}
+
+/* Nutrition bar */
+.nutr-bar-row{margin-bottom:6px;}
+.nutr-bar-lbl{display:flex;justify-content:space-between;font-size:.68rem;color:var(--muted);margin-bottom:3px;}
+.nutr-bar-bg{background:var(--s3);border-radius:20px;height:6px;overflow:hidden;}
+.nutr-bar-fill{height:100%;border-radius:20px;transition:width .5s;}
+
+/* Workout summary */
+.workout-summary{background:var(--gd);border:1px solid var(--gb);border-radius:var(--Rs);padding:11px;margin-bottom:10px;display:none;}
+.ws-title{font-size:.72rem;font-weight:700;color:var(--green);margin-bottom:6px;}
+.ws-row{display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:3px;}
+.ws-key{color:var(--muted);}
+.ws-val{font-family:var(--mono);color:var(--green);font-weight:500;}
+
+/* Grocery from nutrition */
+.nutr-groc-item{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--b1);font-size:.82rem;}
+.nutr-groc-item:last-child{border-bottom:none;}
+.nutr-groc-food{display:flex;align-items:center;gap:7px;}
+.nutr-groc-qty{font-family:var(--mono);font-size:.75rem;color:var(--teal);}
+
+/* Set editor overlay */
+.set-ov{
+  position:fixed;bottom:0;left:0;right:0;z-index:300;
+  background:rgba(8,10,15,0.85);backdrop-filter:blur(8px);
+  display:none;padding:20px 14px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 80px);
+}
+.set-ov.show{display:block;}
+.set-ov-card{background:var(--s1);border:1px solid var(--b2);border-radius:var(--R);padding:16px;}
+.set-ov-title{font-size:.9rem;font-weight:800;margin-bottom:12px;}
+.set-ov-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
+.set-ov-field label{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:3px;}
+.set-ov-field input{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:var(--Rx);color:var(--text);font-family:var(--mono);font-size:1rem;padding:9px 10px;outline:none;text-align:center;}
+.set-ov-field input:focus{border-color:var(--amber);}
+.set-ov-actions{display:flex;gap:8px;}
+
+/* Tabs inside fitness page */
+.fit-tabs{display:flex;gap:5px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px;}
+.fit-tab{padding:6px 13px;border-radius:20px;border:1px solid var(--b2);background:transparent;color:var(--muted);cursor:pointer;font-size:.72rem;font-weight:700;white-space:nowrap;transition:all .15s;}
+.fit-tab.on{background:var(--ad);border-color:var(--amber);color:var(--amber);}
+
+/* ══ TRAINING TRACKER ══ */
+.prog-card{background:var(--s2);border:1px solid var(--b1);border-radius:var(--Rs);padding:12px;margin-bottom:8px;position:relative;}
+.prog-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.prog-card-name{font-size:.88rem;font-weight:700;}
+.prog-card-type{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:var(--ad);color:var(--amber);padding:2px 7px;border-radius:10px;}
+.prog-card-sub{font-size:.7rem;color:var(--muted);}
+.prog-card-del{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:4px;}
+.prog-card-del:active{color:var(--red);}
+.prog-card.active-prog{border-color:var(--green);background:rgba(31,209,122,0.05);}
+.prog-card.active-prog .prog-card-type{background:var(--gd);color:var(--green);}
+.prog-select-btn{padding:5px 10px;background:var(--s3);border:1px solid var(--b2);border-radius:var(--Rx);color:var(--muted2);font-size:.7rem;font-weight:700;cursor:pointer;transition:all .15s;margin-top:6px;}
+.prog-select-btn.active{background:var(--gd);border-color:var(--green);color:var(--green);}
+.prog-select-btn:active{opacity:.8;}
+
+/* Manual log form */
+.fit-log-form{background:var(--s2);border:1px solid var(--b1);border-radius:var(--Rs);padding:12px;margin-bottom:10px;}
+.fit-log-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;}
+.fit-log-inp{width:100%;background:var(--s3);border:1px solid var(--b2);border-radius:var(--Rx);color:var(--text);font-size:.82rem;padding:8px 10px;outline:none;transition:border-color .15s;}
+.fit-log-inp:focus{border-color:var(--amber);}
+.fit-log-inp::placeholder{color:var(--muted);}
+.fit-log-sel{width:100%;background:var(--s3);border:1px solid var(--b2);border-radius:var(--Rx);color:var(--text);font-size:.82rem;padding:8px 10px;outline:none;cursor:pointer;}
+.fit-log-textarea{width:100%;background:var(--s3);border:1px solid var(--b2);border-radius:var(--Rx);color:var(--text);font-size:.82rem;padding:8px 10px;outline:none;resize:none;font-family:var(--font);line-height:1.5;}
+.fit-log-textarea:focus{border-color:var(--amber);}
+.fit-log-textarea::placeholder{color:var(--muted);}
+
+/* Training log history */
+.tlog-item{background:var(--s2);border:1px solid var(--b1);border-radius:var(--Rs);padding:11px;margin-bottom:6px;}
+.tlog-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+.tlog-title{font-size:.85rem;font-weight:700;}
+.tlog-date{font-size:.68rem;color:var(--muted);font-family:var(--mono);}
+.tlog-tags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px;}
+.tlog-tag{font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:8px;border:1px solid var(--b2);color:var(--muted2);}
+.tlog-tag.intensity-high{background:var(--rd);border-color:var(--red);color:var(--red);}
+.tlog-tag.intensity-med{background:var(--ad);border-color:var(--amber);color:var(--amber);}
+.tlog-tag.intensity-low{background:var(--gd);border-color:var(--green);color:var(--green);}
+.tlog-tag.type-football{background:rgba(77,159,255,.12);border-color:var(--blue);color:var(--blue);}
+.tlog-tag.type-cardio{background:rgba(29,212,200,.12);border-color:var(--teal);color:var(--teal);}
+.tlog-notes{font-size:.75rem;color:var(--muted2);line-height:1.5;white-space:pre-wrap;}
+.tlog-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:3px;}
+.tlog-del:active{color:var(--red);}
+.tlog-stats{display:flex;gap:8px;margin-top:5px;}
+.tlog-stat{font-size:.7rem;color:var(--muted);display:flex;align-items:center;gap:3px;}
+.tlog-stat strong{color:var(--text);font-family:var(--mono);}
+
+/* Nutrition flow badges */
+.nutr-phase-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:12px;font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+.nutr-phase-badge.generic{background:var(--ad);color:var(--amber);}
+.nutr-phase-badge.specific{background:var(--gd);color:var(--green);}
+
+/* Profile grid extended */
+.fit-profile-ext{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;}
+.fit-prof-field label{font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px;}
+.fit-prof-field input,.fit-prof-field select{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:var(--Rx);color:var(--text);font-size:.85rem;padding:8px 10px;outline:none;transition:border-color .15s;}
+.fit-prof-field input:focus,.fit-prof-field select:focus{border-color:var(--amber);}
+
+/* Program type pill selector */
+.type-pills{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
+.type-pill{padding:5px 10px;border-radius:16px;border:1px solid var(--b2);background:transparent;color:var(--muted);cursor:pointer;font-size:.7rem;font-weight:700;transition:all .12s;}
+.type-pill.sel{background:var(--ad);border-color:var(--amber);color:var(--amber);}
+
+/* Section separator */
+.fit-sep{height:1px;background:var(--b1);margin:10px 0;}
+
+
+/* AI response box */
+.fit-ai-box{background:var(--s2);border:1px solid var(--b1);border-radius:var(--Rs);padding:11px;margin-top:8px;font-size:.8rem;line-height:1.6;color:var(--muted2);display:none;}
+.fit-ai-box.show{display:block;}
+.fit-ai-box strong{color:var(--text);}
+.fit-ai-spinner{text-align:center;padding:12px;color:var(--muted);font-size:.8rem;display:none;}
+.fit-ai-spinner.show{display:block;}
 </style>
 </head>
 <body>
@@ -549,6 +731,9 @@ input,select,textarea,button{font-family:var(--font);}
   <button class="t-btn" data-p="ai" onclick="goTab(this)">
     <div class="t-icon">🤖</div>AI
     <div class="t-badge" id="badge-ai"></div>
+  </button>
+  <button class="t-btn" data-p="fitness" onclick="goTab(this)">
+    <div class="t-icon">💪</div>Fitness
   </button>
   <button class="t-btn" data-p="theme" onclick="goTab(this)">
     <div class="t-icon">🎨</div>Theme
@@ -901,6 +1086,291 @@ input,select,textarea,button{font-family:var(--font);}
   </div>
 </div>
 
+<!-- ══════════ FITNESS PAGE ══════════ -->
+<div class="page" id="page-fitness">
+  <div class="ph">
+    <div class="ph-left"><h1>Fitness 💪</h1><div class="sub">Training · Nutrition · Grocery</div></div>
+  </div>
+  <div class="sw">
+
+    <!-- Inner tabs -->
+    <div class="fit-tabs">
+      <button class="fit-tab on" data-ft="program" onclick="fitTab(this)">🏋️ Programs</button>
+      <button class="fit-tab" data-ft="tracker" onclick="fitTab(this)">📋 Tracker</button>
+      <button class="fit-tab" data-ft="today" onclick="fitTab(this)">⚡ Today</button>
+      <button class="fit-tab" data-ft="nutrition" onclick="fitTab(this)">🥗 Nutrition</button>
+      <button class="fit-tab" data-ft="grocery" onclick="fitTab(this)">🛒 Grocery</button>
+    </div>
+
+    <!-- ═══ PROGRAM TAB ═══ -->
+    <div id="ft-program">
+
+      <!-- Extended Profile -->
+      <div class="fit-section">
+        <div class="fit-section-title">Body profile <span>used for calorie & macro calculations</span></div>
+        <div class="fit-profile-ext">
+          <div class="fit-prof-field"><label>Weight (kg)</label><input id="fit-weight" type="number" placeholder="75" inputmode="decimal" oninput="fitSaveProfile()"/></div>
+          <div class="fit-prof-field"><label>Height (cm)</label><input id="fit-height" type="number" placeholder="178" inputmode="decimal" oninput="fitSaveProfile()"/></div>
+          <div class="fit-prof-field"><label>Age</label><input id="fit-age" type="number" placeholder="25" inputmode="decimal" oninput="fitSaveProfile()"/></div>
+          <div class="fit-prof-field"><label>Gender</label>
+            <select id="fit-gender" onchange="fitSaveProfile()">
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+          <div class="fit-prof-field"><label>Goal</label>
+            <select id="fit-goal" onchange="fitSaveProfile()">
+              <option value="cut">Cut (lose fat)</option>
+              <option value="maintain">Maintain</option>
+              <option value="bulk" selected>Bulk (gain muscle)</option>
+            </select>
+          </div>
+          <div class="fit-prof-field"><label>Activity level</label>
+            <select id="fit-activity" onchange="fitSaveProfile()">
+              <option value="sedentary">Sedentary</option>
+              <option value="light">Light active</option>
+              <option value="moderate" selected>Moderately active</option>
+              <option value="very">Very active</option>
+              <option value="extra">Extra active</option>
+            </select>
+          </div>
+          <div class="fit-prof-field"><label>Dietary restrictions</label>
+            <select id="fit-diet" onchange="fitSaveProfile()">
+              <option value="none">None</option>
+              <option value="halal">Halal</option>
+              <option value="vegetarian">Vegetarian</option>
+              <option value="vegan">Vegan</option>
+              <option value="lactose">Lactose-free</option>
+              <option value="gluten">Gluten-free</option>
+            </select>
+          </div>
+          <div class="fit-prof-field"><label>Allergies / notes</label><input id="fit-allergies" type="text" placeholder="e.g. nuts, shellfish" oninput="fitSaveProfile()"/></div>
+        </div>
+        <div class="fit-profile" id="fit-profile-stats">
+          <div class="fit-stat"><div class="fit-stat-lbl">BMR</div><div class="fit-stat-val" id="fit-bmr">—</div></div>
+          <div class="fit-stat"><div class="fit-stat-lbl">TDEE</div><div class="fit-stat-val" id="fit-tdee">—</div></div>
+          <div class="fit-stat"><div class="fit-stat-lbl">Target kcal</div><div class="fit-stat-val" id="fit-target-cal">—</div></div>
+        </div>
+      </div>
+
+      <!-- Program Library -->
+      <div class="fit-section">
+        <div class="fit-section-title">Program library <span id="prog-count-lbl">0 programs</span></div>
+        <div id="fit-prog-library">
+          <div class="empty-state">No programs yet. Import one below!</div>
+        </div>
+      </div>
+
+      <!-- Import program -->
+      <div class="fit-section">
+        <div class="fit-section-title">Upload / import new program</div>
+        <div style="margin-bottom:8px;">
+          <div style="font-size:.65rem;color:var(--muted);margin-bottom:4px;">Program name</div>
+          <input class="fit-log-inp" id="fit-prog-name" type="text" placeholder="e.g. PPL 6-day, Football Season, Ramadan Cut…" style="width:100%;"/>
+        </div>
+        <div style="margin-bottom:8px;">
+          <div style="font-size:.65rem;color:var(--muted);margin-bottom:4px;">Program type</div>
+          <div class="type-pills" id="fit-prog-type-pills">
+            <button class="type-pill sel" data-pt="strength" onclick="selProgType(this)">🏋️ Strength</button>
+            <button class="type-pill" data-pt="cardio" onclick="selProgType(this)">🏃 Cardio</button>
+            <button class="type-pill" data-pt="crossfit" onclick="selProgType(this)">⚡ CrossFit/HIIT</button>
+            <button class="type-pill" data-pt="football" onclick="selProgType(this)">⚽ Football</button>
+            <button class="type-pill" data-pt="mixed" onclick="selProgType(this)">🔥 Mixed</button>
+          </div>
+        </div>
+        <div class="fit-import">
+          <textarea id="fit-program-text" placeholder="Paste a training program here — e.g.:&#10;&#10;Day 1 (Chest/Triceps): Bench Press 4x8, Incline DB Press 3x10&#10;Day 2 (Back/Biceps): Deadlift 4x5, Pull-ups 3x8&#10;Day 3: Rest&#10;...&#10;&#10;Or describe a football match week, HIIT plan, etc. AI will parse it."></textarea>
+          <div class="fit-import-actions">
+            <button class="fit-btn amber" onclick="fitParseAndSaveProgram()" style="flex:1;">🤖 Parse & Save Program</button>
+            <button class="fit-btn ghost" onclick="fitClearProgram()">Clear</button>
+          </div>
+        </div>
+        <div class="fit-ai-spinner" id="fit-parse-spinner">⏳ Parsing your program…</div>
+        <div class="fit-ai-box" id="fit-parse-result"></div>
+      </div>
+
+      <!-- Week view -->
+      <div class="fit-section" id="fit-week-section" style="display:none;">
+        <div class="fit-section-title">Active program — weekly schedule</div>
+        <div class="week-grid" id="fit-week-grid"></div>
+        <div id="fit-day-exercises"></div>
+      </div>
+
+    </div>
+
+    <!-- ═══ TRACKER TAB ═══ -->
+    <div id="ft-tracker" style="display:none;">
+
+      <!-- Log today's training manually -->
+      <div class="fit-section">
+        <div class="fit-section-title">Log today's training</div>
+        <div class="fit-log-form">
+          <div class="fit-log-grid">
+            <div>
+              <div style="font-size:.62rem;color:var(--muted);margin-bottom:3px;">Date</div>
+              <input class="fit-log-inp" id="tlog-date" type="date"/>
+            </div>
+            <div>
+              <div style="font-size:.62rem;color:var(--muted);margin-bottom:3px;">Activity type</div>
+              <select class="fit-log-sel" id="tlog-type">
+                <option value="strength">🏋️ Strength</option>
+                <option value="cardio">🏃 Cardio / Running</option>
+                <option value="crossfit">⚡ CrossFit / HIIT</option>
+                <option value="football">⚽ Football match</option>
+                <option value="mixed">🔥 Mixed</option>
+                <option value="rest">😴 Rest / Recovery</option>
+              </select>
+            </div>
+            <div>
+              <div style="font-size:.62rem;color:var(--muted);margin-bottom:3px;">Duration (min)</div>
+              <input class="fit-log-inp" id="tlog-duration" type="number" placeholder="60" inputmode="numeric"/>
+            </div>
+            <div>
+              <div style="font-size:.62rem;color:var(--muted);margin-bottom:3px;">Intensity</div>
+              <select class="fit-log-sel" id="tlog-intensity">
+                <option value="low">🟢 Low</option>
+                <option value="med" selected>🟡 Medium</option>
+                <option value="high">🔴 High</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-bottom:8px;">
+            <div style="font-size:.62rem;color:var(--muted);margin-bottom:3px;">Session title / description</div>
+            <input class="fit-log-inp" id="tlog-title" type="text" placeholder="e.g. Push day, 5km run, Football match vs team A…" style="width:100%;"/>
+          </div>
+          <div style="margin-bottom:8px;">
+            <div style="font-size:.62rem;color:var(--muted);margin-bottom:3px;">Exercises / notes (optional)</div>
+            <textarea class="fit-log-textarea" id="tlog-notes" rows="3" placeholder="Bench 4x8 @ 80kg, Squat 3x10 @ 100kg…&#10;Or: scored 2 goals, played 90 min, right wing…"></textarea>
+          </div>
+          <div class="fit-log-grid">
+            <div>
+              <div style="font-size:.62rem;color:var(--muted);margin-bottom:3px;">Est. calories burned</div>
+              <input class="fit-log-inp" id="tlog-kcal" type="number" placeholder="auto-estimate" inputmode="numeric"/>
+            </div>
+            <div>
+              <div style="font-size:.62rem;color:var(--muted);margin-bottom:3px;">Bodyweight today (kg)</div>
+              <input class="fit-log-inp" id="tlog-bw" type="number" placeholder="optional" inputmode="decimal"/>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:4px;">
+            <button class="fit-btn amber" onclick="fitLogSession()" style="flex:2;">✅ Log session</button>
+            <button class="fit-btn ghost" onclick="fitEstimateKcal()" style="flex:1;font-size:.7rem;">⚡ Estimate kcal</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI: specific nutrition for today -->
+      <div class="fit-section" id="tracker-nutr-section" style="display:none;">
+        <div class="fit-section-title">🥗 Specific nutrition for this session</div>
+        <div class="nutr-phase-badge specific">✅ Based on today's actual training</div>
+        <div class="fit-ai-spinner" id="tracker-nutr-spinner">⏳ Calculating your specific nutrition…</div>
+        <div class="fit-ai-box show" id="tracker-nutr-box">Log a session above to get your specific nutrition plan.</div>
+        <button class="fit-btn green full" style="margin-top:8px;" onclick="fitGetSpecificNutrition()">🤖 Get specific nutrition + grocery suggestions</button>
+      </div>
+
+      <!-- Training log history -->
+      <div class="fit-section">
+        <div class="fit-section-title">Training history <span id="tlog-count-lbl">0 sessions</span></div>
+        <div id="fit-tlog-list">
+          <div class="empty-state">No sessions logged yet. Log your first training above!</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══ TODAY TAB ═══ -->
+    <div id="ft-today" style="display:none;">
+
+      <div class="fit-section">
+        <div class="fit-section-title" id="fit-today-title">Today's workout</div>
+        <div id="fit-today-exercises">
+          <div class="empty-state">No program loaded yet — go to the Programs tab to import one.</div>
+        </div>
+      </div>
+
+      <!-- Workout done summary -->
+      <div class="workout-summary" id="fit-workout-summary">
+        <div class="ws-title">✅ Workout complete!</div>
+        <div class="ws-row"><span class="ws-key">Volume</span><span class="ws-val" id="ws-volume">0 kg total</span></div>
+        <div class="ws-row"><span class="ws-key">Sets done</span><span class="ws-val" id="ws-sets">0</span></div>
+        <div class="ws-row"><span class="ws-key">Est. calories burned</span><span class="ws-val" id="ws-burned">0 kcal</span></div>
+        <div class="ws-row"><span class="ws-key">Extra protein needed</span><span class="ws-val" id="ws-extra-prot">0 g</span></div>
+      </div>
+
+      <button class="fit-btn green full" id="fit-finish-btn" onclick="fitFinishWorkout()" style="margin-bottom:8px;">✅ Finish & calculate nutrition</button>
+
+    </div>
+
+
+    <!-- ═══ NUTRITION TAB ═══ -->
+    <div id="ft-nutrition" style="display:none;">
+
+      <div class="fit-section">
+        <div class="fit-section-title">Today's nutrition targets</div>
+        <div class="macro-grid">
+          <div class="macro-card cal"><div class="macro-lbl">Calories</div><div class="macro-val cal" id="nutr-cal">—</div><div class="macro-sub">kcal</div></div>
+          <div class="macro-card prot"><div class="macro-lbl">Protein</div><div class="macro-val prot" id="nutr-prot">—</div><div class="macro-sub">grams</div></div>
+          <div class="macro-card carb"><div class="macro-lbl">Carbs</div><div class="macro-val carb" id="nutr-carb">—</div><div class="macro-sub">grams</div></div>
+          <div class="macro-card fat"><div class="macro-lbl">Fat</div><div class="macro-val fat" id="nutr-fat">—</div><div class="macro-sub">grams</div></div>
+        </div>
+        <div class="nutr-bar-row"><div class="nutr-bar-lbl"><span>Protein</span><span id="nb-prot-lbl">0 / 0 g</span></div><div class="nutr-bar-bg"><div class="nutr-bar-fill" id="nb-prot" style="width:0%;background:var(--green);"></div></div></div>
+        <div class="nutr-bar-row"><div class="nutr-bar-lbl"><span>Carbs</span><span id="nb-carb-lbl">0 / 0 g</span></div><div class="nutr-bar-bg"><div class="nutr-bar-fill" id="nb-carb" style="width:0%;background:var(--blue);"></div></div></div>
+        <div class="nutr-bar-row"><div class="nutr-bar-lbl"><span>Fat</span><span id="nb-fat-lbl">0 / 0 g</span></div><div class="nutr-bar-bg"><div class="nutr-bar-fill" id="nb-fat" style="width:0%;background:var(--red);"></div></div></div>
+      </div>
+
+      <!-- GENERIC plan: based on program only -->
+      <div class="fit-section">
+        <div class="fit-section-title">📋 Generic plan <span id="nutr-day-type">from program</span></div>
+        <div class="nutr-phase-badge generic">📋 Based on program + goal — no daily training logged</div>
+        <div style="font-size:.72rem;color:var(--muted2);margin-bottom:8px;line-height:1.5;">This plan uses your loaded program and body profile. For a <strong style="color:var(--green)">specific plan</strong> adapted to today's actual training, go to the <strong>Tracker tab</strong>, log your session, then use "Get specific nutrition".</div>
+        <div class="fit-ai-spinner" id="nutr-spinner">⏳ Generating your meal plan…</div>
+        <div class="fit-ai-box show" id="nutr-meal-plan">Set up your profile and load a program first — then your generic meal plan will appear here.</div>
+        <button class="fit-btn amber full" style="margin-top:10px;" onclick="fitGenerateMealPlan()">🤖 Generate generic meal plan</button>
+      </div>
+
+    </div>
+
+    <!-- ═══ GROCERY TAB ═══ -->
+    <div id="ft-grocery" style="display:none;">
+
+      <div class="fit-section">
+        <div class="fit-section-title">Weekly grocery plan from your nutrition</div>
+        <div style="display:flex;gap:6px;margin-bottom:10px;">
+          <select class="cur-sel" id="fit-groc-days" style="min-width:unset;flex:1;">
+            <option value="3">3 days</option>
+            <option value="5">5 days</option>
+            <option value="7" selected>7 days (full week)</option>
+          </select>
+          <button class="fit-btn amber" onclick="fitGenerateGrocery()" style="flex:2;">🤖 Generate grocery list</button>
+        </div>
+        <div class="fit-ai-spinner" id="groc-fit-spinner">⏳ Building your grocery list…</div>
+        <div id="fit-groc-list">
+          <div class="empty-state">Generate your grocery list from your nutrition plan above.</div>
+        </div>
+        <button class="fit-btn green full" id="fit-groc-send" onclick="fitSendToGrocery()" style="margin-top:10px;display:none;">➕ Send to main Grocery list</button>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- SET EDITOR OVERLAY -->
+<div class="set-ov" id="set-ov" onclick="if(event.target===this)closeSetOv()">
+  <div class="set-ov-card">
+    <div class="set-ov-title" id="set-ov-title">Edit set</div>
+    <div class="set-ov-grid">
+      <div class="set-ov-field"><label>Weight (kg)</label><input id="set-weight" type="number" inputmode="decimal" placeholder="60"/></div>
+      <div class="set-ov-field"><label>Reps</label><input id="set-reps" type="number" inputmode="numeric" placeholder="8"/></div>
+      <div class="set-ov-field"><label>RIR</label><input id="set-rir" type="number" inputmode="numeric" placeholder="2"/></div>
+    </div>
+    <div class="set-ov-actions">
+      <button class="fit-btn ghost" onclick="closeSetOv()" style="flex:1;">Cancel</button>
+      <button class="fit-btn amber" onclick="saveSetOv()" style="flex:2;">✓ Mark done</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══════════ THEME PAGE ══════════ -->
 <div class="page" id="page-theme">
   <div class="ph">
@@ -1056,14 +1526,14 @@ const providers={
     call:async(key,sys,msg)=>{
       const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
         headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:700,system:sys,messages:[{role:'user',content:msg}]})});
+        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2500,system:sys,messages:[{role:'user',content:msg}]})});
       const d=await r.json();return d.content?.[0]?.text||d.error?.message||JSON.stringify(d);
     }},
   openai:{name:'OpenAI (GPT-4o)',ph:'sk-proj-… or sk-…',
     call:async(key,sys,msg)=>{
       const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-        body:JSON.stringify({model:'gpt-4o-mini',max_tokens:700,messages:[{role:'system',content:sys},{role:'user',content:msg}]})});
+        body:JSON.stringify({model:'gpt-4o-mini',max_tokens:2500,messages:[{role:'system',content:sys},{role:'user',content:msg}]})});
       const d=await r.json();return d.choices?.[0]?.message?.content||d.error?.message||JSON.stringify(d);
     }},
   gemini:{name:'Google Gemini',ph:'AIzaSy…',
@@ -1077,42 +1547,42 @@ const providers={
     call:async(key,sys,msg)=>{
       const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-        body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:700,messages:[{role:'system',content:sys},{role:'user',content:msg}]})});
+        body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:2500,messages:[{role:'system',content:sys},{role:'user',content:msg}]})});
       const d=await r.json();return d.choices?.[0]?.message?.content||d.error?.message||JSON.stringify(d);
     }},
   deepseek:{name:'DeepSeek',ph:'sk-…',
     call:async(key,sys,msg)=>{
       const r=await fetch('https://api.deepseek.com/v1/chat/completions',{method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-        body:JSON.stringify({model:'deepseek-chat',max_tokens:700,messages:[{role:'system',content:sys},{role:'user',content:msg}]})});
+        body:JSON.stringify({model:'deepseek-chat',max_tokens:2500,messages:[{role:'system',content:sys},{role:'user',content:msg}]})});
       const d=await r.json();return d.choices?.[0]?.message?.content||d.error?.message||JSON.stringify(d);
     }},
   openrouter:{name:'OpenRouter',ph:'sk-or-v1-…',
     call:async(key,sys,msg)=>{
       const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+key,'HTTP-Referer':'https://cebim.finance','X-Title':'Cebim'},
-        body:JSON.stringify({model:'anthropic/claude-3-haiku',max_tokens:700,messages:[{role:'system',content:sys},{role:'user',content:msg}]})});
+        body:JSON.stringify({model:'anthropic/claude-3-haiku',max_tokens:2500,messages:[{role:'system',content:sys},{role:'user',content:msg}]})});
       const d=await r.json();return d.choices?.[0]?.message?.content||d.error?.message||JSON.stringify(d);
     }},
   mistral:{name:'Mistral AI',ph:'…',
     call:async(key,sys,msg)=>{
       const r=await fetch('https://api.mistral.ai/v1/chat/completions',{method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-        body:JSON.stringify({model:'mistral-small-latest',max_tokens:700,messages:[{role:'system',content:sys},{role:'user',content:msg}]})});
+        body:JSON.stringify({model:'mistral-small-latest',max_tokens:2500,messages:[{role:'system',content:sys},{role:'user',content:msg}]})});
       const d=await r.json();return d.choices?.[0]?.message?.content||d.error?.message||JSON.stringify(d);
     }},
   cohere:{name:'Cohere',ph:'…',
     call:async(key,sys,msg)=>{
       const r=await fetch('https://api.cohere.ai/v1/chat',{method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-        body:JSON.stringify({model:'command-r-plus',max_tokens:700,system_prompt:sys,message:msg})});
+        body:JSON.stringify({model:'command-r-plus',max_tokens:2500,system_prompt:sys,message:msg})});
       const d=await r.json();return d.text||d.message||JSON.stringify(d);
     }},
   together:{name:'Together AI',ph:'…',
     call:async(key,sys,msg)=>{
       const r=await fetch('https://api.together.xyz/v1/chat/completions',{method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-        body:JSON.stringify({model:'meta-llama/Llama-3-70b-chat-hf',max_tokens:700,messages:[{role:'system',content:sys},{role:'user',content:msg}]})});
+        body:JSON.stringify({model:'meta-llama/Llama-3-70b-chat-hf',max_tokens:2500,messages:[{role:'system',content:sys},{role:'user',content:msg}]})});
       const d=await r.json();return d.choices?.[0]?.message?.content||d.error?.message||JSON.stringify(d);
     }},
 };
@@ -2027,7 +2497,7 @@ function resetTheme(){
 }
 
 // ══ SERVICE WORKER REGISTRATION ══
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
       .then(reg => console.log('SW registered:', reg.scope))
@@ -2055,6 +2525,763 @@ if(_fbCfg&&_fbCfg.apiKey&&_fbCfg.databaseURL&&_fbCfg.uid){
 render();
 renderGoals();
 renderGrocList();
+// fitness state declared below before fitInit()
+
+// ══════════════════════════════════════════
+// FITNESS MODULE
+// ══════════════════════════════════════════
+
+// ── State ──
+let fitProgram = JSON.parse(localStorage.getItem('fit_program')||'null');
+let fitProfile = JSON.parse(localStorage.getItem('fit_profile')||'null') || {weight:75,height:178,age:25,goal:'bulk'};
+let fitToday = JSON.parse(localStorage.getItem('fit_today')||'null');
+let fitGrocList = JSON.parse(localStorage.getItem('fit_groc_list')||'[]');
+let fitTrainingLog = JSON.parse(localStorage.getItem('fit_tlog')||'[]');
+let activeFitTab = 'program';
+let setOvTarget = null;
+
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const DAY_ICONS = {push:'🏋️',pull:'🤸',legs:'🦵',cardio:'🏃',upper:'💪',lower:'🦾',full:'⚡',rest:'😴',active:'🚶',crossfit:'⚡',football:'⚽',mixed:'🔥'};
+
+fitInit();
+
+function fitInit(){
+  if(fitProfile){
+    const el=id=>document.getElementById(id);
+    if(el('fit-weight'))el('fit-weight').value=fitProfile.weight||'';
+    if(el('fit-height'))el('fit-height').value=fitProfile.height||'';
+    if(el('fit-age'))el('fit-age').value=fitProfile.age||'';
+    if(el('fit-goal'))el('fit-goal').value=fitProfile.goal||'bulk';
+    if(el('fit-gender'))el('fit-gender').value=fitProfile.gender||'male';
+    if(el('fit-activity'))el('fit-activity').value=fitProfile.activity||'moderate';
+    if(el('fit-diet'))el('fit-diet').value=fitProfile.diet||'none';
+    if(el('fit-allergies'))el('fit-allergies').value=fitProfile.allergies||'';
+    fitCalcProfile();
+  }
+  // Set today's date in tracker
+  const tlogDate=document.getElementById('tlog-date');
+  if(tlogDate) tlogDate.value=today();
+  if(fitProgram) fitRenderWeek();
+  fitRenderProgLibrary();
+  fitRenderToday();
+  fitRenderNutrition();
+  fitRenderTlog();
+}
+
+// ── Tab switching ──
+function fitTab(btn){
+  document.querySelectorAll('.fit-tab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  activeFitTab = btn.dataset.ft;
+  ['program','tracker','today','nutrition','grocery'].forEach(t=>{
+    const el=document.getElementById('ft-'+t);
+    if(el) el.style.display = t===activeFitTab?'':'none';
+  });
+  if(activeFitTab==='tracker') fitRenderTlog();
+  if(activeFitTab==='today') fitRenderToday();
+  if(activeFitTab==='nutrition') fitRenderNutrition();
+  if(activeFitTab==='grocery') fitRenderGrocFromStorage();
+  if(activeFitTab==='program') fitRenderProgLibrary();
+}
+
+// ── Profile ──
+function fitSaveProfile(){
+  fitProfile={
+    weight:+document.getElementById('fit-weight').value||75,
+    height:+document.getElementById('fit-height').value||178,
+    age:+document.getElementById('fit-age').value||25,
+    goal:document.getElementById('fit-goal').value,
+    gender:document.getElementById('fit-gender').value||'male',
+    activity:document.getElementById('fit-activity').value||'moderate',
+    diet:document.getElementById('fit-diet').value||'none',
+    allergies:document.getElementById('fit-allergies').value||''
+  };
+  localStorage.setItem('fit_profile',JSON.stringify(fitProfile));
+  fitCalcProfile();
+}
+
+function fitCalcProfile(){
+  if(!fitProfile||!fitProfile.weight) return;
+  const {weight,height,age,goal,gender,activity}=fitProfile;
+  // Mifflin-St Jeor BMR
+  const bmr = gender==='female'
+    ? Math.round(10*weight + 6.25*height - 5*age - 161)
+    : Math.round(10*weight + 6.25*height - 5*age + 5);
+  const actMults={sedentary:1.2,light:1.375,moderate:1.55,very:1.725,extra:1.9};
+  const mult = actMults[activity||'moderate'] || 1.55;
+  const tdee = Math.round(bmr * mult);
+  const targetCal = goal==='cut' ? Math.round(tdee-400) : goal==='bulk' ? Math.round(tdee+300) : tdee;
+  const el=id=>document.getElementById(id);
+  if(el('fit-bmr'))el('fit-bmr').textContent = bmr;
+  if(el('fit-tdee'))el('fit-tdee').textContent = tdee;
+  if(el('fit-target-cal'))el('fit-target-cal').textContent = targetCal;
+}
+
+function fitGetMacros(isWorkoutDay, extraBurn){
+  if(!fitProfile) return {cal:2000,prot:150,carb:220,fat:65};
+  const {weight,goal}=fitProfile;
+  const bmr = Math.round(10*fitProfile.weight + 6.25*fitProfile.height - 5*fitProfile.age + 5);
+  const tdee = Math.round(bmr * (isWorkoutDay ? 1.55 : 1.375));
+  let cal = goal==='cut' ? tdee-400 : goal==='bulk' ? tdee+300 : tdee;
+  cal += (extraBurn||0) * 0.3; // eat back 30% of workout calories
+  cal = Math.round(cal);
+  const prot = Math.round(weight * (isWorkoutDay ? 2.2 : 1.8));
+  const fat = Math.round(cal * 0.28 / 9);
+  const carb = Math.round((cal - prot*4 - fat*9) / 4);
+  return {cal, prot, carb:Math.max(0,carb), fat};
+}
+
+// ── Parse & SAVE program into library ──
+async function fitParseAndSaveProgram(){
+  await fitParseProgram(); // existing parse logic sets fitProgram
+  // After parse, also save to library
+  if(!fitProgram) return;
+  const name = document.getElementById('fit-prog-name').value.trim() || fitProgram.programName || 'Unnamed Program';
+  const typePill = document.querySelector('#fit-prog-type-pills .type-pill.sel');
+  const ptype = typePill ? typePill.dataset.pt : 'strength';
+  fitProgram.savedName = name;
+  fitProgram.savedType = ptype;
+  fitProgram.savedAt = Date.now();
+  // Save to library
+  let lib = JSON.parse(localStorage.getItem('fit_prog_lib')||'[]');
+  lib.push({id: Date.now(), name, type: ptype, program: fitProgram, active: true, savedAt: Date.now()});
+  // Mark others inactive
+  lib.forEach((p,i)=>{ if(i<lib.length-1) p.active=false; });
+  localStorage.setItem('fit_prog_lib', JSON.stringify(lib));
+  fitRenderProgLibrary();
+}
+
+// ── Program type selector ──
+function selProgType(el){
+  document.querySelectorAll('#fit-prog-type-pills .type-pill').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+// ── Render program library ──
+function fitRenderProgLibrary(){
+  const lib = JSON.parse(localStorage.getItem('fit_prog_lib')||'[]');
+  const container = document.getElementById('fit-prog-library');
+  const countLbl = document.getElementById('prog-count-lbl');
+  if(!container) return;
+  if(countLbl) countLbl.textContent = lib.length+' program'+(lib.length!==1?'s':'');
+  if(!lib.length){
+    container.innerHTML='<div class="empty-state">No programs saved yet. Import one below!</div>';
+    return;
+  }
+  const typeIcons={strength:'🏋️',cardio:'🏃',crossfit:'⚡',football:'⚽',mixed:'🔥'};
+  container.innerHTML = lib.slice().reverse().map((p,revIdx)=>{
+    const realIdx = lib.length-1-revIdx;
+    const d = new Date(p.savedAt);
+    const ds = d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
+    const days = p.program && p.program.days ? p.program.days.filter(d=>d.type!=='rest').length : '?';
+    return `<div class="prog-card ${p.active?'active-prog':''}">
+      <div class="prog-card-head">
+        <div class="prog-card-name">${typeIcons[p.type]||'🏋️'} ${p.name}</div>
+        <div class="prog-card-type">${p.active?'✅ Active':p.type}</div>
+      </div>
+      <div class="prog-card-sub">${days} training days/week · saved ${ds}</div>
+      <button class="prog-select-btn ${p.active?'active':''}" onclick="fitSetActiveProgram(${realIdx})">${p.active?'✅ Currently active':'Set as active'}</button>
+      <button class="prog-card-del" onclick="fitDelProgram(${realIdx})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// ── Set active program ──
+function fitSetActiveProgram(idx){
+  let lib = JSON.parse(localStorage.getItem('fit_prog_lib')||'[]');
+  lib.forEach((p,i)=>p.active = i===idx);
+  fitProgram = lib[idx].program;
+  localStorage.setItem('fit_prog_lib', JSON.stringify(lib));
+  localStorage.setItem('fit_program', JSON.stringify(fitProgram));
+  fitRenderWeek();
+  fitRenderProgLibrary();
+  fitCalcProfile();
+}
+
+// ── Delete program from library ──
+function fitDelProgram(idx){
+  if(!confirm('Delete this program?')) return;
+  let lib = JSON.parse(localStorage.getItem('fit_prog_lib')||'[]');
+  lib.splice(idx,1);
+  if(lib.length && lib[lib.length-1]){lib[lib.length-1].active=true; fitProgram=lib[lib.length-1].program; localStorage.setItem('fit_program',JSON.stringify(fitProgram));}
+  else{fitProgram=null; localStorage.removeItem('fit_program');}
+  localStorage.setItem('fit_prog_lib', JSON.stringify(lib));
+  fitRenderProgLibrary();
+  fitRenderWeek();
+}
+
+
+async function fitParseProgram(){
+  const text = document.getElementById('fit-program-text').value.trim();
+  if(!text){alert('Please paste a training program first.');return;}
+  const key = localStorage.getItem('cem3_key_'+curProv);
+  if(!key){alert('No API key saved for '+providers[curProv].name+'. Go to the AI tab and save your key first.');return;}
+
+  document.getElementById('fit-parse-spinner').classList.add('show');
+  document.getElementById('fit-parse-result').classList.remove('show');
+
+  // Tight system prompt — pure JSON, no prose
+  const sys = `You are a JSON converter for training programs. Your ONLY output is a single raw JSON object — no markdown, no backticks, no explanation, no text before or after the JSON.
+
+Output schema (strict):
+{"programName":"string","days":[{"dayNum":1,"name":"Push Day","type":"push","icon":"💪","exercises":[{"name":"Bench Press","muscle":"Chest","sets":[{"weight":80,"reps":8},{"weight":80,"reps":8}]}]}]}
+
+Types allowed: push, pull, legs, upper, lower, full, cardio, crossfit, football, rest, active
+Rules:
+- Always output EXACTLY 7 days (Mon=1 to Sun=7)
+- Rest/recovery days: type "rest", exercises []
+- Football match days: type "football", list drills or match as exercises
+- If weight unknown, use 0
+- Keep exercise names short (max 4 words)
+- Start your output with { immediately`;
+
+  const userMsg = `Convert this training program to JSON now:\n\n${text}\n\nJSON output:`;
+
+  try{
+    // Call API directly with 4000 tokens — bypasses the generic 2500 limit
+    let raw = await fitHighTokenCall(key, sys, userMsg, 4000);
+
+    // Aggressive cleanup
+    raw = raw.trim();
+    // Strip any markdown fences
+    raw = raw.replace(/^```[\w]*\s*/,'').replace(/\s*```$/,'').trim();
+    // Strip any leading prose before the JSON object
+    const jsonStart = raw.indexOf('{');
+    if(jsonStart === -1) throw new Error('Model returned no JSON. Try a different provider or simplify your program text.');
+    raw = raw.slice(jsonStart);
+    // Strip trailing prose after the JSON
+    const jsonEnd = raw.lastIndexOf('}');
+    if(jsonEnd === -1) throw new Error('JSON appears cut off — try shortening your program or switching provider.');
+    raw = raw.slice(0, jsonEnd + 1);
+    // Fix unclosed arrays
+    let arrOpen=0, arrClose=0;
+    for(const ch of raw){if(ch==='[')arrOpen++;if(ch===']')arrClose++;}
+    while(arrClose<arrOpen){raw+=']';arrClose++;}
+    // Fix unclosed objects
+    let objOpen=0, objClose=0;
+    for(const ch of raw){if(ch==='{')objOpen++;if(ch==='}')objClose++;}
+    while(objClose<objOpen){raw+='}';objClose++;}
+    // Remove trailing commas
+    raw = raw.replace(/,(\s*[}\]])/g,'$1');
+
+    fitProgram = JSON.parse(raw);
+    if(!fitProgram.days || !Array.isArray(fitProgram.days)) throw new Error('Invalid JSON structure — missing days array.');
+
+    // Pad to exactly 7 days
+    while(fitProgram.days.length < 7){
+      fitProgram.days.push({dayNum:fitProgram.days.length+1,name:'Rest',type:'rest',icon:'😴',exercises:[]});
+    }
+    fitProgram.days = fitProgram.days.slice(0,7);
+    fitProgram.days.forEach(d=>{if(!d.exercises)d.exercises=[];});
+
+    localStorage.setItem('fit_program', JSON.stringify(fitProgram));
+    document.getElementById('fit-parse-spinner').classList.remove('show');
+    const box = document.getElementById('fit-parse-result');
+    box.classList.add('show');
+    const trainDays = fitProgram.days.filter(d=>d.type!=='rest').length;
+    const totalEx = fitProgram.days.reduce((s,d)=>s+(d.exercises||[]).length,0);
+    box.innerHTML = `<strong>✅ ${fitProgram.programName||'Program'} loaded!</strong><br>${trainDays} training days/week · ${totalEx} exercises total`;
+    document.getElementById('fit-week-section').style.display='';
+    fitRenderWeek();
+    fitRenderToday();
+  }catch(e){
+    document.getElementById('fit-parse-spinner').classList.remove('show');
+    const box = document.getElementById('fit-parse-result');
+    box.classList.add('show');
+    box.innerHTML = `❌ ${e.message}<br><small style="color:var(--muted)">Provider: ${providers[curProv].name}. Tip: try Anthropic or OpenAI for best JSON accuracy.</small>`;
+  }
+}
+
+// ── High-token direct API call (bypasses generic 2500 limit) ──
+async function fitHighTokenCall(key, sys, msg, maxTokens){
+  // Route to correct provider endpoint with higher token limit
+  const prov = curProv;
+  let raw = '';
+  if(prov==='anthropic'){
+    const r = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:maxTokens,system:sys,messages:[{role:'user',content:msg}]})});
+    const d = await r.json();
+    raw = d.content?.[0]?.text || d.error?.message || JSON.stringify(d);
+  } else if(prov==='openai'){
+    const r = await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify({model:'gpt-4o',max_tokens:maxTokens,messages:[{role:'system',content:sys},{role:'user',content:msg}]})});
+    const d = await r.json();
+    raw = d.choices?.[0]?.message?.content || d.error?.message || JSON.stringify(d);
+  } else if(prov==='gemini'){
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:sys+'\n\n'+msg}]}],generationConfig:{maxOutputTokens:maxTokens}})});
+    const d = await r.json();
+    raw = d.candidates?.[0]?.content?.parts?.[0]?.text || d.error?.message || JSON.stringify(d);
+  } else if(prov==='groq'){
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:Math.min(maxTokens,8000),messages:[{role:'system',content:sys},{role:'user',content:msg}]})});
+    const d = await r.json();
+    raw = d.choices?.[0]?.message?.content || d.error?.message || JSON.stringify(d);
+  } else if(prov==='deepseek'){
+    const r = await fetch('https://api.deepseek.com/v1/chat/completions',{method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify({model:'deepseek-chat',max_tokens:maxTokens,messages:[{role:'system',content:sys},{role:'user',content:msg}]})});
+    const d = await r.json();
+    raw = d.choices?.[0]?.message?.content || d.error?.message || JSON.stringify(d);
+  } else {
+    // Fallback to generic call for other providers
+    raw = await providers[prov].call(key, sys, msg);
+  }
+  return raw;
+}
+
+function fitClearProgram(){
+  document.getElementById('fit-program-text').value='';
+  document.getElementById('fit-parse-result').classList.remove('show');
+}
+
+// ── Week render ──
+function fitRenderWeek(){
+  if(!fitProgram) return;
+  document.getElementById('fit-week-section').style.display='';
+  const grid = document.getElementById('fit-week-grid');
+  grid.innerHTML='';
+  const todayDow = (new Date().getDay()+6)%7; // 0=Mon
+  fitProgram.days.forEach((day,i)=>{
+    const pill=document.createElement('div');
+    const isRest=day.type==='rest';
+    const isDone=JSON.parse(localStorage.getItem('fit_done_'+_fitDateKey())||'[]').includes(i);
+    pill.className='day-pill'+(isRest?' rest':'')+(isDone?' done':'')+(i===todayDow?' active':'');
+    pill.innerHTML=`<div class="day-pill-name">${DAYS[i]}</div><div class="day-pill-icon">${isDone?'✅':(DAY_ICONS[day.type]||'💪')}</div>`;
+    if(!isRest) pill.onclick=()=>fitShowDayExercises(i);
+    grid.appendChild(pill);
+  });
+}
+
+function fitShowDayExercises(dayIdx){
+  const day = fitProgram.days[dayIdx];
+  const container = document.getElementById('fit-day-exercises');
+  container.innerHTML=`<div style="font-size:.75rem;color:var(--muted);margin:8px 0 6px;">${DAYS[dayIdx]} — ${day.name}</div>`;
+  (day.exercises||[]).forEach(ex=>{
+    const el=document.createElement('div');
+    el.className='ex-item';
+    el.innerHTML=`<div class="ex-head"><div class="ex-name">${ex.name}</div><div class="ex-muscle">${ex.muscle||''}</div></div>
+    <div class="ex-sets">${(ex.sets||[]).map((s,si)=>`<div class="set-box"><div class="set-box-lbl">Set ${si+1}</div><div class="set-box-val">${s.weight?s.weight+'kg':'—'} × ${s.reps||'?'}</div></div>`).join('')}</div>`;
+    container.appendChild(el);
+  });
+}
+
+function _fitDateKey(){return new Date().toISOString().slice(0,10);}
+
+// ── Today tab ──
+function fitRenderToday(){
+  const todayDow = (new Date().getDay()+6)%7;
+  const title = document.getElementById('fit-today-title');
+  const container = document.getElementById('fit-today-exercises');
+  const finBtn = document.getElementById('fit-finish-btn');
+
+  if(!fitProgram){
+    if(title) title.textContent = "Today's workout";
+    if(container) container.innerHTML='<div class="empty-state">No program loaded yet — go to the <strong>Program tab</strong> to paste and import your program.</div>';
+    if(finBtn) finBtn.style.display='none';
+    return;
+  }
+  const day = fitProgram.days[todayDow];
+  if(!day||day.type==='rest'){
+    if(title) title.textContent='Rest day 😴';
+    if(container) container.innerHTML='<div class="empty-state">Today is a rest day. Recovery is part of the program! 💤</div>';
+    if(finBtn) finBtn.style.display='none';
+    return;
+  }
+  if(title) title.textContent=`${day.name} — ${DAYS[todayDow]}`;
+  if(finBtn) finBtn.style.display='';
+  const sessionKey='fit_session_'+_fitDateKey();
+  let session=JSON.parse(localStorage.getItem(sessionKey)||'null');
+  if(!session){
+    session={dayIdx:todayDow, exercises:JSON.parse(JSON.stringify(day.exercises||[]))};
+    localStorage.setItem(sessionKey,JSON.stringify(session));
+  }
+  if(!container) return;
+  container.innerHTML='';
+  session.exercises.forEach((ex,ei)=>{
+    const el=document.createElement('div');
+    el.className='ex-item';
+    el.innerHTML=`<div class="ex-head"><div class="ex-name">${ex.name}</div><div class="ex-muscle">${ex.muscle||''}</div></div>
+    <div class="ex-sets" id="sets-${ei}">${(ex.sets||[]).map((s,si)=>`<div class="set-box${s.done?' done':''}" onclick="openSetOv(${todayDow},${ei},${si})">
+      <div class="set-box-lbl">Set ${si+1}</div>
+      <div class="set-box-val">${s.done?(s.weight||0)+'kg×'+(s.reps||0):(s.weight?s.weight+'kg':'—')+'×'+(s.reps||'?')}</div>
+    </div>`).join('')}</div>
+    <button class="ex-add-set" onclick="fitAddSet(${ei})">+ Add set</button>`;
+    container.appendChild(el);
+  });
+}
+
+function openSetOv(dayIdx, exIdx, setIdx){
+  setOvTarget={dayIdx,exIdx,setIdx};
+  const sessionKey='fit_session_'+_fitDateKey();
+  const session=JSON.parse(localStorage.getItem(sessionKey)||'null');
+  const set=session?session.exercises[exIdx].sets[setIdx]:{};
+  document.getElementById('set-ov-title').textContent=session?`${session.exercises[exIdx].name} — Set ${setIdx+1}`:'Edit set';
+  document.getElementById('set-weight').value=set.weight||'';
+  document.getElementById('set-reps').value=set.reps||'';
+  document.getElementById('set-rir').value=set.rir||'';
+  document.getElementById('set-ov').classList.add('show');
+}
+function closeSetOv(){document.getElementById('set-ov').classList.remove('show');setOvTarget=null;}
+function saveSetOv(){
+  if(!setOvTarget) return;
+  const {dayIdx,exIdx,setIdx}=setOvTarget;
+  const sessionKey='fit_session_'+_fitDateKey();
+  const session=JSON.parse(localStorage.getItem(sessionKey)||'null');
+  if(!session) return;
+  session.exercises[exIdx].sets[setIdx]={
+    weight:+document.getElementById('set-weight').value||0,
+    reps:+document.getElementById('set-reps').value||0,
+    rir:+document.getElementById('set-rir').value||2,
+    done:true
+  };
+  localStorage.setItem(sessionKey,JSON.stringify(session));
+  closeSetOv();
+  fitRenderToday();
+}
+function fitAddSet(exIdx){
+  const sessionKey='fit_session_'+_fitDateKey();
+  const session=JSON.parse(localStorage.getItem(sessionKey)||'null');
+  if(!session) return;
+  const lastSet=session.exercises[exIdx].sets.slice(-1)[0]||{weight:0,reps:8};
+  session.exercises[exIdx].sets.push({weight:lastSet.weight,reps:lastSet.reps,done:false});
+  localStorage.setItem(sessionKey,JSON.stringify(session));
+  fitRenderToday();
+}
+
+function fitFinishWorkout(){
+  const sessionKey='fit_session_'+_fitDateKey();
+  const session=JSON.parse(localStorage.getItem(sessionKey)||'null');
+  if(!session){return;}
+  let totalVol=0,totalSets=0;
+  session.exercises.forEach(ex=>{ex.sets.forEach(s=>{if(s.done){totalVol+=s.weight*s.reps;totalSets++;}});});
+  const burned=Math.round(totalVol*0.05 + totalSets*8);
+  const extraProt=Math.round(totalVol/1000 * 2.5 + totalSets*0.5);
+  const summary=document.getElementById('fit-workout-summary');
+  summary.style.display='block';
+  document.getElementById('ws-volume').textContent=totalVol.toLocaleString()+' kg total';
+  document.getElementById('ws-sets').textContent=totalSets+' sets';
+  document.getElementById('ws-burned').textContent=burned+' kcal';
+  document.getElementById('ws-extra-prot').textContent='+'+extraProt+' g';
+  // mark day done
+  const doneKey='fit_done_'+_fitDateKey();
+  const todayDow=(new Date().getDay()+6)%7;
+  const done=JSON.parse(localStorage.getItem(doneKey)||'[]');
+  if(!done.includes(todayDow)){done.push(todayDow);localStorage.setItem(doneKey,JSON.stringify(done));}
+  // save workout result for nutrition calc
+  localStorage.setItem('fit_last_workout',JSON.stringify({date:_fitDateKey(),burned,extraProt,sets:totalSets,vol:totalVol}));
+  fitRenderWeek();
+}
+
+// ══════════════════════════════════
+// TRAINING TRACKER MODULE
+// ══════════════════════════════════
+
+// ── Estimate kcal from activity type, duration, intensity, weight ──
+function fitEstimateKcal(){
+  const type = document.getElementById('tlog-type').value;
+  const dur = +document.getElementById('tlog-duration').value || 60;
+  const intensity = document.getElementById('tlog-intensity').value;
+  const bw = +document.getElementById('tlog-bw').value || (fitProfile&&fitProfile.weight) || 75;
+  // MET values
+  const METs = {
+    strength: {low:3,med:5,high:6},
+    cardio:   {low:6,med:9,high:12},
+    crossfit: {low:7,med:10,high:14},
+    football: {low:6,med:9,high:11},
+    mixed:    {low:5,med:7,high:10},
+    rest:     {low:1,med:1,high:1},
+  };
+  const met = (METs[type]||METs.mixed)[intensity] || 7;
+  const kcal = Math.round((met * bw * dur) / 60);
+  document.getElementById('tlog-kcal').value = kcal;
+}
+
+// ── Log a training session ──
+function fitLogSession(){
+  const date = document.getElementById('tlog-date').value || today();
+  const type = document.getElementById('tlog-type').value;
+  const dur = +document.getElementById('tlog-duration').value || 0;
+  const intensity = document.getElementById('tlog-intensity').value;
+  const title = document.getElementById('tlog-title').value.trim() || 'Training session';
+  const notes = document.getElementById('tlog-notes').value.trim();
+  const kcal = +document.getElementById('tlog-kcal').value || 0;
+  const bw = +document.getElementById('tlog-bw').value || 0;
+
+  // Auto-estimate kcal if not provided
+  let finalKcal = kcal;
+  if(!finalKcal && type!=='rest'){
+    const bwForCalc = bw || (fitProfile&&fitProfile.weight) || 75;
+    const METs={strength:{low:3,med:5,high:6},cardio:{low:6,med:9,high:12},crossfit:{low:7,med:10,high:14},football:{low:6,med:9,high:11},mixed:{low:5,med:7,high:10},rest:{low:1,med:1,high:1}};
+    const met=(METs[type]||METs.mixed)[intensity]||7;
+    finalKcal=Math.round((met*bwForCalc*(dur||60))/60);
+  }
+
+  const session = {
+    id: Date.now(),
+    date, type, dur, intensity, title, notes,
+    kcal: finalKcal, bw,
+    savedAt: Date.now()
+  };
+
+  fitTrainingLog.unshift(session);
+  localStorage.setItem('fit_tlog', JSON.stringify(fitTrainingLog));
+  localStorage.setItem('fit_last_workout', JSON.stringify({date, burned:finalKcal, extraProt:Math.round((fitProfile&&fitProfile.weight||75)*0.4), sets:0, vol:0}));
+
+  // Update bodyweight in profile if provided
+  if(bw && fitProfile){fitProfile.weight=bw; localStorage.setItem('fit_profile',JSON.stringify(fitProfile));}
+
+  // Clear form
+  document.getElementById('tlog-title').value='';
+  document.getElementById('tlog-notes').value='';
+  document.getElementById('tlog-kcal').value='';
+  document.getElementById('tlog-bw').value='';
+  document.getElementById('tlog-date').value=today();
+
+  fitRenderTlog();
+
+  // Show specific nutrition section
+  document.getElementById('tracker-nutr-section').style.display='';
+  document.getElementById('tracker-nutr-box').innerHTML='✅ Session logged! Click below to get your specific nutrition plan + grocery list for today.';
+
+  // Auto-generate nutrition for the session
+  setTimeout(()=>fitGetSpecificNutrition(), 400);
+}
+
+// ── Render training log list ──
+function fitRenderTlog(){
+  const container = document.getElementById('fit-tlog-list');
+  const countLbl = document.getElementById('tlog-count-lbl');
+  if(!container) return;
+  if(countLbl) countLbl.textContent = fitTrainingLog.length+' session'+(fitTrainingLog.length!==1?'s':'');
+  if(!fitTrainingLog.length){
+    container.innerHTML='<div class="empty-state">No sessions logged yet. Log your first training above!</div>';
+    return;
+  }
+  const typeIcons={strength:'🏋️',cardio:'🏃',crossfit:'⚡',football:'⚽',mixed:'🔥',rest:'😴'};
+  const intClass={low:'intensity-low',med:'intensity-med',high:'intensity-high'};
+  const typeClass={football:'type-football',cardio:'type-cardio'};
+  container.innerHTML = fitTrainingLog.slice(0,30).map(s=>{
+    const d=new Date(s.date+'T00:00:00');
+    const ds=d.getDate()+'/'+(d.getMonth()+1);
+    const stats=[];
+    if(s.dur)stats.push(`<span class="tlog-stat">⏱ <strong>${s.dur}min</strong></span>`);
+    if(s.kcal)stats.push(`<span class="tlog-stat">🔥 <strong>${s.kcal} kcal</strong></span>`);
+    if(s.bw)stats.push(`<span class="tlog-stat">⚖️ <strong>${s.bw}kg</strong></span>`);
+    return `<div class="tlog-item">
+      <div class="tlog-head">
+        <div class="tlog-title">${typeIcons[s.type]||'💪'} ${s.title}</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div class="tlog-date">${ds}</div>
+          <button class="tlog-del" onclick="fitDelTlog(${s.id})">✕</button>
+        </div>
+      </div>
+      <div class="tlog-tags">
+        <span class="tlog-tag ${intClass[s.intensity]||''}">${s.intensity==='high'?'🔴 High':s.intensity==='med'?'🟡 Medium':'🟢 Low'} intensity</span>
+        <span class="tlog-tag ${typeClass[s.type]||''}">${s.type}</span>
+      </div>
+      ${stats.length?`<div class="tlog-stats">${stats.join('')}</div>`:''}
+      ${s.notes?`<div class="tlog-notes" style="margin-top:5px;">${s.notes}</div>`:''}
+    </div>`;
+  }).join('');
+  // Show specific nutrition section if recent session today
+  const todaySession = fitTrainingLog.find(s=>s.date===today());
+  if(todaySession) document.getElementById('tracker-nutr-section').style.display='';
+}
+
+// ── Delete log entry ──
+function fitDelTlog(id){
+  fitTrainingLog = fitTrainingLog.filter(s=>s.id!==id);
+  localStorage.setItem('fit_tlog', JSON.stringify(fitTrainingLog));
+  fitRenderTlog();
+}
+
+// ── Get SPECIFIC nutrition based on today's logged session ──
+async function fitGetSpecificNutrition(){
+  const key = localStorage.getItem('cem3_key_'+curProv);
+  if(!key){alert('No API key saved. Go to the AI tab first.');return;}
+  if(!fitProfile||!fitProfile.weight){alert('Please fill in your body profile in the Programs tab first.');return;}
+
+  const todaySession = fitTrainingLog.find(s=>s.date===today()) || fitTrainingLog[0];
+  if(!todaySession){alert('No training session found. Log your session above first.');return;}
+
+  document.getElementById('tracker-nutr-spinner').classList.add('show');
+  document.getElementById('tracker-nutr-box').classList.remove('show');
+
+  const {weight,height,age,goal,gender,diet,allergies,activity}=fitProfile;
+  const dietNote = diet&&diet!=='none'?`Dietary requirement: ${diet}.`:'';
+  const allergyNote = allergies?`Allergies/avoid: ${allergies}.`:'';
+
+  const sys='You are an elite sports nutritionist. Give precise, practical nutrition advice. Use foods available in Algeria/Turkey (chicken, eggs, rice, bread, lentils, chickpeas, dates, olive oil, yogurt, vegetables). Format with meal names bolded (**Meal:**), include macros per meal in parentheses. End with a short grocery list of exactly 8 key items with quantities.';
+
+  const msg=`Create a SPECIFIC nutrition plan for TODAY based on this ACTUAL session:
+Session: ${todaySession.title}
+Type: ${todaySession.type} | Intensity: ${todaySession.intensity} | Duration: ${todaySession.dur||60} min | Est. kcal burned: ${todaySession.kcal||'unknown'}
+Notes: ${todaySession.notes||'none'}
+
+Athlete profile:
+- Weight: ${weight}kg | Height: ${height}cm | Age: ${age} | Gender: ${gender||'male'}
+- Goal: ${goal} | Activity level: ${activity||'moderate'}
+- ${dietNote} ${allergyNote}
+
+Provide: 4 optimized meals with exact portions, total macros, pre/post workout timing advice, and hydration target. Then list 8 grocery items needed.`;
+
+  try{
+    const text = await providers[curProv].call(key, sys, msg);
+    document.getElementById('tracker-nutr-spinner').classList.remove('show');
+    const box = document.getElementById('tracker-nutr-box');
+    box.classList.add('show');
+    box.innerHTML = text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    // Save for grocery tab
+    localStorage.setItem('fit_last_specific_nutr', text);
+  }catch(e){
+    document.getElementById('tracker-nutr-spinner').classList.remove('show');
+    const box=document.getElementById('tracker-nutr-box');
+    box.classList.add('show');
+    box.innerHTML='❌ Error: '+e.message;
+  }
+}
+
+// ── Nutrition ──
+function fitRenderNutrition(){
+  const todayDow=(new Date().getDay()+6)%7;
+  const isWorkoutDay=fitProgram && fitProgram.days[todayDow] && fitProgram.days[todayDow].type!=='rest';
+  const lastWorkout=JSON.parse(localStorage.getItem('fit_last_workout')||'null');
+  const extraBurn=(lastWorkout&&lastWorkout.date===_fitDateKey())?lastWorkout.burned:0;
+  const m=fitGetMacros(isWorkoutDay, extraBurn);
+  const el=id=>document.getElementById(id);
+  if(el('nutr-cal')) el('nutr-cal').textContent=m.cal;
+  if(el('nutr-prot')) el('nutr-prot').textContent=m.prot;
+  if(el('nutr-carb')) el('nutr-carb').textContent=m.carb;
+  if(el('nutr-fat')) el('nutr-fat').textContent=m.fat;
+  if(el('nb-prot-lbl')) el('nb-prot-lbl').textContent='target: '+m.prot+' g';
+  if(el('nb-carb-lbl')) el('nb-carb-lbl').textContent='target: '+m.carb+' g';
+  if(el('nb-fat-lbl')) el('nb-fat-lbl').textContent='target: '+m.fat+' g';
+  // bars at 0 until user logs food — future feature
+  if(el('nb-prot')) el('nb-prot').style.width='0%';
+  if(el('nb-carb')) el('nb-carb').style.width='0%';
+  if(el('nb-fat')) el('nb-fat').style.width='0%';
+  const dayTypeLbl=el('nutr-day-type');
+  if(dayTypeLbl){
+    if(!fitProfile||!fitProfile.weight){
+      dayTypeLbl.textContent='⚠️ fill in your profile first';
+    } else {
+      dayTypeLbl.textContent=isWorkoutDay?'💪 training day':'😴 rest day';
+    }
+  }
+  // Show profile warning in meal plan area if profile not set
+  const mealBox=el('nutr-meal-plan');
+  if(mealBox&&(!fitProfile||!fitProfile.weight)){
+    mealBox.classList.add('show');
+    mealBox.innerHTML='Fill in your body profile in the <strong>Program tab</strong> first, then generate your meal plan here.';
+  }
+}
+
+async function fitGenerateMealPlan(){
+  const key=localStorage.getItem('cem3_key_'+curProv);
+  if(!key){alert('No API key saved for '+providers[curProv].name+'. Go to the AI tab first.');return;}
+  const todayDow=(new Date().getDay()+6)%7;
+  const isWorkout=fitProgram&&fitProgram.days[todayDow]&&fitProgram.days[todayDow].type!=='rest';
+  const m=fitGetMacros(isWorkout,0);
+  const lastWorkout=JSON.parse(localStorage.getItem('fit_last_workout')||'null');
+  const workoutCtx=lastWorkout&&lastWorkout.date===_fitDateKey()?`Just finished workout: ${lastWorkout.sets} sets, ${lastWorkout.vol}kg volume, ~${lastWorkout.burned} kcal burned.`:'';
+  const dietNote=fitProfile&&fitProfile.diet&&fitProfile.diet!=='none'?`Dietary: ${fitProfile.diet}.`:'';
+  const allergyNote=fitProfile&&fitProfile.allergies?`Avoid: ${fitProfile.allergies}.`:'';
+  document.getElementById('nutr-spinner').classList.add('show');
+  document.getElementById('nutr-meal-plan').classList.remove('show');
+  try{
+    const sys='You are a sports nutritionist. Give a practical GENERIC daily meal plan based on the training program only (not a specific session). Use foods available in Turkey/Algeria (chicken, eggs, rice, bread, yogurt, vegetables, legumes, dates, lentils). Keep it simple and affordable. Format with emoji, meal names bolded with **, and include approximate macros per meal.';
+    const msg=`Create a generic meal plan for: ${isWorkout?'TRAINING day':'REST day'}\nTargets: ${m.cal} kcal, ${m.prot}g protein, ${m.carb}g carbs, ${m.fat}g fat\nProfile: ${fitProfile&&fitProfile.weight?fitProfile.weight+'kg':''}, goal: ${fitProfile&&fitProfile.goal?fitProfile.goal:'bulk'}\n${dietNote} ${allergyNote}\n${workoutCtx}\n\nGive 4 meals with specific foods and portions. Be concise. Note this is a GENERIC plan — for a plan tailored to today's specific session, log the session in the Tracker tab.`;
+    const text=await providers[curProv].call(key,sys,msg);
+    document.getElementById('nutr-spinner').classList.remove('show');
+    const box=document.getElementById('nutr-meal-plan');
+    box.classList.add('show');
+    box.innerHTML=text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+  }catch(e){
+    document.getElementById('nutr-spinner').classList.remove('show');
+    document.getElementById('nutr-meal-plan').classList.add('show');
+    document.getElementById('nutr-meal-plan').innerHTML='❌ Error: '+e.message;
+  }
+}
+
+// ── Grocery ──
+async function fitGenerateGrocery(){
+  const key=localStorage.getItem('cem3_key_'+curProv);
+  if(!key){alert('No API key saved for '+providers[curProv].name+'. Go to the AI tab first.');return;}
+  const days=+document.getElementById('fit-groc-days').value;
+  const m=fitGetMacros(true,0);
+  const dietNote=fitProfile&&fitProfile.diet&&fitProfile.diet!=='none'?`Dietary requirement: ${fitProfile.diet}.`:'';
+  const allergyNote=fitProfile&&fitProfile.allergies?`Avoid: ${fitProfile.allergies}.`:'';
+  // Check if we have a specific nutrition context from tracker
+  const specificNutr=localStorage.getItem('fit_last_specific_nutr')||'';
+  const nutrCtx=specificNutr?`Based on today's specific session nutrition: use similar foods.`:'Generic grocery list.';
+  document.getElementById('groc-fit-spinner').classList.add('show');
+  document.getElementById('fit-groc-list').innerHTML='';
+  document.getElementById('fit-groc-send').style.display='none';
+  try{
+    const sys='You create concise grocery lists. Output ONLY a valid JSON array, no markdown, no explanation, no backticks. Max 12 items. Each item: {"food":"string","qty":"string","category":"protein|carb|fat|veggie|dairy|other","emoji":"emoji"}';
+    const msg=`Grocery list for ${days} days, ${m.prot}g protein/day, ${m.cal} kcal/day, goal: ${fitProfile&&fitProfile.goal?fitProfile.goal:'bulk'}. Person weighs ${fitProfile&&fitProfile.weight?fitProfile.weight:75}kg. ${dietNote} ${allergyNote} Use affordable Algeria/Turkey foods. ${nutrCtx} Max 12 items. Only output the JSON array [`;
+    let raw=await providers[curProv].call(key,sys,msg);
+    raw=raw.replace(/^```[\w]*\n?/,'').replace(/\n?```$/,'').trim();
+    const arrStart=raw.indexOf('[');
+    if(arrStart===-1) throw new Error('No JSON array in response');
+    raw=raw.slice(arrStart);
+    const lastClose=raw.lastIndexOf('}');
+    if(lastClose===-1) throw new Error('No complete items in response');
+    raw=raw.slice(0,lastClose+1)+']';
+    raw=raw.replace(/,\s*]$/,']');
+    fitGrocList=JSON.parse(raw);
+    if(!fitGrocList.length) throw new Error('Empty list returned');
+    localStorage.setItem('fit_groc_list',JSON.stringify(fitGrocList));
+    document.getElementById('groc-fit-spinner').classList.remove('show');
+    fitRenderGrocFromStorage();
+    document.getElementById('fit-groc-send').style.display='';
+  }catch(e){
+    document.getElementById('groc-fit-spinner').classList.remove('show');
+    document.getElementById('fit-groc-list').innerHTML='<div class="empty-state">❌ Error: '+e.message+'</div>';
+  }
+}
+
+function fitRenderGrocFromStorage(){
+  const list=JSON.parse(localStorage.getItem('fit_groc_list')||'[]');
+  const container=document.getElementById('fit-groc-list');
+  if(!list.length){container.innerHTML='<div class="empty-state">Generate your grocery list from your nutrition plan above.</div>';return;}
+  const cats={protein:'🥩 Protein',carb:'🌾 Carbs',fat:'🫒 Fats & Oils',veggie:'🥦 Vegetables',dairy:'🥛 Dairy',other:'📦 Other'};
+  const grouped={};
+  list.forEach(item=>{const c=item.category||'other';if(!grouped[c])grouped[c]=[];grouped[c].push(item);});
+  container.innerHTML='';
+  Object.entries(cats).forEach(([cat,label])=>{
+    if(!grouped[cat]) return;
+    const sec=document.createElement('div');
+    sec.innerHTML=`<div style="font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 4px;">${label}</div>`;
+    grouped[cat].forEach(item=>{
+      const row=document.createElement('div');
+      row.className='nutr-groc-item';
+      row.innerHTML=`<div class="nutr-groc-food"><span style="font-size:1.1rem;">${item.emoji||'🍽️'}</span><span>${item.food}</span></div><span class="nutr-groc-qty">${item.qty}</span>`;
+      sec.appendChild(row);
+    });
+    container.appendChild(sec);
+  });
+  document.getElementById('fit-groc-send').style.display='';
+}
+
+function fitSendToGrocery(){
+  const list=JSON.parse(localStorage.getItem('fit_groc_list')||'[]');
+  if(!list.length) return;
+  list.forEach(item=>{
+    grocItems.push({id:Date.now()+'_'+Math.random(),text:item.food,qty:item.qty,done:false,price:0});
+  });
+  localStorage.setItem('cem3_groc',JSON.stringify(grocItems));
+  renderGrocList();
+  alert('✅ '+list.length+' items added to your Grocery list!');
+  // switch to grocery tab
+  const grocBtn=document.querySelector('[data-p="grocery"]');
+  if(grocBtn) goTab(grocBtn);
+}
 </script>
 </body>
 </html>
