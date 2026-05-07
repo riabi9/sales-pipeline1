@@ -1176,6 +1176,86 @@ header {
     margin-right: 4px;
     vertical-align: middle
 }
+/* ── Alternative line badge ── */
+.alt-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--purple-bg);
+    color: var(--purple-text);
+    border: 1px solid var(--purple);
+    white-space: nowrap;
+    cursor: pointer;
+    margin-top: 2px;
+    letter-spacing: .2px;
+    line-height: 1.4;
+}
+.alt-badge:hover { background: var(--purple); color: #fff; }
+.alt-btn {
+    width: 22px;
+    height: 22px;
+    border: 1px dashed var(--border2);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text4);
+    cursor: pointer;
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .12s;
+    flex-shrink: 0;
+}
+.alt-btn:hover { border-color: var(--purple); color: var(--purple); background: var(--purple-bg); }
+.alt-btn.has-alt { border-color: var(--purple); color: var(--purple); background: var(--purple-bg); border-style: solid; }
+#altPickerModal { z-index: 600; }
+.alt-pick-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: border-color .12s, background .12s;
+    font-size: 12px;
+}
+.alt-pick-item:hover { border-color: var(--purple); background: var(--purple-bg); }
+.alt-pick-item.current-line { opacity: .35; cursor: not-allowed; pointer-events: none; }
+.alt-pick-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--surface2);
+    color: var(--text3);
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.alt-pick-info { flex: 1; min-width: 0; }
+.alt-pick-grade { font-weight: 700; color: var(--text); }
+.alt-pick-dims { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.lnum-cell { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 36px; }
+.alt-line-row td { background: color-mix(in srgb, var(--purple-bg) 30%, transparent) !important; }
+.alt-line-row:hover td { background: color-mix(in srgb, var(--purple-bg) 55%, transparent) !important; }
+@keyframes lc-spin { to { transform: rotate(360deg); } }
+.lc-spinner {
+    display: inline-block;
+    width: 9px; height: 9px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--blue);
+    border-radius: 50%;
+    animation: lc-spin .7s linear infinite;
+    flex-shrink: 0;
+}
 .totals-sect {
     display: flex;
     flex-direction: column;
@@ -1822,6 +1902,13 @@ header {
                             </span>
                             <span><input class="oi mono" id="shippingQuote" type="number" placeholder="0.00" min="0" oninput="recalcOffer()" style="width:120px;height:28px;text-align:right;display:inline-block"></span>
                         </div>
+                        <div class="t-row" id="tAltRow" style="display:none">
+                            <span class="t-lbl" style="color:var(--purple-text);display:flex;align-items:center;gap:8px">
+                                <span>🔀 Alternatives (excluded)</span>
+                                <span id="tAltCount" style="font-size:10px;color:var(--text3)"></span>
+                            </span>
+                            <span class="t-val" id="tAlt" style="color:var(--purple-text)">$0</span>
+                        </div>
                         <div class="t-row"><span class="t-lbl">Total margin</span><span class="t-val" id="tMargin">$0</span></div>
                         <div class="t-row grand"><span class="t-lbl">Total Offer Price</span><span class="t-val" id="tGrand">$0</span></div>
                     </div>
@@ -2028,7 +2115,30 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS company_subtitle text;
 
 -- Step 5: Add multi-product category support
 ALTER TABLE stock ADD COLUMN IF NOT EXISTS product_category text DEFAULT 'flat';
-ALTER TABLE stock ADD COLUMN IF NOT EXISTS section text;</pre><div class="modal-acts" style="gap:8px"><button class="btn btn-ghost btn-sm" onclick="closeSQLSetupModal()">Close</button><button class="btn btn-sm" style="background:var(--surface2);border-color:var(--border2)" onclick="copySQLSetup()">📋 Copy SQL</button><a class="btn btn-blue btn-sm" href="https://supabase.com/dashboard" target="_blank">Open Supabase →</a></div></div></div>
+ALTER TABLE stock ADD COLUMN IF NOT EXISTS section text;
+
+-- Step 6: Enforce valid product_category values (prevents bad data)
+ALTER TABLE stock DROP CONSTRAINT IF EXISTS chk_product_category;
+ALTER TABLE stock ADD CONSTRAINT chk_product_category
+    CHECK (product_category IN ('flat','pipe','profile','bar','other'));
+
+-- Step 7: Fix any existing rows that have NULL or invalid product_category
+UPDATE stock SET product_category = 'flat'
+WHERE product_category IS NULL
+   OR product_category NOT IN ('flat','pipe','profile','bar','other');
+
+-- Step 8: Make product_category NOT NULL with a safe default
+ALTER TABLE stock ALTER COLUMN product_category SET NOT NULL;
+ALTER TABLE stock ALTER COLUMN product_category SET DEFAULT 'flat';
+
+-- Step 9: Index product_category for faster category-filtered queries
+CREATE INDEX IF NOT EXISTS stock_category_idx ON stock (product_category);
+
+-- Step 10: Index grade for faster search (most common search field)
+CREATE INDEX IF NOT EXISTS stock_grade_idx ON stock (grade);
+
+-- Step 11: Index available for faster availability filtering
+CREATE INDEX IF NOT EXISTS stock_available_idx ON stock (available);</pre><div class="modal-acts" style="gap:8px"><button class="btn btn-ghost btn-sm" onclick="closeSQLSetupModal()">Close</button><button class="btn btn-sm" style="background:var(--surface2);border-color:var(--border2)" onclick="copySQLSetup()">📋 Copy SQL</button><a class="btn btn-blue btn-sm" href="https://supabase.com/dashboard" target="_blank">Open Supabase →</a></div></div></div>
 
 <!-- Save search modal -->
 <div class="modal-bg" id="saveSearchModal"><div class="modal" style="max-width:320px"><div class="modal-drag"></div><p class="modal-ttl">Save Search</p><div class="form-row"><label class="lbl">Search name</label><input class="inp" id="saveSearchName" placeholder="e.g. S235 Plate 10mm" onkeydown="if(event.key==='Enter')confirmSaveSearch()"></div><p style="font-size:12px;color:var(--text3)" id="saveSearchSummary"></p><div class="modal-acts"><button class="btn btn-ghost btn-sm" onclick="closeSaveSearch()">Cancel</button><button class="btn btn-blue btn-sm" onclick="confirmSaveSearch()">Save</button></div></div></div>
@@ -2082,6 +2192,20 @@ ALTER TABLE stock ADD COLUMN IF NOT EXISTS section text;</pre><div class="modal-
             <button class="btn btn-danger btn-sm" id="ceDeleteBtn" style="display:none;margin-right:auto" onclick="deleteContactEntry()">Delete</button>
             <button class="btn btn-ghost btn-sm" onclick="closeContactEditModal()">Cancel</button>
             <button class="btn btn-blue btn-sm" onclick="saveContactEntry()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Alt Picker Modal -->
+<div class="modal-bg" id="altPickerModal">
+    <div class="modal" style="max-width:420px">
+        <div class="modal-drag"></div>
+        <p class="modal-ttl">🔀 Mark as Alternative For…</p>
+        <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Select which line this product is an alternative for, or clear any existing link.</p>
+        <div id="altPickerList" style="max-height:340px;overflow-y:auto"></div>
+        <div class="modal-acts" style="justify-content:space-between">
+            <button class="btn btn-danger btn-sm" id="altClearBtn" onclick="clearAlt()" style="display:none">✕ Clear alternative</button>
+            <button class="btn btn-ghost btn-sm" onclick="closeAltPicker()" style="margin-left:auto">Cancel</button>
         </div>
     </div>
 </div>
@@ -2209,13 +2333,17 @@ async function initLists(){
         if(data&&data.length){
             data.forEach(r=>{
                 const exists=stockLists.find(l=>l.supabase_id===r.id);
-                if(!exists) stockLists.push({id:'clist_'+r.id,supabase_id:r.id,name:r.name,type:'cloud',items:[]});
+                if(!exists) stockLists.push({id:'clist_'+r.id,supabase_id:r.id,name:r.name,type:'cloud',items:[],_loading:true});
             });
         }
     }catch(e){}
     const saved = localStorage.getItem('sp_active_list');
     activeListId = stockLists.find(l=>l.id===saved) ? saved : 'cloud';
-    await loadCloudStock();
+    // Show rail immediately with loading indicators, then load all lists in parallel
+    renderListsRail();
+    await loadAllCloudLists();
+    // Clear loading flags
+    stockLists.forEach(l=>{ delete l._loading; });
     renderAll();
 }
 // ══════════════════════════════════
@@ -2296,7 +2424,25 @@ function handlePendingHandoff(){
         try{ alert('✓ Imported '+n+' line'+(n!==1?'s':'')+' from CRM lead'+(h.leadName?' ('+h.leadName+')':'')); }catch(e){}
     }
 }
+async function loadAllCloudLists(){
+    // Fetch all cloud lists in parallel — one promise per list
+    const cloudLists=stockLists.filter(l=>l.type==='cloud');
+    await Promise.all(cloudLists.map(async list=>{
+        let all=[],page=0,size=1000;
+        while(true){
+            const from=page*size,to=from+size-1;
+            let q=sb.from('stock').select('*').order('grade').range(from,to);
+            if(list.supabase_id) q=q.eq('list_id',list.supabase_id);
+            else q=q.is('list_id',null);
+            const {data,error}=await q;
+            if(error||!data||!data.length)break;
+            all=[...all,...data]; if(data.length<size)break; page++;
+        }
+        list.items=all;
+    }));
+}
 async function loadCloudStock(){
+    // Load only the active cloud list (used after edits/imports/deletes)
     const list=stockLists.find(l=>l.id===activeListId);
     if(!list||list.type!=='cloud')return;
     let all=[],page=0,size=1000;
@@ -2330,7 +2476,10 @@ function renderListsRail(){
             <div class="lc-meta">
                 <span class="lc-badge ${l.type}">${l.type==='cloud'?'☁ Cloud':'📋 Local'}</span>
                 ${l.product_category&&l.product_category!=='mixed'?`<span class="lc-badge" style="background:var(--green-bg);color:var(--green-text)">${{flat:'📐 Flat',pipe:'⭕ Pipe',profile:'🔷 Profile',bar:'🔵 Bar'}[l.product_category]||l.product_category}</span>`:''}
-                <span>${l.items.length.toLocaleString()} item${l.items.length!==1?'s':''}</span>
+                ${l._loading
+                    ? `<span style="font-size:10px;color:var(--text4);display:inline-flex;align-items:center;gap:3px"><span class="lc-spinner"></span> Loading…</span>`
+                    : `<span>${l.items.length.toLocaleString()} item${l.items.length!==1?'s':''}</span>`
+                }
             </div>
             <div class="lc-actions">
                 ${l.id!=='cloud'?`
@@ -2346,7 +2495,8 @@ async function selectList(id){
     activeListId=id;
     localStorage.setItem('sp_active_list',id);
     const list=stockLists.find(l=>l.id===id);
-    if(list&&list.type==='cloud'){ await loadCloudStock(); }
+    // Only fetch if this cloud list has never been loaded (shouldn't happen after initLists, but safe fallback)
+    if(list&&list.type==='cloud'&&list._loading){ await loadCloudStock(); delete list._loading; }
     renderAll();
 }
 
@@ -2466,8 +2616,13 @@ async function confirmDeleteList(){
 function inferCategory(type){
     const t=(type||'').toLowerCase();
     if(['pipe','tube','casing','tubing','erw','saw','smls','hollow section','rhs','chs','shs'].some(k=>t.includes(k)))return'pipe';
-    if(['hea','heb','hem','ipe','ipn','inp','upe','upn','channel','angle','l-','h-','i-','u-','profile','beam','section','joist','purlin'].some(k=>t.includes(k)))return'profile';
-    if(['bar','rod','wire','rebar','re-bar','deformed','round bar','flat bar','square bar','hex'].some(k=>t.includes(k)))return'bar';
+    if(['hea','heb','hem','ipe','ipn','inp','upe','upn','channel','angle','h-beam','i-beam','u-beam','profile','beam','joist','purlin'].some(k=>t.includes(k)))return'profile';
+    // 'l-', 'h-', 'i-', 'u-' are too short and match inside words — check with word boundary logic
+    if(/\b(l|h|i|u)[-\s](section|profile|beam|bar)\b/.test(t))return'profile';
+    if(['round bar','flat bar','square bar','hex bar','hex rod','rebar','re-bar','deformed bar','deformed rod','wire rod','wire'].some(k=>t.includes(k)))return'bar';
+    if(t==='bar'||t==='rod'||/\bbar\b/.test(t)||/\brod\b/.test(t))return'bar';
+    // Flat products: plate, sheet, coil, strip, blank, checkered, floor plate
+    // These are the default but listing them avoids future ambiguity
     return'flat';
 }
 
@@ -2776,7 +2931,18 @@ function parseCSV(txt){
 function processRows(rawRows){
     if(!rawRows.length){setUS('No data found','err');return;}
     const numCols=['thickness','width','length','quantity','buy_price','weight_kg'];
-    const mapped=rawRows.map(row=>{const obj={available:'yes',unit:'ton',currency:'USD'};Object.entries(row).forEach(([k,v])=>{const col=COL_MAP[k.toLowerCase().trim()];if(col)obj[col]=numCols.includes(col)?(Number(v)||null):(v||'');});return obj;}).filter(r=>r.grade||r.product_type);
+    const validCats=['flat','pipe','profile','bar','other'];
+    const mapped=rawRows.map(row=>{
+        const obj={available:'yes',unit:'ton',currency:'USD'};
+        Object.entries(row).forEach(([k,v])=>{
+            const col=COL_MAP[k.toLowerCase().trim()];
+            if(col)obj[col]=numCols.includes(col)?(Number(v)||null):(v||'');
+        });
+        // Always resolve product_category — use column value if valid, otherwise infer from product_type
+        const rawCat=(obj.product_category||'').toLowerCase().trim();
+        obj.product_category=validCats.includes(rawCat)?rawCat:inferCategory(obj.product_type||'');
+        return obj;
+    }).filter(r=>r.grade||r.product_type);
     if(!mapped.length){setUS('No valid rows. Check column headers.','err');return;}
     previewData=mapped; showPreview(mapped);
 }
@@ -2820,6 +2986,8 @@ async function confirmUpload(){
                     const clean={user_id:currentUser.id,source:'upload'};
                     CLOUD_COLS.forEach(col=>{if(r[col]!==undefined&&r[col]!==null&&r[col]!=='')clean[col]=r[col];});
                     if(!clean.available)clean.available='yes';if(!clean.unit)clean.unit='ton';if(!clean.currency)clean.currency='USD';
+                    // Always ensure product_category is set — never let it be blank
+                    if(!clean.product_category)clean.product_category=inferCategory(clean.product_type||'');
                     if(list.supabase_id)clean.list_id=list.supabase_id;
                     return clean;
                 });
@@ -2831,6 +2999,7 @@ async function confirmUpload(){
             btn.textContent=`Updating ${toUpdate.length}…`;
             for(const row of toUpdate){
                 const clean={};CLOUD_COLS.forEach(col=>{if(row[col]!==undefined&&row[col]!==null)clean[col]=row[col];});
+                if(!clean.product_category)clean.product_category=inferCategory(clean.product_type||'');
                 await sb.from('stock').update(clean).eq('id',row._existingId);
             }
         }
@@ -2985,18 +3154,51 @@ function newOffer(){
 function addOfferLine(p={}){
     const id=lineId++;
     const cat=p.category||'flat';
-    offerLines.push({id,fromStock:!!p.buy_price,grade:p.grade||'',type:p.type||'',category:cat,dim1:p.dim1||p.thick||'',dim2:p.dim2||p.width||'',dim3:p.dim3||p.length||'',qty:0,unit:p.unit||'ton',buy_price:p.buy_price||0,fixed_add:0,margin_mode:'pct',margin_val:15});
+    offerLines.push({id,fromStock:!!p.buy_price,grade:p.grade||'',type:p.type||'',category:cat,dim1:p.dim1||p.thick||'',dim2:p.dim2||p.width||'',dim3:p.dim3||p.length||'',qty:0,unit:p.unit||'ton',buy_price:p.buy_price||0,fixed_add:0,margin_mode:'pct',margin_val:15,altFor:null,altInclude:false});
     renderOfferLines(); recalcOffer();
 }
-function removeOfferLine(id){ offerLines=offerLines.filter(l=>l.id!==id); renderOfferLines(); recalcOffer(); }
+// ── Alt picker ──
+let _altPickerForId=null;
+function openAltPicker(lineId){
+    _altPickerForId=lineId;
+    const line=offerLines.find(l=>l.id===lineId);
+    const list=document.getElementById('altPickerList');
+    const clearBtn=document.getElementById('altClearBtn');
+    clearBtn.style.display=line&&line.altFor!=null?'inline-flex':'none';
+    list.innerHTML=offerLines.map((l,i)=>{
+        if(l.id===lineId) return`<div class="alt-pick-item current-line"><div class="alt-pick-num">${i+1}</div><div class="alt-pick-info"><div class="alt-pick-grade">${esc(l.grade)||'(no grade)'} <span style="font-size:9px;color:var(--text4);font-weight:400">← this line</span></div><div class="alt-pick-dims">${esc(l.type)||''} ${l.dim1?l.dim1+'mm':''}${l.dim2?' × '+l.dim2:''}${l.dim3?' × '+l.dim3:''}</div></div></div>`;
+        const isSelected=line&&line.altFor===l.id;
+        return`<div class="alt-pick-item${isSelected?' selected':''}" onclick="setAlt(${l.id})"><div class="alt-pick-num">${i+1}</div><div class="alt-pick-info"><div class="alt-pick-grade">${esc(l.grade)||'(no grade)'}</div><div class="alt-pick-dims">${esc(l.type)||''} ${l.dim1?l.dim1+'mm':''}${l.dim2?' × '+l.dim2:''}${l.dim3?' × '+l.dim3:''}</div></div>${isSelected?`<span style="color:var(--purple);font-size:12px">✓</span>`:''}</div>`;
+    }).join('');
+    document.getElementById('altPickerModal').classList.add('open');
+}
+function setAlt(targetId){
+    const l=offerLines.find(x=>x.id===_altPickerForId);
+    if(l){ l.altFor=targetId; }
+    closeAltPicker();
+    renderOfferLines();
+}
+function clearAlt(){
+    const l=offerLines.find(x=>x.id===_altPickerForId);
+    if(l){ l.altFor=null; }
+    closeAltPicker();
+    renderOfferLines();
+}
+function closeAltPicker(){ document.getElementById('altPickerModal').classList.remove('open'); _altPickerForId=null; }
+function removeOfferLine(id){ offerLines=offerLines.filter(l=>l.id!==id); offerLines.forEach(l=>{if(l.altFor===id)l.altFor=null;}); renderOfferLines(); recalcOffer(); }
 function setMarginMode(lid,mode){
     const l=offerLines.find(l=>l.id===lid); if(l)l.margin_mode=mode;
     document.getElementById(`mm_p_${lid}`)?.classList.toggle('active',mode==='pct');
     document.getElementById(`mm_f_${lid}`)?.classList.toggle('active',mode==='fixed');
     recalcOffer();
 }
+function toggleAltInclude(lineId){
+    const l=offerLines.find(x=>x.id===lineId);
+    if(l){ l.altInclude=document.getElementById(`ol_inc_${lineId}`)?.checked||false; }
+    recalcOffer();
+}
 function recalcOffer(){
-    let bs=0,fs=0,ms=0,gs=0;
+    let ms=0,gs=0,altTotal=0,altCount=0;
     offerLines.forEach(l=>{
         const buy=Number(document.getElementById(`ol_b_${l.id}`)?.value)||0;
         const fix=Number(document.getElementById(`ol_f_${l.id}`)?.value)||0;
@@ -3005,9 +3207,15 @@ function recalcOffer(){
         const cost=buy+fix;
         const sell=l.margin_mode==='pct'?cost*(1+mv/100):cost+mv;
         const total=sell*qty;
-        bs+=buy*qty; fs+=fix*qty; ms+=(sell-cost)*qty; gs+=total;
+        const isExcluded=l.altFor!=null&&!l.altInclude;
         const sc=document.getElementById(`ol_s_${l.id}`); if(sc)sc.textContent=fmtShort(sell);
-        const tc=document.getElementById(`ol_t_${l.id}`); if(tc)tc.textContent=fmtShort(total);
+        // For alt lines write into inner span if present, else directly
+        const tvEl=document.getElementById(`ol_tv_${l.id}`);
+        const tcEl=document.getElementById(`ol_t_${l.id}`);
+        if(tvEl) tvEl.textContent=fmtShort(total);
+        else if(tcEl) tcEl.textContent=fmtShort(total);
+        if(isExcluded){ altTotal+=total; altCount++; }
+        else { ms+=(sell-cost)*qty; gs+=total; }
     });
     const shipping=Number(document.getElementById('shippingQuote')?.value)||0;
     const shippingIncluded=document.getElementById('shippingIncluded')?.checked;
@@ -3016,17 +3224,42 @@ function recalcOffer(){
     const f=n=>`${cur} ${fmtNum(n)}`;
     document.getElementById('tMargin').textContent=f(ms);
     document.getElementById('tGrand').textContent=f(gs);
+    // Alt total row
+    const altRow=document.getElementById('tAltRow');
+    const altEl=document.getElementById('tAlt');
+    const altCntEl=document.getElementById('tAltCount');
+    if(altRow&&altEl){
+        if(altCount>0){
+            altRow.style.display='flex';
+            altEl.textContent=f(altTotal);
+            if(altCntEl) altCntEl.textContent=`${altCount} line${altCount!==1?'s':''} not counted`;
+        } else { altRow.style.display='none'; }
+    }
 }
 function renderOfferLines(){
     const tbody=document.getElementById('offerLinesBody');
-    if(!offerLines.length){tbody.innerHTML=`<tr><td colspan="15" class="empty">No lines yet</td></tr>`;return;}
+    if(!offerLines.length){tbody.innerHTML=`<tr><td colspan="16" class="empty">No lines yet</td></tr>`;return;}
     tbody.innerHTML=offerLines.map((l,i)=>{
         const cfg=getCatConfig(l.category||'flat');
         const [d1lbl,d2lbl,d3lbl]=cfg.dims;
         const [p1,p2,p3]=cfg.placeholders;
         const unitOpts=['ton','kg','pcs','m','set'].map(u=>`<option${l.unit===u?' selected':''}>${u}</option>`).join('');
-        return`<tr>
-            <td class="lnum">${i+1}${l.fromStock?`<span class="from-stock-dot" title="From stock"></span>`:''}</td>
+        // Build alt label
+        let altLabel='';
+        const isAlt=l.altFor!=null;
+        if(isAlt){
+            const refLine=offerLines.find(x=>x.id===l.altFor);
+            const refIdx=refLine?offerLines.indexOf(refLine)+1:'?';
+            altLabel=`<span class="alt-badge" title="Alternative for line ${refIdx}" onclick="openAltPicker(${l.id})">🔀 ALT #${refIdx}</span>`;
+        }
+        return`<tr class="${isAlt?'alt-line-row':''}">
+            <td class="lnum" style="vertical-align:top;padding-top:10px">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+                    <span>${i+1}${l.fromStock?`<span class="from-stock-dot" title="From stock"></span>`:''}</span>
+                    <button class="alt-btn${isAlt?' has-alt':''}" title="${isAlt?'Change/clear alternative':'Mark as alternative for another line'}" onclick="openAltPicker(${l.id})">🔀</button>
+                    ${altLabel}
+                </div>
+            </td>
             <td><input class="oi" id="ol_g_${l.id}" value="${esc(l.grade)}" placeholder="Grade" oninput="recalcOffer()"></td>
             <td><div style="display:flex;gap:3px"><select class="oi" id="ol_cat_${l.id}" title="Category" style="width:26px;padding:0 2px;font-size:10px;flex-shrink:0" onchange="onLineCategChange(${l.id})">${['flat','pipe','profile','bar','other'].map(c=>`<option value="${c}"${(l.category||'flat')===c?' selected':''}>${{flat:'📐',pipe:'⭕',profile:'🔷',bar:'🔵',other:'📦'}[c]}</option>`).join('')}</select><input class="oi" id="ol_ty_${l.id}" value="${esc(l.type)}" placeholder="${l.category==='profile'?'HEA / IPE…':'Type'}" style="flex:1"></div></td>
             <td><input class="oi mono" id="ol_th_${l.id}" type="${l.category==='profile'?'text':'number'}" value="${l.dim1||''}" placeholder="${p1}" title="${d1lbl}"></td>
@@ -3038,8 +3271,10 @@ function renderOfferLines(){
             <td><input class="oi mono" id="ol_f_${l.id}" type="number" value="${l.fixed_add||''}" placeholder="0.00" oninput="recalcOffer()"></td>
             <td><input class="oi mono" id="ol_m_${l.id}" type="number" value="${l.margin_val||''}" placeholder="0" oninput="recalcOffer()"></td>
             <td><div class="mm-wrap"><button class="mm-btn ${l.margin_mode==='pct'?'active':''}" id="mm_p_${l.id}" onclick="setMarginMode(${l.id},'pct')">%</button><button class="mm-btn ${l.margin_mode==='fixed'?'active':''}" id="mm_f_${l.id}" onclick="setMarginMode(${l.id},'fixed')">$</button></div></td>
-            <td class="ccell sell" id="ol_s_${l.id}">—</td>
-            <td class="ccell total" id="ol_t_${l.id}">—</td>
+            <td class="ccell sell${isAlt&&!l.altInclude?' alt-excluded':''}" id="ol_s_${l.id}">—</td>
+            <td class="ccell total${isAlt&&!l.altInclude?' alt-excluded':''}" id="ol_t_${l.id}" style="${isAlt&&!l.altInclude?'color:var(--text4)':''}">
+                ${isAlt?`<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px"><span id="ol_tv_${l.id}">—</span><label style="display:inline-flex;align-items:center;gap:3px;font-size:9px;color:var(--purple-text);cursor:pointer;white-space:nowrap"><input type="checkbox" id="ol_inc_${l.id}" ${l.altInclude?'checked':''} onchange="toggleAltInclude(${l.id})" style="accent-color:var(--purple);width:10px;height:10px"> include</label></div>`:''}
+            </td>
             <td><button class="del-line-btn" onclick="removeOfferLine(${l.id})">×</button></td>
         </tr>`;
     }).join('');
@@ -3060,7 +3295,7 @@ function readLines(){
         const sell=l.margin_mode==='pct'?cost*(1+mv/100):cost+mv;
         const cat=document.getElementById(`ol_cat_${l.id}`)?.value||l.category||'flat';
         const cfg=getCatConfig(cat);
-        return{...l,grade:document.getElementById(`ol_g_${l.id}`)?.value||l.grade,type:document.getElementById(`ol_ty_${l.id}`)?.value||l.type,category:cat,dim1:document.getElementById(`ol_th_${l.id}`)?.value||'',dim2:document.getElementById(`ol_w_${l.id}`)?.value||'',dim3:document.getElementById(`ol_l_${l.id}`)?.value||'',dimLabels:cfg.dims,qty,unit:document.getElementById(`ol_u_${l.id}`)?.value||l.unit,buy_price:buy,fixed_add:fix,margin_val:mv,sell_price:sell,total:sell*qty};
+        return{...l,grade:document.getElementById(`ol_g_${l.id}`)?.value||l.grade,type:document.getElementById(`ol_ty_${l.id}`)?.value||l.type,category:cat,dim1:document.getElementById(`ol_th_${l.id}`)?.value||'',dim2:document.getElementById(`ol_w_${l.id}`)?.value||'',dim3:document.getElementById(`ol_l_${l.id}`)?.value||'',dimLabels:cfg.dims,qty,unit:document.getElementById(`ol_u_${l.id}`)?.value||l.unit,buy_price:buy,fixed_add:fix,margin_val:mv,sell_price:sell,total:sell*qty,altFor:l.altFor??null,altInclude:l.altInclude??false};
     }).filter(l=>l.grade||l.qty);
 }
 function buildPreview(){
@@ -3068,13 +3303,24 @@ function buildPreview(){
     const cur=document.getElementById('offerCurrency')?.value||'USD';
     const shipping=Number(document.getElementById('shippingQuote')?.value)||0;
     const shippingIncluded=document.getElementById('shippingIncluded')?.checked;
-    let gs=0; lines.forEach(l=>{gs+=l.total;});
+    let gs=0,altTotal=0;
+    lines.forEach(l=>{ if(l.altFor!=null&&!l.altInclude) altTotal+=l.total; else gs+=l.total; });
     if(!shippingIncluded) gs+=shipping;
+    const tableRows=lines.map((l,i)=>{
+        const cfg=getCatConfig(l.category||'flat');
+        const isExcluded=l.altFor!=null&&!l.altInclude;
+        const altRef=l.altFor!=null?offerLines.find(x=>x.id===l.altFor):null;
+        const altIdx=altRef?lines.findIndex(x=>x.id===altRef.id)+1:null;
+        const rowStyle=isExcluded?'background:#f5f3ff;color:#6d5fa0;':'';
+        const totalCell=isExcluded?`<span style="text-decoration:line-through;opacity:.6">${cur} ${fmtNum(l.total)}</span> <span style="font-size:8px;color:#6d5fa0">(excl.)</span>`:`${cur} ${fmtNum(l.total)}`;
+        return`<tr style="${rowStyle}"><td>${i+1}${isExcluded?` <span style="font-size:8px;background:#ede9fe;color:#5b21b6;padding:1px 4px;border-radius:3px;font-weight:700">ALT${altIdx?' #'+altIdx:''}</span>`:''}</td><td><strong>${esc(l.grade)}</strong></td><td>${esc(l.type)||'—'}</td><td>${l.dim1||'—'} <small>${cfg.dims[0].split(' ')[0]}</small></td><td>${l.dim2||'—'}</td><td>${l.dim3||'—'}</td><td>${l.qty}</td><td>${l.unit}</td><td>${fmtNum(l.sell_price)}</td><td>${totalCell}</td></tr>`;
+    }).join('');
+    const altNote=altTotal>0?`<div class="pi-trow" style="color:#6d5fa0;font-size:11px"><span>Alternatives (not included in total)</span><span>${cur} ${fmtNum(altTotal)}</span></div>`:'';
     document.getElementById('printDoc').innerHTML=`
         <div class="pi-hdr"><div><div class="pi-co">${esc(currentProfile.company_name)}</div><div class="pi-co-sub">${esc(currentProfile.company_subtitle)}</div><div class="pi-co-sub">${esc(document.getElementById('offerBy').value)} · ${currentUser?.email||''}</div></div><div style="text-align:right"><div style="font-size:20px;font-weight:800">SALES OFFER</div><div style="font-size:13px;color:#888">${esc(document.getElementById('offerNum').value)||'—'}</div></div></div>
         <div class="pi-info"><div class="pi-block"><strong>Offer to</strong>${esc(document.getElementById('clientCompany').value)||'—'}<br>${esc(document.getElementById('clientContact').value)||''}<br>${esc(document.getElementById('clientEmail').value)||''}<br>${esc(document.getElementById('clientPhone').value)||''}</div><div class="pi-block"><strong>Offer details</strong>Date: ${document.getElementById('offerDate').value||'—'}<br>Valid: ${document.getElementById('offerValid').value||'—'}<br>Currency: ${cur}<br>By: ${esc(document.getElementById('offerBy').value)||'—'}</div></div>
-        <table class="pi-tbl"><thead><tr><th>#</th><th>Grade</th><th>Type / Section</th><th>Dim 1</th><th>Dim 2</th><th>Dim 3</th><th>Qty</th><th>Unit</th><th>Sell/${cur}</th><th>Total</th></tr></thead><tbody>${lines.map((l,i)=>{const cfg=getCatConfig(l.category||'flat');return`<tr><td>${i+1}</td><td><strong>${esc(l.grade)}</strong></td><td>${esc(l.type)||'—'}</td><td>${l.dim1||'—'} <small>${cfg.dims[0].split(' ')[0]}</small></td><td>${l.dim2||'—'}</td><td>${l.dim3||'—'}</td><td>${l.qty}</td><td>${l.unit}</td><td>${fmtNum(l.sell_price)}</td><td>${cur} ${fmtNum(l.total)}</td></tr>`;}).join('')}</tbody></table>
-        <div class="pi-totals">${shipping?`<div class="pi-trow"><span>Shipping${shippingIncluded?' (included in prices)':''}</span><span>${shippingIncluded?'Included':cur+' '+fmtNum(shipping)}</span></div>`:''}<div class="pi-trow pi-grand"><span>Total Offer Price</span><span>${cur} ${fmtNum(gs)}</span></div></div>
+        <table class="pi-tbl"><thead><tr><th>#</th><th>Grade</th><th>Type / Section</th><th>Dim 1</th><th>Dim 2</th><th>Dim 3</th><th>Qty</th><th>Unit</th><th>Sell/${cur}</th><th>Total</th></tr></thead><tbody>${tableRows}</tbody></table>
+        <div class="pi-totals">${shipping?`<div class="pi-trow"><span>Shipping${shippingIncluded?' (included in prices)':''}</span><span>${shippingIncluded?'Included':cur+' '+fmtNum(shipping)}</span></div>`:''}${altNote}<div class="pi-trow pi-grand"><span>Total Offer Price</span><span>${cur} ${fmtNum(gs)}</span></div></div>
         <div class="pi-terms">${document.getElementById('termPayment').value?`<strong>Payment:</strong> ${esc(document.getElementById('termPayment').value)}<br>`:''}${document.getElementById('termDelivery').value?`<strong>Delivery:</strong> ${esc(document.getElementById('termDelivery').value)}<br>`:''}${document.getElementById('termIncoterms').value?`<strong>Incoterms:</strong> ${esc(document.getElementById('termIncoterms').value)}<br>`:''}${document.getElementById('termOrigin').value?`<strong>Origin:</strong> ${esc(document.getElementById('termOrigin').value)}<br>`:''}${document.getElementById('termNotes').value?`<strong>Notes:</strong> ${esc(document.getElementById('termNotes').value)}`:''}</div>
         <div class="pi-footer">This offer is valid until ${document.getElementById('offerValid').value||'—'} · Generated by Steel Platform</div>
     `;
@@ -3084,10 +3330,10 @@ function exportExcel(){
     const cur=document.getElementById('offerCurrency')?.value||'USD';
     const shipping=Number(document.getElementById('shippingQuote')?.value)||0;
     const shippingIncluded=document.getElementById('shippingIncluded')?.checked;
-    let gs=0; lines.forEach(l=>gs+=l.total);
+    let gs=0,altTotal=0; lines.forEach(l=>{ if(l.altFor!=null&&!l.altInclude) altTotal+=l.total; else gs+=l.total; });
     if(!shippingIncluded) gs+=shipping;
-    const rows=[['SALES OFFER','','','','','','','',''],['','','','','','','','',''],['Offer To:',document.getElementById('clientCompany').value,'','','Offer #:',document.getElementById('offerNum').value,'',''],['Contact:',document.getElementById('clientContact').value,'','','Date:',document.getElementById('offerDate').value,'',''],['Email:',document.getElementById('clientEmail').value,'','','Valid:',document.getElementById('offerValid').value,'',''],['Phone:',document.getElementById('clientPhone').value,'','','By:',document.getElementById('offerBy').value,'',''],['','','','','','','','',''],['#','Grade','Type / Section','Dim 1','Dim 2','Dim 3','Qty','Unit',`Sell/${cur}`,'Total']];
-    lines.forEach((l,i)=>{const cfg=getCatConfig(l.category||'flat');rows.push([i+1,l.grade,l.type||'',`${l.dim1||''} (${cfg.dims[0]})`,l.dim2||'',l.dim3||'',l.qty,l.unit,l.sell_price,l.total]);});
+    const rows=[['SALES OFFER','','','','','','','',''],['','','','','','','','',''],['Offer To:',document.getElementById('clientCompany').value,'','','Offer #:',document.getElementById('offerNum').value,'',''],['Contact:',document.getElementById('clientContact').value,'','','Date:',document.getElementById('offerDate').value,'',''],['Email:',document.getElementById('clientEmail').value,'','','Valid:',document.getElementById('offerValid').value,'',''],['Phone:',document.getElementById('clientPhone').value,'','','By:',document.getElementById('offerBy').value,'',''],['','','','','','','','',''],['#','Grade','Type / Section','Dim 1','Dim 2','Dim 3','Qty','Unit',`Sell/${cur}`,'Total','Note']];
+    lines.forEach((l,i)=>{const cfg=getCatConfig(l.category||'flat');const isExcluded=l.altFor!=null&&!l.altInclude;const altRef=l.altFor!=null?offerLines.find(x=>x.id===l.altFor):null;const altIdx=altRef?lines.findIndex(x=>x.id===altRef.id)+1:null;rows.push([i+1,l.grade,l.type||'',`${l.dim1||''} (${cfg.dims[0]})`,l.dim2||'',l.dim3||'',l.qty,l.unit,l.sell_price,isExcluded?'(excluded)':l.total,isExcluded?`ALT${altIdx?' for #'+altIdx:''}`:''  ]);});
     rows.push(['']);if(shipping) rows.push(['','','','','','','','',`Shipping${shippingIncluded?' (included)':''}`,shippingIncluded?'Included':shipping]);rows.push(['','','','','','','','','TOTAL',gs]);rows.push([]);
     if(document.getElementById('termPayment').value)rows.push(['Payment:',document.getElementById('termPayment').value]);if(document.getElementById('termDelivery').value)rows.push(['Delivery:',document.getElementById('termDelivery').value]);if(document.getElementById('termIncoterms').value)rows.push(['Incoterms:',document.getElementById('termIncoterms').value]);if(document.getElementById('termOrigin').value)rows.push(['Origin:',document.getElementById('termOrigin').value]);if(document.getElementById('termNotes').value)rows.push(['Notes:',document.getElementById('termNotes').value]);
     const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:4},{wch:14},{wch:12},{wch:10},{wch:10},{wch:10},{wch:7},{wch:6},{wch:12},{wch:14}];XLSX.utils.book_append_sheet(wb,ws,'Offer');XLSX.writeFile(wb,'offer_'+(document.getElementById('clientCompany').value||'export').replace(/[^a-zA-Z0-9]/g,'_')+'.xlsx');
