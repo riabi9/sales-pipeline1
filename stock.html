@@ -2333,7 +2333,7 @@ async function initLists(){
         if(data&&data.length){
             data.forEach(r=>{
                 const exists=stockLists.find(l=>l.supabase_id===r.id);
-                if(!exists) stockLists.push({id:'clist_'+r.id,supabase_id:r.id,name:r.name,type:'cloud',items:[],_loading:true});
+                if(!exists) stockLists.push({id:'clist_'+r.id,supabase_id:r.id,name:r.name,type:'cloud',product_category:r.product_category||'flat',items:[],_loading:true});
             });
         }
     }catch(e){}
@@ -2562,7 +2562,7 @@ async function confirmListName(){
         if(wantCloud){
             const btn=document.getElementById('listNameConfirmBtn');
             btn.disabled=true; btn.textContent='Creating…';
-            const {data,error}=await sb.from('stock_lists').insert({name}).select().single();
+            const {data,error}=await sb.from('stock_lists').insert({name,product_category:listCat}).select().single();
             btn.disabled=false; btn.textContent='Create';
             if(error){showSQLSetupModal(error.message);return;}
             const newList={id:'clist_'+data.id,supabase_id:data.id,name,type:'cloud',product_category:listCat,items:[]};
@@ -2931,16 +2931,18 @@ function parseCSV(txt){
 function processRows(rawRows){
     if(!rawRows.length){setUS('No data found','err');return;}
     const numCols=['thickness','width','length','quantity','buy_price','weight_kg'];
-    const validCats=['flat','pipe','profile','bar','other'];
+    const validCats=['flat','pipe','profile','bar','other','mixed'];
     const mapped=rawRows.map(row=>{
         const obj={available:'yes',unit:'ton',currency:'USD'};
         Object.entries(row).forEach(([k,v])=>{
             const col=COL_MAP[k.toLowerCase().trim()];
             if(col)obj[col]=numCols.includes(col)?(Number(v)||null):(v||'');
         });
-        // Always resolve product_category — use column value if valid, otherwise infer from product_type
+        // Always resolve product_category — use column value if valid, otherwise infer from product_type, then fall back to the active list's category
         const rawCat=(obj.product_category||'').toLowerCase().trim();
-        obj.product_category=validCats.includes(rawCat)?rawCat:inferCategory(obj.product_type||'');
+        const inferred=inferCategory(obj.product_type||'');
+        const listFallback=(activeList&&activeList().product_category)||'flat';
+        obj.product_category=validCats.includes(rawCat)?rawCat:(inferred!=='flat'?inferred:listFallback);
         return obj;
     }).filter(r=>r.grade||r.product_type);
     if(!mapped.length){setUS('No valid rows. Check column headers.','err');return;}
