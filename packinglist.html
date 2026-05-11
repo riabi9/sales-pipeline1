@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Fatura → Packing List</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #f0f2f5; color: #222; min-height: 100vh; padding: 24px; }
+
+/* ── top bar ── */
+.topbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+.topbar h1 { font-size: 20px; font-weight: 600; color: #1a1a2e; margin-bottom: 3px; }
+.topbar .subtitle { font-size: 13px; color: #666; }
+.settings-btn { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 7px; border: 1px solid #d0d0d0; background: #fff; cursor: pointer; font-size: 13px; color: #444; white-space: nowrap; }
+.settings-btn:hover { background: #f5f5f5; border-color: #aaa; }
+.provider-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; }
+
+/* ── settings modal ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100; display: none; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: #fff; border-radius: 12px; width: 480px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px 16px; border-bottom: 1px solid #eee; }
+.modal-header h2 { font-size: 16px; font-weight: 600; }
+.modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #888; line-height: 1; padding: 2px 6px; border-radius: 4px; }
+.modal-close:hover { background: #f0f0f0; color: #333; }
+.modal-body { padding: 20px 24px; }
+
+/* ── provider cards ── */
+.providers-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.provider-card { border: 1.5px solid #e0e0e0; border-radius: 9px; padding: 14px 16px; cursor: pointer; transition: border-color .15s, background .15s; }
+.provider-card:hover { border-color: #aaa; }
+.provider-card.selected { border-color: #4a6cf7; background: #f5f7ff; }
+.provider-card-top { display: flex; align-items: center; gap: 10px; }
+.provider-logo { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.provider-info { flex: 1; }
+.provider-name { font-size: 14px; font-weight: 600; }
+.provider-model { font-size: 11px; color: #888; margin-top: 1px; }
+.provider-pdf { font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 500; flex-shrink: 0; }
+.pdf-yes { background: #dcfce7; color: #15803d; }
+.pdf-partial { background: #fef9c3; color: #854d0e; }
+.radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #ccc; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.provider-card.selected .radio-circle { border-color: #4a6cf7; }
+.radio-inner { width: 9px; height: 9px; border-radius: 50%; background: #4a6cf7; display: none; }
+.provider-card.selected .radio-inner { display: block; }
+
+.key-field { display: none; margin-top: 12px; border-top: 1px solid #eee; padding-top: 12px; }
+.provider-card.selected .key-field { display: block; }
+.key-field label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #888; margin-bottom: 5px; display: block; }
+.key-input-row { display: flex; gap: 6px; }
+.key-input-row input { flex: 1; padding: 8px 10px; border: 1px solid #d0d0d0; border-radius: 6px; font-size: 13px; font-family: monospace; }
+.key-input-row input:focus { outline: 2px solid #4a6cf7; border-color: transparent; }
+.toggle-vis { background: none; border: 1px solid #d0d0d0; border-radius: 6px; padding: 0 10px; cursor: pointer; font-size: 16px; color: #666; }
+.toggle-vis:hover { background: #f5f5f5; }
+
+.modal-footer { padding: 16px 24px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; }
+.btn-save { background: #4a6cf7; color: #fff; border: none; padding: 9px 20px; border-radius: 7px; cursor: pointer; font-size: 14px; font-weight: 500; }
+.btn-save:hover { background: #3a5ce5; }
+.btn-cancel { background: none; border: 1px solid #d0d0d0; padding: 9px 16px; border-radius: 7px; cursor: pointer; font-size: 14px; color: #555; }
+.btn-cancel:hover { background: #f5f5f5; }
+
+/* ── main cards ── */
+.card { background: #fff; border-radius: 10px; border: 1px solid #e0e0e0; padding: 20px; margin-bottom: 16px; }
+.upload-area { border: 2px dashed #c0c0c0; border-radius: 8px; padding: 32px; text-align: center; cursor: pointer; transition: border-color .2s, background .2s; }
+.upload-area:hover, .upload-area.dragover { border-color: #4a6cf7; background: #f0f4ff; }
+.upload-area input { display: none; }
+.upload-label { font-size: 14px; color: #555; }
+.upload-label strong { color: #4a6cf7; cursor: pointer; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; font-weight: 500; transition: all .15s; }
+.btn-primary { background: #4a6cf7; color: #fff; }
+.btn-primary:hover { background: #3a5ce5; }
+.btn-primary:disabled { background: #a0b0f0; cursor: not-allowed; }
+.btn-green { background: #16a34a; color: #fff; }
+.btn-green:hover { background: #15803d; }
+.btn-outline { background: #fff; color: #4a6cf7; border: 1.5px solid #4a6cf7; }
+.btn-outline:hover { background: #f0f4ff; }
+.status { font-size: 13px; padding: 10px 14px; border-radius: 6px; margin-top: 12px; display: none; }
+.status-info    { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.status-error   { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+.status-success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.meta-field label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #888; margin-bottom: 4px; }
+.meta-field input { width: 100%; padding: 7px 10px; border: 1px solid #d0d0d0; border-radius: 5px; font-size: 13px; }
+.meta-field input:focus { outline: 2px solid #4a6cf7; border-color: transparent; }
+.section-title { font-size: 13px; font-weight: 600; color: #444; margin-bottom: 12px; text-transform: uppercase; letter-spacing: .05em; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { background: #1a1a2e; color: #fff; padding: 8px 10px; text-align: left; font-weight: 500; white-space: nowrap; }
+td { padding: 7px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+tr:hover td { background: #fafafa; }
+td input { width: 100%; border: none; background: transparent; font-size: 12px; padding: 2px 0; outline: none; }
+td input:focus { background: #fffbeb; border-radius: 3px; padding: 2px 4px; }
+.totals-row td { font-weight: 600; background: #f0f4ff; border-top: 2px solid #4a6cf7; }
+.action-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.file-badge { display: inline-flex; align-items: center; gap: 6px; background: #f0f4ff; border: 1px solid #c7d7ff; color: #3a5ce5; padding: 5px 12px; border-radius: 20px; font-size: 12px; }
+.table-wrap { overflow-x: auto; }
+.no-key-warning { background: #fff8ed; border: 1px solid #fcd34d; color: #92400e; border-radius: 7px; padding: 10px 14px; font-size: 13px; margin-bottom: 12px; display: none; }
+</style>
+</head>
+<body>
+
+<!-- ── Top bar ── -->
+<div class="topbar">
+  <div>
+    <h1>📦 E-Fatura → Packing List</h1>
+    <div class="subtitle">Upload your e-fatura PDF — AI extracts all line items and generates the Excel packing list.</div>
+  </div>
+  <button class="settings-btn" onclick="openSettings()">
+    <span class="provider-dot" id="status-dot"></span>
+    ⚙ Settings
+  </button>
+</div>
+
+<!-- ── Settings Modal ── -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>⚙ AI Provider Settings</h2>
+      <button class="modal-close" onclick="closeSettings()">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:#666;margin-bottom:16px">Select your AI provider and enter your API key. Keys are saved locally in your browser.</p>
+
+      <div class="providers-grid" id="providers-grid">
+
+        <!-- Anthropic -->
+        <div class="provider-card" id="card-anthropic" onclick="selectProvider('anthropic')">
+          <div class="provider-card-top">
+            <div class="provider-logo" style="background:#c17b3f">An</div>
+            <div class="provider-info">
+              <div class="provider-name">Anthropic — Claude</div>
+              <div class="provider-model">claude-sonnet-4-20250514</div>
+            </div>
+            <span class="provider-pdf pdf-yes">✓ PDF native</span>
+            <div class="radio-circle"><div class="radio-inner"></div></div>
+          </div>
+          <div class="key-field">
+            <label>API Key</label>
+            <div class="key-input-row">
+              <input type="password" id="key-anthropic" placeholder="sk-ant-..." oninput="saveKey('anthropic')">
+              <button class="toggle-vis" onclick="toggleVis('key-anthropic',this)">👁</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Google Gemini -->
+        <div class="provider-card" id="card-gemini" onclick="selectProvider('gemini')">
+          <div class="provider-card-top">
+            <div class="provider-logo" style="background:#4285F4">G</div>
+            <div class="provider-info">
+              <div class="provider-name">Google — Gemini</div>
+              <div class="provider-model">gemini-2.0-flash</div>
+            </div>
+            <span class="provider-pdf pdf-yes">✓ PDF native</span>
+            <div class="radio-circle"><div class="radio-inner"></div></div>
+          </div>
+          <div class="key-field">
+            <label>API Key</label>
+            <div class="key-input-row">
+              <input type="password" id="key-gemini" placeholder="AIza..." oninput="saveKey('gemini')">
+              <button class="toggle-vis" onclick="toggleVis('key-gemini',this)">👁</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- OpenAI -->
+        <div class="provider-card" id="card-openai" onclick="selectProvider('openai')">
+          <div class="provider-card-top">
+            <div class="provider-logo" style="background:#10a37f">AI</div>
+            <div class="provider-info">
+              <div class="provider-name">OpenAI — GPT-4o</div>
+              <div class="provider-model">gpt-4o</div>
+            </div>
+            <span class="provider-pdf pdf-yes">✓ PDF native</span>
+            <div class="radio-circle"><div class="radio-inner"></div></div>
+          </div>
+          <div class="key-field">
+            <label>API Key</label>
+            <div class="key-input-row">
+              <input type="password" id="key-openai" placeholder="sk-..." oninput="saveKey('openai')">
+              <button class="toggle-vis" onclick="toggleVis('key-openai',this)">👁</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mistral -->
+        <div class="provider-card" id="card-mistral" onclick="selectProvider('mistral')">
+          <div class="provider-card-top">
+            <div class="provider-logo" style="background:#ff7000">Mi</div>
+            <div class="provider-info">
+              <div class="provider-name">Mistral — Pixtral</div>
+              <div class="provider-model">pixtral-large-latest</div>
+            </div>
+            <span class="provider-pdf pdf-yes">✓ PDF native</span>
+            <div class="radio-circle"><div class="radio-inner"></div></div>
+          </div>
+          <div class="key-field">
+            <label>API Key</label>
+            <div class="key-input-row">
+              <input type="password" id="key-mistral" placeholder="..." oninput="saveKey('mistral')">
+              <button class="toggle-vis" onclick="toggleVis('key-mistral',this)">👁</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- xAI Grok -->
+        <div class="provider-card" id="card-xai" onclick="selectProvider('xai')">
+          <div class="provider-card-top">
+            <div class="provider-logo" style="background:#000">𝕏</div>
+            <div class="provider-info">
+              <div class="provider-name">xAI — Grok</div>
+              <div class="provider-model">grok-2-vision-latest</div>
+            </div>
+            <span class="provider-pdf pdf-partial">~ Image only</span>
+            <div class="radio-circle"><div class="radio-inner"></div></div>
+          </div>
+          <div class="key-field">
+            <label>API Key</label>
+            <div class="key-input-row">
+              <input type="password" id="key-xai" placeholder="xai-..." oninput="saveKey('xai')">
+              <button class="toggle-vis" onclick="toggleVis('key-xai',this)">👁</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeSettings()">Cancel</button>
+      <button class="btn-save" onclick="saveSettings()">Save & Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Upload card ── -->
+<div class="card">
+  <div class="section-title">Step 1 — Upload E-Fatura (PDF)</div>
+  <div class="no-key-warning" id="no-key-warning">
+    ⚠ No API key configured. <strong onclick="openSettings()" style="cursor:pointer;text-decoration:underline">Open Settings</strong> to add your key.
+  </div>
+  <div class="upload-area" id="drop-zone">
+    <div style="font-size:36px;margin-bottom:8px">📄</div>
+    <div class="upload-label">Drag & drop your PDF here, or <strong onclick="document.getElementById('file-input').click()">browse</strong></div>
+    <div style="font-size:11px;color:#aaa;margin-top:6px">Supports Turkish e-fatura format</div>
+    <input type="file" id="file-input" accept=".pdf">
+  </div>
+  <div id="upload-status" class="status"></div>
+  <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <button class="btn btn-primary" id="extract-btn" disabled onclick="extractData()">
+      <span class="spinner" id="extract-spinner" style="display:none"></span>
+      <span id="extract-label">⚡ Extract with AI</span>
+    </button>
+    <span class="file-badge" id="file-badge" style="display:none">📎 <span id="file-name-badge"></span></span>
+  </div>
+</div>
+
+<!-- ── Preview card ── -->
+<div class="card" id="preview-card" style="display:none">
+  <div class="section-title">Step 2 — Review & Edit</div>
+  <div class="meta-grid">
+    <div class="meta-field">
+      <label>Sender</label>
+      <input type="text" id="meta-sender" value="BEYCE METAL SANAYİ VE TİCARET LİMİTED ŞİRKETİ">
+    </div>
+    <div class="meta-field">
+      <label>Bill To / Ship To</label>
+      <input type="text" id="meta-billto">
+    </div>
+    <div class="meta-field">
+      <label>Date (DD-MM-YYYY)</label>
+      <input type="text" id="meta-date">
+    </div>
+    <div class="meta-field">
+      <label>Invoice No</label>
+      <input type="text" id="meta-invno">
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th style="min-width:280px">Description</th>
+          <th style="min-width:120px">Project No</th>
+          <th>No. PCS</th>
+          <th>Pcs in Pack</th>
+          <th>Gross KG</th>
+          <th>Net KG</th>
+          <th style="width:28px"></th>
+        </tr>
+      </thead>
+      <tbody id="items-body"></tbody>
+      <tfoot>
+        <tr class="totals-row">
+          <td colspan="3" style="text-align:right;padding-right:12px">TOTAL</td>
+          <td id="tot-pcs">—</td><td id="tot-packs">—</td>
+          <td id="tot-gross">—</td><td id="tot-net">—</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  <button class="btn btn-outline" style="margin-top:8px;font-size:12px;padding:5px 12px" onclick="addRow()">+ Add row</button>
+  <div style="margin-top:20px" class="action-row">
+    <button class="btn btn-green" onclick="generateExcel()">⬇ Download Packing List (.xlsx)</button>
+    <button class="btn btn-outline" onclick="resetAll()">↩ Start over</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx-style@0.8.13/dist/xlsx.full.min.js"></script>
+<script>
+/* ════════════════════════════════════════════
+   SETTINGS
+════════════════════════════════════════════ */
+const PROVIDERS = {
+  anthropic: { name:'Anthropic', color:'#c17b3f' },
+  gemini:    { name:'Google Gemini', color:'#4285F4' },
+  openai:    { name:'OpenAI', color:'#10a37f' },
+  mistral:   { name:'Mistral', color:'#ff7000' },
+  xai:       { name:'xAI Grok', color:'#000' },
+};
+
+let currentProvider = localStorage.getItem('packing_provider') || 'anthropic';
+let keys = {};
+try { keys = JSON.parse(localStorage.getItem('packing_keys') || '{}'); } catch(e) {}
+
+function loadSettings() {
+  selectProvider(currentProvider, false);
+  Object.keys(keys).forEach(p => {
+    const el = document.getElementById(`key-${p}`);
+    if (el) el.value = keys[p] || '';
+  });
+  updateStatusDot();
+  checkKeyWarning();
+}
+
+function selectProvider(id, scroll=true) {
+  currentProvider = id;
+  document.querySelectorAll('.provider-card').forEach(c => c.classList.remove('selected'));
+  const card = document.getElementById(`card-${id}`);
+  if (card) { card.classList.add('selected'); if(scroll) card.scrollIntoView({block:'nearest'}); }
+}
+
+function saveKey(provider) {
+  keys[provider] = document.getElementById(`key-${provider}`).value.trim();
+  localStorage.setItem('packing_keys', JSON.stringify(keys));
+}
+
+function saveSettings() {
+  localStorage.setItem('packing_provider', currentProvider);
+  Object.keys(PROVIDERS).forEach(p => {
+    const el = document.getElementById(`key-${p}`);
+    if (el) { keys[p] = el.value.trim(); }
+  });
+  localStorage.setItem('packing_keys', JSON.stringify(keys));
+  updateStatusDot();
+  checkKeyWarning();
+  closeSettings();
+}
+
+function openSettings()  { document.getElementById('settings-modal').classList.add('open'); }
+function closeSettings() { document.getElementById('settings-modal').classList.remove('open'); }
+document.getElementById('settings-modal').addEventListener('click', e => { if(e.target===e.currentTarget) closeSettings(); });
+
+function updateStatusDot() {
+  const dot = document.getElementById('status-dot');
+  dot.style.background = keys[currentProvider] ? '#22c55e' : '#f59e0b';
+}
+
+function checkKeyWarning() {
+  document.getElementById('no-key-warning').style.display = keys[currentProvider] ? 'none' : 'block';
+}
+
+function toggleVis(id, btn) {
+  const inp = document.getElementById(id);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+
+function getActiveKey() { return keys[currentProvider] || ''; }
+
+/* ════════════════════════════════════════════
+   FILE UPLOAD
+════════════════════════════════════════════ */
+let selectedFile = null;
+const dropZone  = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+
+function handleFile(file) {
+  if (!file || !file.name.toLowerCase().endsWith('.pdf')) { showStatus('Please select a PDF file.','error'); return; }
+  selectedFile = file;
+  document.getElementById('file-name-badge').textContent = file.name;
+  document.getElementById('file-badge').style.display = 'inline-flex';
+  document.getElementById('extract-btn').disabled = false;
+  showStatus(`✓ "${file.name}" ready — click Extract.`, 'success');
+}
+
+function showStatus(msg, type) {
+  const el = document.getElementById('upload-status');
+  el.className = `status status-${type}`;
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function fileToBase64(file) {
+  return new Promise((res,rej) => {
+    const r = new FileReader();
+    r.onload  = () => res(r.result.split(',')[1]);
+    r.onerror = () => rej(new Error('Read failed'));
+    r.readAsDataURL(file);
+  });
+}
+
+/* ════════════════════════════════════════════
+   AI EXTRACTION — per-provider API calls
+════════════════════════════════════════════ */
+const PROMPT = `Extract packing list data from this Turkish e-fatura invoice PDF. Return ONLY valid JSON, no markdown, no preamble.
+
+{
+  "billTo": "<customer name from SAYIN section>",
+  "date": "<Fatura Tarihi as DD-MM-YYYY>",
+  "invoiceNo": "<Fatura No>",
+  "items": [
+    { "description": "<full Malzeme text trimmed>", "projectNo": "<Not field e.g. BN702>", "numPCS": <Kap No, usually 1>, "pcsInPack": <Kap Adet>, "grossKG": <Miktar KG>, "netKG": <same as grossKG> }
+  ]
+}
+
+Include ALL line items. numPCS=Kap No (always 1). pcsInPack=Kap Adet. grossKG=netKG=Miktar in KG.`;
+
+async function callAnthropic(b64, apiKey) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json', 'x-api-key': apiKey, 'anthropic-version':'2023-06-01' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514', max_tokens: 4000,
+      messages: [{ role:'user', content:[
+        { type:'document', source:{ type:'base64', media_type:'application/pdf', data:b64 } },
+        { type:'text', text: PROMPT }
+      ]}]
+    })
+  });
+  if (!res.ok) throw new Error(`Anthropic API ${res.status}: ${await res.text()}`);
+  const d = await res.json();
+  return d.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+}
+
+async function callGemini(b64, apiKey) {
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts:[
+        { inline_data:{ mime_type:'application/pdf', data:b64 } },
+        { text: PROMPT }
+      ]}]
+    })
+  });
+  if (!res.ok) throw new Error(`Gemini API ${res.status}: ${await res.text()}`);
+  const d = await res.json();
+  return d.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('') || '';
+}
+
+async function callOpenAI(b64, apiKey) {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: 'gpt-4o', max_tokens: 4000,
+      messages: [{ role:'user', content:[
+        { type:'file', file:{ filename:'invoice.pdf', file_data:`data:application/pdf;base64,${b64}` } },
+        { type:'text', text: PROMPT }
+      ]}]
+    })
+  });
+  if (!res.ok) throw new Error(`OpenAI API ${res.status}: ${await res.text()}`);
+  const d = await res.json();
+  return d.choices?.[0]?.message?.content || '';
+}
+
+async function callMistral(b64, apiKey) {
+  const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: 'pixtral-large-latest', max_tokens: 4000,
+      messages: [{ role:'user', content:[
+        { type:'document_url', document_url:`data:application/pdf;base64,${b64}` },
+        { type:'text', text: PROMPT }
+      ]}]
+    })
+  });
+  if (!res.ok) throw new Error(`Mistral API ${res.status}: ${await res.text()}`);
+  const d = await res.json();
+  return d.choices?.[0]?.message?.content || '';
+}
+
+async function callXAI(b64, apiKey) {
+  // Grok vision: send as image (PDF not natively supported; best effort with PNG-like data)
+  const res = await fetch('https://api.x.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: 'grok-2-vision-latest', max_tokens: 4000,
+      messages: [{ role:'user', content:[
+        { type:'image_url', image_url:{ url:`data:application/pdf;base64,${b64}` } },
+        { type:'text', text: PROMPT }
+      ]}]
+    })
+  });
+  if (!res.ok) throw new Error(`xAI API ${res.status}: ${await res.text()}`);
+  const d = await res.json();
+  return d.choices?.[0]?.message?.content || '';
+}
+
+async function extractData() {
+  const apiKey = getActiveKey();
+  if (!apiKey) { openSettings(); return; }
+  if (!selectedFile) return;
+
+  const btn = document.getElementById('extract-btn');
+  document.getElementById('extract-spinner').style.display = 'inline-block';
+  document.getElementById('extract-label').textContent = 'Extracting…';
+  btn.disabled = true;
+  showStatus(`Calling ${PROVIDERS[currentProvider].name} API…`, 'info');
+
+  try {
+    const b64 = await fileToBase64(selectedFile);
+    let raw = '';
+    switch(currentProvider) {
+      case 'anthropic': raw = await callAnthropic(b64, apiKey); break;
+      case 'gemini':    raw = await callGemini(b64, apiKey);    break;
+      case 'openai':    raw = await callOpenAI(b64, apiKey);    break;
+      case 'mistral':   raw = await callMistral(b64, apiKey);   break;
+      case 'xai':       raw = await callXAI(b64, apiKey);       break;
+    }
+    const clean  = raw.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+    renderPreview(parsed);
+    showStatus(`✓ Extracted ${parsed.items.length} line items via ${PROVIDERS[currentProvider].name}.`, 'success');
+  } catch(err) {
+    showStatus(`Error: ${err.message}`, 'error');
+    btn.disabled = false;
+  } finally {
+    document.getElementById('extract-spinner').style.display = 'none';
+    document.getElementById('extract-label').textContent = '⚡ Extract with AI';
+  }
+}
+
+/* ════════════════════════════════════════════
+   PREVIEW TABLE
+════════════════════════════════════════════ */
+function renderPreview(data) {
+  document.getElementById('meta-billto').value = data.billTo    || '';
+  document.getElementById('meta-date').value   = data.date      || '';
+  document.getElementById('meta-invno').value  = data.invoiceNo || '';
+  document.getElementById('items-body').innerHTML = '';
+  (data.items||[]).forEach(item => addRow(item));
+  updateTotals();
+  document.getElementById('preview-card').style.display = 'block';
+  document.getElementById('preview-card').scrollIntoView({ behavior:'smooth' });
+}
+
+function addRow(item={}) {
+  const tbody = document.getElementById('items-body');
+  const n = tbody.rows.length + 1;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="color:#888;font-size:11px">${n}</td>
+    <td><input type="text"   value="${esc(item.description||'')}" onchange="updateTotals()"></td>
+    <td><input type="text"   value="${esc(item.projectNo||'')}"   onchange="updateTotals()"></td>
+    <td><input type="number" value="${item.numPCS||1}"    min="0" onchange="updateTotals()" style="width:55px"></td>
+    <td><input type="number" value="${item.pcsInPack||''}" min="0" onchange="updateTotals()" style="width:65px"></td>
+    <td><input type="number" value="${item.grossKG||''}"  min="0" step=".01" onchange="updateTotals()" style="width:75px"></td>
+    <td><input type="number" value="${item.netKG||''}"    min="0" step=".01" onchange="updateTotals()" style="width:75px"></td>
+    <td><button onclick="this.closest('tr').remove();renumber();updateTotals()" style="background:none;border:none;cursor:pointer;color:#e00;font-size:16px">×</button></td>`;
+  tbody.appendChild(tr);
+}
+
+function esc(s) { return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function renumber() { document.querySelectorAll('#items-body tr').forEach((tr,i)=>tr.cells[0].textContent=i+1); }
+function getRows() {
+  return Array.from(document.querySelectorAll('#items-body tr')).map(tr => {
+    const i = tr.querySelectorAll('input');
+    return { description:i[0].value, projectNo:i[1].value,
+             numPCS:+i[2].value||0, pcsInPack:+i[3].value||0,
+             grossKG:+i[4].value||0, netKG:+i[5].value||0 };
+  });
+}
+function updateTotals() {
+  const rows = getRows();
+  document.getElementById('tot-pcs').textContent   = rows.reduce((s,r)=>s+r.numPCS,0);
+  document.getElementById('tot-packs').textContent  = rows.reduce((s,r)=>s+r.pcsInPack,0);
+  document.getElementById('tot-gross').textContent  = rows.reduce((s,r)=>s+r.grossKG,0).toLocaleString();
+  document.getElementById('tot-net').textContent    = rows.reduce((s,r)=>s+r.netKG,0).toLocaleString();
+}
+
+/* ════════════════════════════════════════════
+   EXCEL GENERATION (xlsx-style)
+════════════════════════════════════════════ */
+function generateExcel() {
+  const sender  = document.getElementById('meta-sender').value;
+  const billTo  = document.getElementById('meta-billto').value;
+  const dateStr = document.getElementById('meta-date').value;
+  const rows    = getRows();
+
+  const THIN = { style:'thin', color:{ auto:1 } };
+  const BORDER = { top:THIN, bottom:THIN, left:THIN, right:THIN };
+
+  const st = (bold, sz, h, v, wrap, border) => ({
+    font:      { name:'Calibri', sz:sz||11, bold:!!bold },
+    alignment: { horizontal:h||'left', vertical:v||'center', wrapText:!!wrap },
+    ...(border ? { border:BORDER } : {})
+  });
+
+  const c  = (v, style) => ({ v, t: typeof v==='number'?'n':'s', s: style });
+  const fc = (f, style) => ({ f, t:'n', s: style });
+
+  const ws = {};
+  ws['A3']  = c('SENDER;',           st(true,11,'left'));
+  ws['A4']  = c(sender,              st(false,11,'left'));
+  ws['A8']  = c('PACKING LIST',      { font:{name:'Calibri',sz:20,bold:true}, alignment:{horizontal:'center',vertical:'center'} });
+  ws['A10'] = c('BILL TO & SHIP TO', st(true,11,'left'));
+  ws['E10'] = c('Date',              st(true,11,'left'));
+  ws['A11'] = c(billTo,              { font:{name:'Calibri',sz:11}, alignment:{horizontal:'left',vertical:'center',wrapText:true} });
+  ws['E11'] = c(dateStr,             st(false,11,'left'));
+
+  [['A15','DESCRIPTION','left'],['B15','PROJECT NO','center'],['C15','NUMBER OF PCS','center'],
+   ['D15','PIECES IN PACKS/BOX','center'],['E15','GROSS WEIGHT / KG','center'],['F15','NET WEIGHT / KG','center']]
+  .forEach(([addr,val,h]) => ws[addr] = c(val, { font:{name:'Calibri',sz:11,bold:true}, alignment:{horizontal:h,vertical:'center',wrapText:true}, border:BORDER }));
+
+  const D = 17;
+  rows.forEach((r, i) => {
+    const rn = D + i;
+    ws[`A${rn}`] = c(r.description, st(false,11,'left','center',true,true));
+    ws[`B${rn}`] = c(r.projectNo,   st(false,11,'center','center',true,true));
+    ws[`C${rn}`] = c(r.numPCS,      st(false,11,'center','center',false,true)); ws[`C${rn}`].t='n';
+    ws[`D${rn}`] = c(r.pcsInPack,   st(false,11,'center','center',false,true)); ws[`D${rn}`].t='n';
+    ws[`E${rn}`] = c(r.grossKG,     st(false,11,'center','center',false,true)); ws[`E${rn}`].t='n';
+    ws[`F${rn}`] = { v:r.netKG, t:'n', s:st(false,11,'center','center',false,true) };
+  });
+
+  const lastData   = D + rows.length - 1;
+  const totHdr     = lastData + 3;
+  const totVal     = totHdr + 1;
+  const totalPCS   = rows.reduce((s,r)=>s+r.numPCS,0);
+  const totalPacks = rows.reduce((s,r)=>s+r.pcsInPack,0);
+  const totalGross = rows.reduce((s,r)=>s+r.grossKG,0);
+  const totalNet   = rows.reduce((s,r)=>s+r.netKG,0);
+  const s10  = { font:{name:'Calibri',sz:10,bold:true}, alignment:{horizontal:'center',vertical:'center',wrapText:true} };
+  const s11b = { font:{name:'Calibri',sz:11,bold:true}, alignment:{horizontal:'center',vertical:'center'} };
+
+  ws[`A${totHdr}`] = c('TOTAL',             { font:{name:'Calibri',sz:11,bold:true}, alignment:{horizontal:'left',vertical:'center'} });
+  ws[`C${totHdr}`] = c('Number of PCS',     s10);
+  ws[`D${totHdr}`] = c('NUMBER OF PALLETS', s10);
+  ws[`E${totHdr}`] = c('GROSS WEIGHT / KG', s10);
+  ws[`F${totHdr}`] = c('NET WEIGHT / KG',   s10);
+  ws[`C${totVal}`] = { v:totalPCS,   t:'n', s:s11b };
+  ws[`D${totVal}`] = { v:totalPacks, t:'n', s:s11b };
+  ws[`E${totVal}`] = { v:totalGross, t:'n', s:s11b };
+  ws[`F${totVal}`] = { v:totalNet,   t:'n', s:s11b };
+
+  ws['!ref'] = `A1:F${totVal}`;
+  ws['!cols'] = [{ wpx:502 },{ wpx:183 },{ wpx:100 },{ wpx:98 },{ wpx:107 },{ wpx:103 }];
+  ws['!rows'] = [];
+  ws['!rows'][2]  = { hpt:15   }; ws['!rows'][3]  = { hpt:15   };
+  ws['!rows'][7]  = { hpt:25.5 }; ws['!rows'][9]  = { hpt:15   };
+  ws['!rows'][10] = { hpt:15   }; ws['!rows'][14] = { hpt:25.5 };
+  ws['!rows'][15] = { hpt:15   };
+  rows.forEach((_,i) => { ws['!rows'][D-1+i] = { hpt:15.75 }; });
+  ws['!rows'][totHdr-1] = { hpt:34.5  };
+  ws['!rows'][totVal-1] = { hpt:15.75 };
+  ws['!merges'] = [
+    { s:{r:7,c:0}, e:{r:7,c:5} },
+    { s:{r:14,c:0}, e:{r:15,c:0} }, { s:{r:14,c:1}, e:{r:15,c:1} },
+    { s:{r:14,c:2}, e:{r:15,c:2} }, { s:{r:14,c:3}, e:{r:15,c:3} },
+    { s:{r:14,c:4}, e:{r:15,c:4} }, { s:{r:14,c:5}, e:{r:15,c:5} },
+    { s:{r:totHdr-1,c:0}, e:{r:totVal-1,c:0} },
+    { s:{r:totHdr-1,c:1}, e:{r:totVal-1,c:1} },
+  ];
+
+  const wb  = { SheetNames:['Packing'], Sheets:{ Packing:ws } };
+  const fn  = (dateStr ? dateStr.replace(/[-\/]/g,'_') : 'Packing') + '_Packing_list.xlsx';
+
+  // Use Blob download — works from file:// and http:// alike
+  const wbout = XLSX.write(wb, { bookType:'xlsx', type:'binary' });
+  const buf = new ArrayBuffer(wbout.length);
+  const view = new Uint8Array(buf);
+  for (let i = 0; i < wbout.length; i++) view[i] = wbout.charCodeAt(i) & 0xFF;
+  const blob = new Blob([buf], { type:'application/octet-stream' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = fn;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
+}
+
+function resetAll() {
+  selectedFile = null; fileInput.value = '';
+  document.getElementById('file-badge').style.display = 'none';
+  document.getElementById('extract-btn').disabled = true;
+  document.getElementById('upload-status').style.display = 'none';
+  document.getElementById('preview-card').style.display = 'none';
+  document.getElementById('items-body').innerHTML = '';
+}
+
+/* ── init ── */
+loadSettings();
+</script>
+</body>
+</html>
