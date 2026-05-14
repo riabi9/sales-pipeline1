@@ -431,7 +431,16 @@ const PROMPT = `Extract packing list data from this Turkish e-fatura invoice PDF
   ]
 }
 
-Include ALL line items. numPCS=Kap No (always 1). pcsInPack=Kap Adet. grossKG=netKG=Miktar in KG.`;
+Include ALL line items. numPCS=Kap No (always 1). pcsInPack=Kap Adet. grossKG=netKG=Miktar in KG.
+
+CRITICAL — steel profile type names, read these exactly as written:
+- NPU = channel/U-profile steel (do NOT write SPU, NRU, NPY or any other variant)
+- NPI = I-beam (narrow flange)
+- HEB = wide flange H-beam
+- HEA = wide flange H-beam (lighter)
+- IPE = I-beam (European standard)
+- UPN = U-channel
+Double-check every profile type code before outputting.`;
 
 async function callAnthropic(b64, apiKey) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -541,6 +550,20 @@ async function extractData() {
     }
     const clean  = raw.replace(/```json|```/g,'').trim();
     const parsed = JSON.parse(clean);
+    // Post-processing: fix known AI misreads on steel profile codes
+    if (parsed.items) {
+      parsed.items = parsed.items.map(item => {
+        item.description = item.description
+          .replace(/\bSPU\b/g, 'NPU')
+          .replace(/\bNRU\b/g, 'NPU')
+          .replace(/\bNPY\b/g, 'NPU')
+          .replace(/\bSPI\b/g, 'NPI')
+          .replace(/\bHEP\b/g, 'HEB')
+          .replace(/\bHEB\b/gi, 'HEB')  // normalise case
+          .replace(/\bIPE\b/gi, 'IPE');
+        return item;
+      });
+    }
     renderPreview(parsed);
     showStatus(`✓ Extracted ${parsed.items.length} line items via ${PROVIDERS[currentProvider].name}.`, 'success');
   } catch(err) {
