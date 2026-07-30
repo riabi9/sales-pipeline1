@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1456a0">
+    <title>R-METAL — Global Steel Stock, Trading & Solutions</title>
+    <meta name="description" content="R-METAL - Browse live steel stock, download catalogs, calculate weights, and request quotes for international grade steel products.">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f0f0ee;
+            --surface: #fff;
+            --surface2: #ebebea;
+            --surface3: #f6f6f4;
+            --border: #e0e0de;
+            --border2: #cacac6;
+            --text: #111110;
+            --text2: #4a4a48;
+            --text3: #888884;
+            --text4: #bbbbb6;
+            --blue: #1456a0;
+            --blue-bg: #e8f1fb;
+            --blue-mid: #4a8fd4;
+            --green: #15895f;
+            --green-bg: #e2f4ee;
+            --green-text: #0c5e42;
+            --red: #cc3333;
+            --red-bg: #fdeaea;
+            --red-text: #922020;
+            --amber: #c47d00;
+            --amber-bg: #fdf2de;
+            --amber-text: #764900;
+            --purple: #6055c0;
+            --purple-bg: #eeedfb;
+            --purple-text: #3f36a0;
+            --sans: 'IBM Plex Sans', system-ui, sans-serif;
+            --mono: 'IBM Plex Mono', monospace;
+            --serif: 'Fraunces', Georgia, serif;
+            --shadow-1: 0 1px 2px rgba(0, 0, 0, .04);
+            --shadow-2: 0 4px 14px rgba(0, 0, 0, .06);
+            --shadow-3: 0 10px 32px rgba(0, 0, 0, .10);
+        }
+
+        [data-theme="dark"] {
+            --bg: #0d0d0c;
+            --surface: #181817;
+            --surface2: #202020;
+            --surface3: #1b1b1a;
+            --border: #282826;
+            --border2: #343432;
+            --text: #edecea;
+            --text2: #b4b4b0;
+            --text3: #727270;
+            --text4: #424240;
+            --blue: #4a90d9;
+            --blue-bg: #0a1f3a;
+            --blue-mid: #2468b0;
+            --green: #28b488;
+            --green-bg: #082a1e;
+            --green-text: #50c8a0;
+            --red: #e04848;
+            --red-bg: #280c0c;
+            --red-text: #ee8888;
+            --amber: #f0a820;
+            --amber-bg: #281a00;
+            --amber-text: #f8c860;
+            --purple: #9088e0;
+            --purple-bg: #181538;
+            --purple-text: #b0a8f4;
+            --shadow-1: 0 1px 2px rgba(0, 0, 0, .4);
+            --shadow-2: 0 4px 14px rgba(0, 0, 0, .5);
+            --shadow-3: 0 10px 32px rgba(0, 0, 0, .6);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+        html { scroll-behavior: smooth; }
+        html, body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+        body { transition: background .25s, color .15s }
+        button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit }
+        input, select, textarea { font-family: inherit; color: inherit }
+        a { color: var(--blue); text-decoration: none }
+        a:hover { text-decoration: underline }
+
+        .top-bar { position: sticky; top: 0; z-index: 60; background: var(--surface); border-bottom: 1px solid var(--border); box-shadow: var(--shadow-1) }
+        .top-bar-inner { max-width: 1280px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 18px }
+        .brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .brand-logo-img { max-height: 36px; max-width: 140px; display: none; object-fit: contain; }
+        .brand-logo-icon { width: 36px; height: 36px; border-radius: 9px; background: var(--blue); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; box-shadow: var(--shadow-2) }
+        .brand-name { font-weight: 800; font-size: 18px; color: var(--text); letter-spacing: -.3px; line-height: 1.1; font-family: var(--serif); }
+        .brand-sub { font-family: var(--mono); font-size: 10px; color: var(--text4); text-transform: uppercase; letter-spacing: .6px; margin-top: 1px; }
+
+        .nav-links { display: flex; align-items: center; gap: 20px; font-weight: 600; font-size: 13px; }
+        .nav-links a { color: var(--text2); transition: color .15s; }
+        .nav-links a:hover { color: var(--blue); text-decoration: none; }
+
+        .top-acts { display: flex; align-items: center; gap: 8px; flex-shrink: 0 }
+        .icon-btn { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; color: var(--text2); transition: background .15s, color .15s }
+        .icon-btn:hover { background: var(--surface2); color: var(--text) }
+        .calc-btn-top { display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border2); color: var(--text); font-weight: 600; font-size: 12px; transition: background .15s }
+        .calc-btn-top:hover { background: var(--border); }
+        .cart-btn { display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 8px; background: var(--blue); color: #fff; font-weight: 600; font-size: 13px; transition: transform .15s, opacity .15s; position: relative }
+        .cart-btn:hover { opacity: .92 }
+        .cart-count { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: #fff; color: var(--blue); font-size: 11px; font-weight: 700; font-family: var(--mono) }
+        .cart-count.zero { background: rgba(255, 255, 255, .25); color: #fff }
+
+        .hero { max-width: 1280px; margin: 0 auto; padding: 48px 18px 28px; text-align: center }
+        .hero h1 { font-family: var(--serif); font-weight: 700; font-size: clamp(32px, 5vw, 56px); letter-spacing: -1px; line-height: 1.05; color: var(--text); margin-bottom: 14px }
+        .hero h1 em { font-style: italic; color: var(--blue); font-weight: 600 }
+        .hero p { font-size: 16px; color: var(--text2); max-width: 680px; margin: 0 auto; line-height: 1.6 }
+        .hero-cta-btns { display: flex; justify-content: center; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
+
+        .section-block { max-width: 1280px; margin: 0 auto; padding: 40px 18px; border-top: 1px solid var(--border); }
+        .section-ttl { font-family: var(--serif); font-size: 28px; font-weight: 600; letter-spacing: -.5px; margin-bottom: 8px; color: var(--text); }
+        .section-sub { font-size: 14px; color: var(--text3); margin-bottom: 24px; max-width: 600px; line-height: 1.5; }
+
+        .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: center; }
+        .about-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; box-shadow: var(--shadow-1); }
+        .about-card h3 { font-family: var(--serif); font-size: 20px; margin-bottom: 10px; color: var(--blue); }
+        .about-card p { font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 12px; }
+
+        .brochure-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
+        .brochure-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; transition: transform .15s, box-shadow .15s; }
+        .brochure-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
+        .brochure-icon { font-size: 36px; margin-bottom: 10px; color: var(--blue); }
+        .brochure-ttl { font-weight: 700; font-size: 16px; margin-bottom: 6px; }
+        .brochure-desc { font-size: 12px; color: var(--text3); line-height: 1.5; margin-bottom: 14px; }
+
+        .filter-shell { max-width: 1280px; margin: 0 auto; padding: 6px 18px 16px; position: sticky; top: 60px; z-index: 50 }
+        .filter-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 10px; display: grid; grid-template-columns: 1.4fr .8fr .6fr .6fr .6fr auto; gap: 8px; box-shadow: var(--shadow-2) }
+        .filter-bar input, .filter-bar select { height: 38px; border: 1px solid var(--border2); border-radius: 8px; padding: 0 11px; font-size: 13px; background: var(--surface3); color: var(--text); outline: none; transition: border-color .15s, box-shadow .15s }
+        .filter-bar input:focus, .filter-bar select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-bg) }
+        .search-input-wrap { position: relative }
+        .search-input-wrap input { padding-left: 36px }
+        .search-input-wrap::before { content: "🔍"; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; opacity: .7; pointer-events: none }
+        .filter-clear { height: 38px; padding: 0 14px; border-radius: 8px; background: var(--surface2); color: var(--text2); font-size: 12px; font-weight: 600; transition: background .15s }
+        .filter-clear:hover { background: var(--border) }
+
+        .results-shell { max-width: 1280px; margin: 0 auto; padding: 8px 18px 60px }
+        .results-meta { display: flex; align-items: center; justify-content: space-between; padding: 10px 4px; font-size: 12px; color: var(--text3); font-family: var(--mono) }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; transition: border-color .15s, transform .15s, box-shadow .2s; position: relative; }
+        .card:hover { border-color: var(--border2); box-shadow: var(--shadow-2); transform: translateY(-1px) }
+        .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px }
+        .cat-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; background: var(--surface2); color: var(--text2); font-size: 11px; font-weight: 600; font-family: var(--mono); text-transform: uppercase; }
+        .card-grade { font-family: var(--serif); font-size: 22px; font-weight: 600; color: var(--text); }
+        .card-type { font-size: 13px; color: var(--text2); }
+        .card-dims { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto }
+        .dim-chip { display: inline-flex; align-items: baseline; gap: 3px; padding: 5px 9px; border-radius: 6px; background: var(--surface3); border: 1px solid var(--border); font-family: var(--mono); font-size: 12px; color: var(--text) }
+        .dim-chip .lbl { font-size: 9px; color: var(--text4); font-weight: 600; text-transform: uppercase; }
+        .card-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 10px; border-top: 1px dashed var(--border) }
+        .spec-btn { height: 32px; padding: 0 8px; border-radius: 8px; background: var(--surface2); color: var(--text2); font-size: 11px; font-weight: 600; border: 1px solid var(--border); }
+        .add-btn { height: 32px; padding: 0 12px; border-radius: 8px; background: var(--blue); color: #fff; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+
+        .contact-box { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 28px; box-shadow: var(--shadow-2); display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; }
+        .contact-info p { font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 12px; }
+        .contact-item { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 14px; font-weight: 500; }
+
+        .modal-bg { position: fixed; inset: 0; background: rgba(0, 0, 0, .5); display: none; align-items: flex-start; justify-content: center; padding: 20px 12px; z-index: 200; overflow-y: auto; }
+        .modal-bg.open { display: flex }
+        .modal { background: var(--surface); border-radius: 18px; width: 100%; max-width: 760px; display: flex; flex-direction: column; box-shadow: var(--shadow-3); margin: auto }
+        .modal-hd { padding: 18px 22px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px }
+        .modal-hd h2 { font-family: var(--serif); font-weight: 600; font-size: 22px; flex: 1 }
+        .modal-hd .close { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--text2); }
+        .modal-bd { padding: 18px 22px; overflow-y: auto; flex: 1 }
+        .modal-ft { padding: 14px 22px 18px; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: center; }
+
+        .btn { height: 40px; padding: 0 18px; border-radius: 9px; background: var(--surface2); color: var(--text); font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--border) }
+        .btn-blue { background: var(--blue); color: #fff; border-color: var(--blue) }
+        .btn-blue:hover { background: #0d4685; }
+        .btn-green { background: var(--green); color: #fff; border-color: var(--green) }
+        .btn-ghost { background: transparent; border-color: transparent; color: var(--text2) }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px }
+        .fld { display: flex; flex-direction: column }
+        .fld.full { grid-column: 1/-1 }
+        .fld label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .4px; font-weight: 600; margin-bottom: 4px; font-family: var(--mono) }
+        .fld input, .fld select, .fld textarea { height: 40px; border: 1px solid var(--border2); border-radius: 9px; padding: 0 12px; font-size: 13px; background: var(--surface); color: var(--text); outline: none; width: 100% }
+        .fld textarea { height: auto; min-height: 90px; padding: 10px 12px; resize: vertical; }
+
+        .whatsapp-fab { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: #25d366; color: #fff; font-size: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(37, 211, 102, .4); z-index: 80; }
+
+        .foot { max-width: 1280px; margin: 0 auto; padding: 24px 18px; text-align: center; font-size: 11px; color: var(--text4); font-family: var(--mono); border-top: 1px solid var(--border) }
+
+        .admin-banner { position: sticky; top: 0; z-index: 70; background: linear-gradient(90deg, #0c5e42, #15895f); color: #fff; padding: 8px 16px; display: none; align-items: center; gap: 12px; font-size: 12px; }
+        .admin-banner.show { display: flex }
+
+        @media(max-width:900px) {
+            .nav-links { display: none; }
+            .about-grid, .contact-box { grid-template-columns: 1fr; }
+            .filter-bar { grid-template-columns: 1fr 1fr; }
+            .filter-bar>.search-input-wrap, .filter-bar>.filter-clear { grid-column: 1/-1 }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Admin Notification Banner -->
+    <div class="admin-banner" id="adminBanner">
+        <span>👤 Logged in as <b id="adminEmail">—</b></span>
+        <button class="btn btn-sm" onclick="openInbox()" style="background:#fff; color:var(--green-text)">📬 Inbox</button>
+        <button class="btn btn-sm" onclick="openAdminSettings()" style="background:rgba(255,255,255,.2); color:#fff">⚙️ Adjust Website Info</button>
+        <button class="btn btn-sm" onclick="doAdminLogout()" style="background:rgba(0,0,0,.2); color:#fff">Logout</button>
+    </div>
+
+    <!-- Navigation Header -->
+    <header class="top-bar">
+        <div class="top-bar-inner">
+            <div class="brand">
+                <img id="brandLogoImg" class="brand-logo-img" alt="R-METAL Logo">
+                <div class="brand-logo-icon" id="brandLogoIcon">R</div>
+                <div>
+                    <div class="brand-name" id="brandName">R-METAL</div>
+                    <div class="brand-sub" id="brandSub">Steel Stock & Global Trading</div>
+                </div>
+            </div>
+
+            <nav class="nav-links">
+                <a href="#about">About Us</a>
+                <a href="#catalogue">Products</a>
+                <a href="#brochures">Brochures</a>
+                <a href="#contact">Contact</a>
+            </nav>
+
+            <div class="top-acts">
+                <button class="calc-btn-top" onclick="openCalcModal()">🧮 <span class="hide-sm">Calculator</span></button>
+                <button class="icon-btn" id="darkBtn" onclick="toggleDark()" title="Toggle theme">🌙</button>
+                <button class="cart-btn" onclick="openCart()">
+                    <span>📋</span><span class="hide-sm">Enquiry</span>
+                    <span class="cart-count zero" id="cartCount">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1 id="heroHeadline">Premium Steel Products.<br><em>Global Supply & Trading.</em></h1>
+        <p id="heroSubtext">Welcome to <b>R-METAL</b>. Browse our live inventory of high-grade steel plates, coils, pipes, structural profiles, and bars. Submit your requirements or download our standard catalogs instantly.</p>
+        <div class="hero-cta-btns">
+            <a href="#catalogue" class="btn btn-blue">🔍 Search Live Stock</a>
+            <a href="#brochures" class="btn">📄 View Catalogs</a>
+            <button class="btn btn-ghost" onclick="openCalcModal()">🧮 Weight Calculator</button>
+        </div>
+    </section>
+
+    <!-- About Us Section -->
+    <section class="section-block" id="about">
+        <h2 class="section-ttl">About R-METAL</h2>
+        <p class="section-sub">Your reliable partner in global steel stockholding, mill distribution, and custom project sourcing.</p>
+        
+        <div class="about-grid">
+            <div class="about-card">
+                <h3>Global Sourcing & Quality Assured</h3>
+                <p id="aboutText1">R-METAL specializes in supplying prime structural steel, pressure vessel plates, seamless pipes, and commercial bars across key global industries. We work directly with certified steel mills to ensure international quality compliance (EN, ASTM, API).</p>
+            </div>
+            <div class="about-card">
+                <h3>Tailored Logistics & Sourcing</h3>
+                <p id="aboutText2">Whether you need immediate stock delivery from our local yards or mill-run custom sourcing for major projects, our logistics team manages cutting, testing, mill certificates, and shipping straight to your site.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products & Stock Catalogue Section -->
+    <section class="section-block" id="catalogue">
+        <h2 class="section-ttl">Stock Catalogue</h2>
+        <p class="section-sub">Filter live items in stock or request custom dimensions for sourcing.</p>
+
+        <div class="filter-shell">
+            <div class="filter-bar">
+                <div class="search-input-wrap"><input id="fName" placeholder="Search grade, type (e.g. S235, Plate, Pipe, X52)..." oninput="onFilterChange()"></div>
+                <select id="fCategory" onchange="onFilterChange()">
+                    <option value="">All Categories</option>
+                    <option value="flat">📐 Flat / Plate / Coil</option>
+                    <option value="pipe">⭕ Pipe / Tube</option>
+                    <option value="profile">🔷 Profile / Beam</option>
+                    <option value="bar">🔵 Bar / Rod</option>
+                </select>
+                <input id="fThick" type="number" placeholder="Thick (mm)" oninput="onFilterChange()">
+                <input id="fWidth" type="number" placeholder="Width (mm)" oninput="onFilterChange()">
+                <input id="fLength" type="number" placeholder="Length (mm)" oninput="onFilterChange()">
+                <button class="filter-clear" onclick="clearFilters()">Clear</button>
+            </div>
+        </div>
+
+        <main class="results-shell">
+            <div class="results-meta">
+                <span id="resultsCount">Loading stock...</span>
+                <select class="sort-select" id="fSort" onchange="renderResults()">
+                    <option value="grade">Sort by Grade</option>
+                    <option value="product_type">Sort by Type</option>
+                    <option value="thickness">Sort by Thickness</option>
+                </select>
+            </div>
+            <div id="resultsArea">
+                <div class="loading"><div class="spinner"></div><div>Loading stock database...</div></div>
+            </div>
+        </main>
+    </section>
+
+    <!-- Brochures & Downloadable Catalogs -->
+    <section class="section-block" id="brochures">
+        <h2 class="section-ttl">Brochures & PDF Catalogs</h2>
+        <p class="section-sub">Download our general product guides, grade reference sheets, and standard dimension tables.</p>
+
+        <div class="brochure-grid">
+            <div class="brochure-card">
+                <div>
+                    <div class="brochure-icon">📄</div>
+                    <div class="brochure-ttl">R-METAL General Stock Brochure</div>
+                    <div class="brochure-desc">Full overview of available grades, stock sizes, tolerances, and mill standards.</div>
+                </div>
+                <button class="btn btn-blue btn-sm" onclick="openPdfGate()">📥 Download PDF</button>
+            </div>
+            <div class="brochure-card">
+                <div>
+                    <div class="brochure-icon">📊</div>
+                    <div class="brochure-ttl">Structural Steel Dimensions Guide</div>
+                    <div class="brochure-desc">Standard section tables for HEA, HEB, IPE, UPN beams and hollow profiles.</div>
+                </div>
+                <button class="btn btn-blue btn-sm" onclick="openPdfGate()">📥 Download PDF</button>
+            </div>
+            <div class="brochure-card">
+                <div>
+                    <div class="brochure-icon">⚙️</div>
+                    <div class="brochure-ttl">Pipes & Pressure Vessel Grades</div>
+                    <div class="brochure-desc">Detailed specification datasheets for API 5L line pipes and ASTM pressure plates.</div>
+                </div>
+                <button class="btn btn-blue btn-sm" onclick="openPdfGate()">📥 Download PDF</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Us Section -->
+    <section class="section-block" id="contact">
+        <h2 class="section-ttl">Contact R-METAL</h2>
+        <p class="section-sub">Have questions or specific project inquiries? Reach out to our sales engineering team.</p>
+
+        <div class="contact-box">
+            <div class="contact-info">
+                <h3 style="font-family:var(--serif); margin-bottom:14px;">Head Office & Sales</h3>
+                <div class="contact-item"><span>📞 Phone:</span> <span id="cntPhone">+213 00 00 00 00</span></div>
+                <div class="contact-item"><span>✉️ Email:</span> <span id="cntEmail">sales@r-metal.com</span></div>
+                <div class="contact-item"><span>📍 Address:</span> <span id="cntAddress">Main Industrial Zone, Steel District</span></div>
+                <div class="contact-item"><span>🕒 Hours:</span> <span>Mon - Fri: 8:00 AM - 5:00 PM</span></div>
+                <button class="btn btn-green" style="margin-top:16px;" onclick="openWhatsApp()">💬 Chat on WhatsApp</button>
+            </div>
+
+            <form onsubmit="handleDirectContact(event)">
+                <div class="form-grid">
+                    <div class="fld"><label>Your Name *</label><input required id="cntFormName" placeholder="Full Name"></div>
+                    <div class="fld"><label>Email *</label><input required type="email" id="cntFormEmail" placeholder="you@company.com"></div>
+                    <div class="fld"><label>Company</label><input id="cntFormCompany" placeholder="Company Name"></div>
+                    <div class="fld"><label>Phone</label><input id="cntFormPhone" placeholder="Phone Number"></div>
+                    <div class="fld full"><label>Message / Requirements *</label><textarea required id="cntFormMessage" placeholder="State your required grades, quantities, delivery destination..."></textarea></div>
+                </div>
+                <button class="btn btn-blue" style="margin-top:14px; width:100%">Send Direct Message</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="foot">
+        <div>© <span id="footYear">2026</span> <b id="footBrand">R-METAL</b>. All Rights Reserved.</div>
+        <div style="margin-top:6px;">
+            <a href="#admin" onclick="openAdminLogin(); return false;">Admin Login</a>
+        </div>
+    </footer>
+
+    <!-- WEIGHT & PRICE CALCULATOR MODAL -->
+    <div class="modal-bg" id="calcModal" onclick="if(event.target===this)closeCalcModal()">
+        <div class="modal" style="max-width:540px" onclick="event.stopPropagation()">
+            <div class="modal-hd">
+                <h2>🧮 Steel Weight & Price Calculator</h2>
+                <button class="close" onclick="closeCalcModal()">×</button>
+            </div>
+            <div class="modal-bd">
+                <div class="fld" style="margin-bottom:12px">
+                    <label>Shape / Product</label>
+                    <select id="calcShape" onchange="onCalcShapeChange()">
+                        <option value="plate">📐 Plate / Sheet / Coil</option>
+                        <option value="pipe">⭕ Round Pipe / Tube</option>
+                        <option value="bar">🔵 Solid Round Bar / Rod</option>
+                    </select>
+                </div>
+                <div class="form-grid" id="calcInputsGrid"></div>
+                <div class="form-grid" style="margin-top:10px;">
+                    <div class="fld"><label>Pieces</label><input id="calcPcs" type="number" min="1" value="1" oninput="calculateSteelWeight()"></div>
+                    <div class="fld"><label>Price/Ton ($)</label><input id="calcPricePerTon" type="number" placeholder="e.g. 850" oninput="calculateSteelWeight()"></div>
+                </div>
+                <div style="background:var(--surface3); border:1px solid var(--border); border-radius:12px; padding:14px; text-align:center; margin-top:14px;">
+                    <div style="font-family:var(--mono); font-size:24px; font-weight:700; color:var(--blue);" id="calcResultWeight">0.00 kg</div>
+                    <div style="font-size:12px; color:var(--text3);" id="calcResultTons">0.000 Metric Tons</div>
+                    <div style="color:var(--green-text); font-size:18px; margin-top:8px; display:none; font-weight:700;" id="calcResultCost">$0.00</div>
+                </div>
+            </div>
+            <div class="modal-ft"><div style="flex:1"></div><button class="btn btn-ghost" onclick="closeCalcModal()">Close</button></div>
+        </div>
+    </div>
+
+    <!-- SPECS DATASHEET MODAL -->
+    <div class="modal-bg" id="specModal" onclick="if(event.target===this)closeSpecModal()">
+        <div class="modal" style="max-width:600px" onclick="event.stopPropagation()">
+            <div class="modal-hd">
+                <h2 id="specGradeTitle">📄 Grade Specifications</h2>
+                <button class="close" onclick="closeSpecModal()">×</button>
+            </div>
+            <div class="modal-bd" id="specModalBody"></div>
+            <div class="modal-ft"><div style="flex:1"></div><button class="btn btn-ghost" onclick="closeSpecModal()">Close</button></div>
+        </div>
+    </div>
+
+    <!-- CART / ENQUIRY MODAL -->
+    <div class="modal-bg" id="cartModal" onclick="if(event.target===this)closeCart()">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-hd">
+                <h2>Your Enquiry Cart</h2>
+                <button class="close" onclick="closeCart()">×</button>
+            </div>
+            <div class="modal-bd" id="step1Body">
+                <div id="cartStockList"></div>
+                <div id="cartStockEmpty" style="text-align:center; padding:32px; color:var(--text3);">No products added to enquiry yet.</div>
+            </div>
+            <div class="modal-bd" id="step2Body" style="display:none">
+                <div class="form-grid">
+                    <div class="fld"><label>Full Name *</label><input id="cName" placeholder="Your name"></div>
+                    <div class="fld"><label>Email *</label><input id="cEmail" type="email" placeholder="you@company.com"></div>
+                    <div class="fld"><label>Company</label><input id="cCompany" placeholder="Company name"></div>
+                    <div class="fld"><label>Phone</label><input id="cPhone" placeholder="Phone number"></div>
+                    <div class="fld full"><label>Message / Details</label><textarea id="cMessage" placeholder="Delivery destination, certifications..."></textarea></div>
+                </div>
+            </div>
+            <div class="modal-ft">
+                <button class="btn btn-ghost" id="footBack" onclick="goToStep(1)" style="display:none">Back</button>
+                <div style="flex:1"></div>
+                <button class="btn btn-blue" id="footNext" onclick="goToStep(2)">Proceed to Contact →</button>
+                <button class="btn btn-green" id="footSubmit" onclick="submitEnquiry()" style="display:none">Submit Enquiry</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN LOG IN MODAL -->
+    <div class="modal-bg" id="loginModal" onclick="if(event.target===this)closeAdminLogin()">
+        <div class="modal" style="max-width:380px" onclick="event.stopPropagation()">
+            <div class="modal-hd">
+                <h2>Admin Sign In</h2>
+                <button class="close" onclick="closeAdminLogin()">×</button>
+            </div>
+            <div class="modal-bd">
+                <div class="fld" style="margin-bottom:10px"><label>Email</label><input id="liEmail" type="email" placeholder="admin@r-metal.com"></div>
+                <div class="fld" style="margin-bottom:14px"><label>Password</label><input id="liPass" type="password" onkeydown="if(event.key==='Enter')doAdminLogin()"></div>
+                <div id="liMsg"></div>
+            </div>
+            <div class="modal-ft"><div style="flex:1"></div><button class="btn btn-blue" id="liBtn" onclick="doAdminLogin()">Sign In</button></div>
+        </div>
+    </div>
+
+    <!-- DYNAMIC ADMIN WEBSITE CONTENT ADJUSTER MODAL -->
+    <div class="modal-bg" id="adminSettingsModal" onclick="if(event.target===this)closeAdminSettings()">
+        <div class="modal" style="max-width:640px" onclick="event.stopPropagation()">
+            <div class="modal-hd">
+                <h2>⚙️ Admin: Adjust Website Content</h2>
+                <button class="close" onclick="closeAdminSettings()">×</button>
+            </div>
+            <div class="modal-bd">
+                <div class="form-grid">
+                    <div class="fld"><label>Company Name</label><input id="setBrandName" value="R-METAL"></div>
+                    <div class="fld"><label>Tagline</label><input id="setBrandSub" value="Steel Stock & Global Trading"></div>
+                    <div class="fld full"><label>Logo Image URL (Optional)</label><input id="setLogoUrl" placeholder="https://your-domain.com/logo.png"></div>
+                    <div class="fld full"><label>Hero Main Title</label><input id="setHeroHeadline" value="Premium Steel Products. Global Supply & Trading."></div>
+                    <div class="fld full"><label>Hero Description</label><textarea id="setHeroSubtext"></textarea></div>
+                    <div class="fld"><label>Contact Phone</label><input id="setPhone" value="+213 00 00 00 00"></div>
+                    <div class="fld"><label>Contact Email</label><input id="setEmail" value="sales@r-metal.com"></div>
+                    <div class="fld full"><label>Contact Address</label><input id="setAddress" value="Main Industrial Zone, Steel District"></div>
+                    <div class="fld full"><label>WhatsApp Number (Intl format)</label><input id="setWaNum" value="+213000000000"></div>
+                </div>
+            </div>
+            <div class="modal-ft">
+                <div style="flex:1"></div>
+                <button class="btn btn-ghost" onclick="closeAdminSettings()">Cancel</button>
+                <button class="btn btn-blue" onclick="saveAdminSettings()">💾 Save Website Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF GATE LEAD MODAL -->
+    <div class="modal-bg" id="pdfGateModal" onclick="if(event.target===this)closePdfGate()">
+        <div class="modal" style="max-width:400px" onclick="event.stopPropagation()">
+            <div class="modal-hd"><h2>📄 Download R-METAL Catalog</h2><button class="close" onclick="closePdfGate()">×</button></div>
+            <div class="modal-bd">
+                <p style="font-size:13px; color:var(--text2); margin-bottom:12px;">Enter your email to download the brochure instantly.</p>
+                <div class="fld" style="margin-bottom:10px"><label>Email *</label><input id="pdfEmail" type="email" placeholder="you@company.com"></div>
+            </div>
+            <div class="modal-ft"><div style="flex:1"></div><button class="btn btn-blue" onclick="downloadFeaturedPdf()">📥 Download Now</button></div>
+        </div>
+    </div>
+
+    <!-- Floating WhatsApp Action -->
+    <a class="whatsapp-fab" id="whatsappFab" target="_blank" rel="noopener" title="Chat with R-METAL on WhatsApp">💬</a>
+
+    <script>
+        const CONFIG = {
+            companyName: 'R-METAL',
+            companySub: 'Steel Stock & Global Trading',
+            supabaseUrl: 'https://fmmfofjkebdsrnkchrfo.supabase.co',
+            supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtbWZvZmprZWJkc3Jua2NocmZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDAxNDIsImV4cCI6MjA5MjA3NjE0Mn0.bQQJt06mucLCQCrY1NgN-ed2ngDeRLmITmOfQCAM7ZU',
+            whatsappNumber: '+213000000000'
+        };
+
+        const sb = supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
+
+        const STEEL_SPECS_DB = {
+            'S235': { standard: 'EN 10025-2', composition: { C: '≤ 0.17%', Mn: '≤ 1.40%', P: '≤ 0.035%', S: '≤ 0.035%' }, mechanical: { yield: '≥ 235 MPa', tensile: '360 - 510 MPa' } },
+            'S275': { standard: 'EN 10025-2', composition: { C: '≤ 0.21%', Mn: '≤ 1.50%', P: '≤ 0.035%', S: '≤ 0.035%' }, mechanical: { yield: '≥ 275 MPa', tensile: '410 - 560 MPa' } },
+            'S355': { standard: 'EN 10025-2', composition: { C: '≤ 0.20%', Mn: '≤ 1.60%', P: '≤ 0.030%', S: '≤ 0.030%' }, mechanical: { yield: '≥ 355 MPa', tensile: '470 - 630 MPa' } },
+            'X52': { standard: 'API 5L', composition: { C: '≤ 0.24%', Mn: '≤ 1.40%', P: '≤ 0.025%', S: '≤ 0.015%' }, mechanical: { yield: '≥ 360 MPa', tensile: '≥ 460 MPa' } }
+        };
+
+        let dedupedItems = [];
+        let cart = { stock: [] };
+        let adminUser = null;
+
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+        function toggleDark() {
+            const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+            document.getElementById('darkBtn').textContent = t === 'dark' ? '☀' : '🌙';
+        }
+
+        // --- Stock Loading ---
+        async function initStock() {
+            try {
+                const { data, error } = await sb.from('stock').select('id,product_category,product_type,grade,thickness,width,length,quantity,unit,section').limit(500);
+                if (error) throw error;
+                dedupedItems = data || [];
+                renderResults();
+            } catch (e) {
+                document.getElementById('resultsArea').innerHTML = `<div class="empty"><h3>R-METAL Live Stock</h3><p>Use search filters to locate stock inventory or submit a custom inquiry.</p></div>`;
+            }
+        }
+
+        function onFilterChange() {
+            renderResults();
+        }
+
+        function renderResults() {
+            const query = document.getElementById('fName').value.toLowerCase().trim();
+            const cat = document.getElementById('fCategory').value;
+            const area = document.getElementById('resultsArea');
+
+            let items = dedupedItems.filter(s => {
+                if (cat && s.product_category !== cat) return false;
+                if (query && !(`${s.grade} ${s.product_type}`).toLowerCase().includes(query)) return false;
+                return true;
+            });
+
+            document.getElementById('resultsCount').textContent = `${items.length} Product(s) Available`;
+
+            if (!items.length) {
+                area.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text3);">No exact product matches found. You can add a custom item into your enquiry.</div>`;
+                return;
+            }
+
+            area.innerHTML = `<div class="grid">${items.map(s => `
+                <div class="card">
+                    <div class="card-top"><span class="cat-badge">${esc(s.product_category || 'STEEL')}</span></div>
+                    <div class="card-grade">${esc(s.grade || 'Standard Grade')}</div>
+                    <div class="card-type">${esc(s.product_type || '')}</div>
+                    <div class="card-dims">
+                        ${s.thickness ? `<span class="dim-chip"><span class="lbl">T</span> ${s.thickness}mm</span>` : ''}
+                        ${s.width ? `<span class="dim-chip"><span class="lbl">W</span> ${s.width}mm</span>` : ''}
+                        ${s.length ? `<span class="dim-chip"><span class="lbl">L</span> ${s.length}mm</span>` : ''}
+                    </div>
+                    <div class="card-foot">
+                        <button class="spec-btn" onclick="openSpecModal('${esc(s.grade||'')}')">📄 Specs</button>
+                        <button class="add-btn" onclick="addToEnquiry('${s.id}')">+ Add to Enquiry</button>
+                    </div>
+                </div>
+            `).join('')}</div>`;
+        }
+
+        function clearFilters() {
+            document.getElementById('fName').value = '';
+            document.getElementById('fCategory').value = '';
+            renderResults();
+        }
+
+        // --- Specs Datasheet Modal ---
+        function openSpecModal(grade) {
+            const modal = document.getElementById('specModal');
+            const title = document.getElementById('specGradeTitle');
+            const body = document.getElementById('specModalBody');
+            
+            const clean = grade.trim().toUpperCase();
+            title.textContent = `Datasheet: ${grade || 'Steel Grade'}`;
+
+            if (STEEL_SPECS_DB[clean]) {
+                const info = STEEL_SPECS_DB[clean];
+                body.innerHTML = `
+                    <p><b>Standard:</b> ${info.standard}</p>
+                    <br>
+                    <h4>Chemical Composition</h4>
+                    <p>${JSON.stringify(info.composition)}</p>
+                    <br>
+                    <h4>Mechanical Properties</h4>
+                    <p>${JSON.stringify(info.mechanical)}</p>
+                `;
+            } else {
+                body.innerHTML = `<p style="padding:20px; text-align:center;">Specification sheet for ${esc(grade)} available upon formal quote request.</p>`;
+            }
+            modal.classList.add('open');
+        }
+        function closeSpecModal() { document.getElementById('specModal').classList.remove('open'); }
+
+        // --- Weight Calculator Logic ---
+        function openCalcModal() { document.getElementById('calcModal').classList.add('open'); onCalcShapeChange(); }
+        function closeCalcModal() { document.getElementById('calcModal').classList.remove('open'); }
+
+        function onCalcShapeChange() {
+            const shape = document.getElementById('calcShape').value;
+            const grid = document.getElementById('calcInputsGrid');
+            if (shape === 'plate') {
+                grid.innerHTML = `<div class="fld"><label>Thick (mm)</label><input id="cThick" type="number" oninput="calculateSteelWeight()"></div><div class="fld"><label>Width (mm)</label><input id="cWidth" type="number" oninput="calculateSteelWeight()"></div><div class="fld full"><label>Length (mm)</label><input id="cLength" type="number" oninput="calculateSteelWeight()"></div>`;
+            } else if (shape === 'pipe') {
+                grid.innerHTML = `<div class="fld"><label>OD (mm)</label><input id="cOD" type="number" oninput="calculateSteelWeight()"></div><div class="fld"><label>Wall WT (mm)</label><input id="cWT" type="number" oninput="calculateSteelWeight()"></div><div class="fld full"><label>Length (mm)</label><input id="cLength" type="number" oninput="calculateSteelWeight()"></div>`;
+            } else {
+                grid.innerHTML = `<div class="fld"><label>Diameter (mm)</label><input id="cDiam" type="number" oninput="calculateSteelWeight()"></div><div class="fld"><label>Length (mm)</label><input id="cLength" type="number" oninput="calculateSteelWeight()"></div>`;
+            }
+        }
+
+        function calculateSteelWeight() {
+            const shape = document.getElementById('calcShape').value;
+            const pcs = parseFloat(document.getElementById('calcPcs')?.value) || 1;
+            const price = parseFloat(document.getElementById('calcPricePerTon')?.value) || 0;
+            let kg = 0;
+
+            if (shape === 'plate') {
+                const t = parseFloat(document.getElementById('cThick')?.value) || 0;
+                const w = parseFloat(document.getElementById('cWidth')?.value) || 0;
+                const l = parseFloat(document.getElementById('cLength')?.value) || 0;
+                kg = (t * w * l * 7.85) / 1000000;
+            } else if (shape === 'pipe') {
+                const od = parseFloat(document.getElementById('cOD')?.value) || 0;
+                const wt = parseFloat(document.getElementById('cWT')?.value) || 0;
+                const l = parseFloat(document.getElementById('cLength')?.value) || 0;
+                kg = (od - wt) * wt * 0.0246615 * (l / 1000);
+            } else {
+                const d = parseFloat(document.getElementById('cDiam')?.value) || 0;
+                const l = parseFloat(document.getElementById('cLength')?.value) || 0;
+                kg = (Math.PI * Math.pow(d / 2, 2) * l * 7.85) / 1000000;
+            }
+
+            const totalKg = kg * pcs;
+            const tons = totalKg / 1000;
+            document.getElementById('calcResultWeight').textContent = totalKg.toFixed(2) + ' kg';
+            document.getElementById('calcResultTons').textContent = tons.toFixed(3) + ' Metric Tons';
+
+            const costBox = document.getElementById('calcResultCost');
+            if (price > 0 && tons > 0) {
+                costBox.style.display = 'block';
+                costBox.textContent = 'Est. Price: $' + (tons * price).toFixed(2);
+            } else { costBox.style.display = 'none'; }
+        }
+
+        // --- Cart / Enquiry Functions ---
+        function addToEnquiry(id) {
+            const item = dedupedItems.find(i => i.id === id);
+            if (item) {
+                cart.stock.push(item);
+                updateCartCount();
+                alert(`${item.grade || 'Product'} added to enquiry.`);
+            }
+        }
+
+        function updateCartCount() {
+            document.getElementById('cartCount').textContent = cart.stock.length;
+            document.getElementById('cartCount').classList.toggle('zero', cart.stock.length === 0);
+        }
+
+        function openCart() {
+            document.getElementById('cartModal').classList.add('open');
+            renderCartList();
+        }
+        function closeCart() { document.getElementById('cartModal').classList.remove('open'); }
+
+        function renderCartList() {
+            const list = document.getElementById('cartStockList');
+            const empty = document.getElementById('cartStockEmpty');
+            if (!cart.stock.length) {
+                list.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+            empty.style.display = 'none';
+            list.innerHTML = cart.stock.map((c, i) => `
+                <div style="padding:10px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                    <div><b>${esc(c.grade || 'Steel Item')}</b> - ${esc(c.product_type || '')}</div>
+                    <button onclick="cart.stock.splice(${i},1); renderCartList(); updateCartCount();" style="color:var(--red)">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function goToStep(n) {
+            document.getElementById('step1Body').style.display = n === 1 ? '' : 'none';
+            document.getElementById('step2Body').style.display = n === 2 ? '' : 'none';
+            document.getElementById('footBack').style.display = n === 2 ? '' : 'none';
+            document.getElementById('footNext').style.display = n === 1 ? '' : 'none';
+            document.getElementById('footSubmit').style.display = n === 2 ? '' : 'none';
+        }
+
+        async function submitEnquiry() {
+            const name = document.getElementById('cName').value;
+            const email = document.getElementById('cEmail').value;
+            if (!name || !email) { alert('Please enter name and email'); return; }
+
+            await sb.from('client_enquiries').insert({ client_name: name, client_email: email, items: cart.stock });
+            alert('Thank you! Your enquiry has been sent to R-METAL.');
+            cart.stock = [];
+            updateCartCount();
+            closeCart();
+        }
+
+        // --- Direct Contact Form Handler ---
+        async function handleDirectContact(e) {
+            e.preventDefault();
+            const name = document.getElementById('cntFormName').value;
+            const email = document.getElementById('cntFormEmail').value;
+            const msg = document.getElementById('cntFormMessage').value;
+
+            await sb.from('client_enquiries').insert({ client_name: name, client_email: email, message: msg });
+            alert('Your message has been sent to R-METAL sales team.');
+            e.target.reset();
+        }
+
+        function openWhatsApp() {
+            const num = CONFIG.whatsappNumber.replace(/[^\d]/g, '');
+            window.open(`https://wa.me/${num}?text=Hello%20R-METAL%20Sales%20Team`, '_blank');
+        }
+
+        // --- PDF Gate Lead Download ---
+        function openPdfGate() { document.getElementById('pdfGateModal').classList.add('open'); }
+        function closePdfGate() { document.getElementById('pdfGateModal').classList.remove('open'); }
+        async function downloadFeaturedPdf() {
+            const email = document.getElementById('pdfEmail').value;
+            if (!email) return alert('Please enter email');
+            await sb.from('subscribers').insert({ email, source: 'pdf_catalog' });
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFontSize(18);
+            doc.text('R-METAL Steel Stock Brochure', 15, 20);
+            doc.setFontSize(11);
+            doc.text('Thank you for downloading R-METAL product catalog.', 15, 30);
+            doc.save('R-METAL_Steel_Catalog.pdf');
+            closePdfGate();
+        }
+
+        // --- Admin Controls & Dynamic Website Adjustment ---
+        function openAdminLogin() { document.getElementById('loginModal').classList.add('open'); }
+        function closeAdminLogin() { document.getElementById('loginModal').classList.remove('open'); }
+        
+        async function doAdminLogin() {
+            const email = document.getElementById('liEmail').value;
+            const pass = document.getElementById('liPass').value;
+            const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+            if (!error && data.user) {
+                adminUser = data.user;
+                document.getElementById('adminEmail').textContent = adminUser.email;
+                document.getElementById('adminBanner').classList.add('show');
+                closeAdminLogin();
+            } else { alert('Login failed: ' + (error?.message || 'Check credentials')); }
+        }
+
+        function doAdminLogout() {
+            sb.auth.signOut();
+            document.getElementById('adminBanner').classList.remove('show');
+            adminUser = null;
+        }
+
+        function openAdminSettings() { document.getElementById('adminSettingsModal').classList.add('open'); }
+        function closeAdminSettings() { document.getElementById('adminSettingsModal').classList.remove('open'); }
+
+        function saveAdminSettings() {
+            const name = document.getElementById('setBrandName').value;
+            const sub = document.getElementById('setBrandSub').value;
+            const logo = document.getElementById('setLogoUrl').value;
+            const headline = document.getElementById('setHeroHeadline').value;
+            const subtext = document.getElementById('setHeroSubtext').value;
+            const phone = document.getElementById('setPhone').value;
+            const email = document.getElementById('setEmail').value;
+            const address = document.getElementById('setAddress').value;
+            const wa = document.getElementById('setWaNum').value;
+
+            // Apply directly to UI
+            document.getElementById('brandName').textContent = name;
+            document.getElementById('footBrand').textContent = name;
+            document.getElementById('brandSub').textContent = sub;
+            document.getElementById('heroHeadline').innerHTML = headline;
+            document.getElementById('heroSubtext').textContent = subtext;
+            document.getElementById('cntPhone').textContent = phone;
+            document.getElementById('cntEmail').textContent = email;
+            document.getElementById('cntAddress').textContent = address;
+            CONFIG.whatsappNumber = wa;
+
+            if (logo) {
+                document.getElementById('brandLogoImg').src = logo;
+                document.getElementById('brandLogoImg').style.display = 'block';
+                document.getElementById('brandLogoIcon').style.display = 'none';
+            }
+
+            // Persist locally for static session
+            localStorage.setItem('rmetal_settings', JSON.stringify({ name, sub, logo, headline, subtext, phone, email, address, wa }));
+            closeAdminSettings();
+            alert('Website information updated successfully!');
+        }
+
+        function loadSavedSettings() {
+            const saved = localStorage.getItem('rmetal_settings');
+            if (saved) {
+                const s = JSON.parse(saved);
+                if (s.name) { document.getElementById('brandName').textContent = s.name; document.getElementById('footBrand').textContent = s.name; }
+                if (s.sub) document.getElementById('brandSub').textContent = s.sub;
+                if (s.headline) document.getElementById('heroHeadline').innerHTML = s.headline;
+                if (s.subtext) document.getElementById('heroSubtext').textContent = s.subtext;
+                if (s.phone) document.getElementById('cntPhone').textContent = s.phone;
+                if (s.email) document.getElementById('cntEmail').textContent = s.email;
+                if (s.address) document.getElementById('cntAddress').textContent = s.address;
+                if (s.wa) CONFIG.whatsappNumber = s.wa;
+                if (s.logo) {
+                    document.getElementById('brandLogoImg').src = s.logo;
+                    document.getElementById('brandLogoImg').style.display = 'block';
+                    document.getElementById('brandLogoIcon').style.display = 'none';
+                }
+            }
+        }
+
+        // Init
+        loadSavedSettings();
+        initStock();
+    </script>
+</body>
+</html>
