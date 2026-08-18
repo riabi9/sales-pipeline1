@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Command Center — Scratchpad</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --panel-bg: #0d0f12;
+    --panel-border: rgba(255, 176, 0, 0.18);
+    --amber: #ffb000;
+    --amber-dim: rgba(255, 176, 0, 0.55);
+    --text-hi: #eef0f2;
+    --text-lo: #8a9099;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    background: var(--panel-bg);
+    color: var(--text-hi);
+    font-family: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  .screen { padding: 20px; max-width: 480px; margin: 0 auto; }
+  .screen.hidden { display: none; }
+  h1 {
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin: 0 0 16px;
+  }
+  label { display: block; font-size: 11px; color: var(--text-lo); margin-bottom: 12px; }
+  label span { display: block; margin-bottom: 4px; }
+  input, textarea {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 10px;
+    color: var(--text-hi);
+    font-family: inherit;
+    font-size: 14px;
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--amber-dim); }
+  textarea { min-height: 50vh; resize: vertical; }
+  button {
+    background: var(--amber);
+    color: #14110a;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+  }
+  .hint { font-size: 11px; color: var(--text-lo); margin-top: 12px; line-height: 1.5; }
+  .status { font-size: 11px; color: var(--amber); margin-top: 10px; min-height: 14px; }
+  .disconnect {
+    background: transparent;
+    color: var(--text-lo);
+    border: 1px solid var(--panel-border);
+    margin-top: 16px;
+  }
+</style>
+</head>
+<body>
+
+  <div id="setup" class="screen">
+    <h1>Connect</h1>
+    <label>
+      <span>Supabase URL</span>
+      <input id="setup_url" type="text" placeholder="https://xxxx.supabase.co" />
+    </label>
+    <label>
+      <span>Supabase anon key</span>
+      <input id="setup_key" type="password" placeholder="anon / public key" />
+    </label>
+    <button id="setup_connect">Connect</button>
+    <p class="hint">
+      Same values as your desktop app's Settings tab. Stored only on this
+      phone, in this browser's local storage — never sent anywhere else.
+    </p>
+  </div>
+
+  <div id="app" class="screen hidden">
+    <h1>Scratchpad</h1>
+    <textarea id="text" placeholder="Type here… syncs to your PC."></textarea>
+    <p id="status" class="status"></p>
+    <button id="disconnect" class="disconnect">Disconnect this phone</button>
+  </div>
+
+<script>
+(function () {
+  var TABLE = "sync_notes";
+  var ROW_ID = "scratchpad";
+  var POLL_MS = 2500;
+
+  var setupScreen = document.getElementById("setup");
+  var appScreen = document.getElementById("app");
+  var setupUrl = document.getElementById("setup_url");
+  var setupKey = document.getElementById("setup_key");
+  var setupConnect = document.getElementById("setup_connect");
+  var textEl = document.getElementById("text");
+  var statusEl = document.getElementById("status");
+  var disconnectBtn = document.getElementById("disconnect");
+
+  var client = null;
+  var pollTimer = null;
+  var lastTypedAt = 0;
+  var pushTimer = null;
+
+  function connect(url, key) {
+    client = window.supabase.createClient(url, key);
+    localStorage.setItem("cc_supabase_url", url);
+    localStorage.setItem("cc_supabase_key", key);
+    setupScreen.classList.add("hidden");
+    appScreen.classList.remove("hidden");
+    loadInitial();
+    pollTimer = setInterval(pollRemote, POLL_MS);
+  }
+
+  function loadInitial() {
+    statusEl.textContent = "Loading…";
+    client.from(TABLE).select("content, updated_at").eq("id", ROW_ID).then(function (res) {
+      if (res.error) {
+        statusEl.textContent = "Couldn't load: " + res.error.message;
+        return;
+      }
+      var row = res.data && res.data[0];
+      textEl.value = (row && row.content) || "";
+      statusEl.textContent = "Up to date.";
+    });
+  }
+
+  function pollRemote() {
+    client.from(TABLE).select("content, updated_at").eq("id", ROW_ID).then(function (res) {
+      if (res.error) {
+        statusEl.textContent = "Sync error: " + res.error.message;
+        return;
+      }
+      var row = res.data && res.data[0];
+      var remote = (row && row.content) || "";
+      var recentlyTyped = Date.now() - lastTypedAt < 1500;
+      if (!recentlyTyped && remote !== textEl.value) {
+        textEl.value = remote;
+        statusEl.textContent = "Updated from another device.";
+      } else if (!recentlyTyped) {
+        statusEl.textContent = "Up to date.";
+      }
+    });
+  }
+
+  function pushLocal() {
+    client.from(TABLE).upsert({ id: ROW_ID, content: textEl.value }).then(function (res) {
+      statusEl.textContent = res.error ? "Couldn't sync: " + res.error.message : "Synced.";
+    });
+  }
+
+  textEl.addEventListener("input", function () {
+    lastTypedAt = Date.now();
+    statusEl.textContent = "Typing…";
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(pushLocal, 800);
+  });
+
+  setupConnect.addEventListener("click", function () {
+    var url = setupUrl.value.trim();
+    var key = setupKey.value.trim();
+    if (!url || !key) {
+      alert("Enter both the URL and the key.");
+      return;
+    }
+    connect(url, key);
+  });
+
+  disconnectBtn.addEventListener("click", function () {
+    localStorage.removeItem("cc_supabase_url");
+    localStorage.removeItem("cc_supabase_key");
+    clearInterval(pollTimer);
+    pollTimer = null;
+    client = null;
+    appScreen.classList.add("hidden");
+    setupScreen.classList.remove("hidden");
+    setupUrl.value = "";
+    setupKey.value = "";
+  });
+
+  var savedUrl = localStorage.getItem("cc_supabase_url");
+  var savedKey = localStorage.getItem("cc_supabase_key");
+  if (savedUrl && savedKey) {
+    setupUrl.value = savedUrl;
+    setupKey.value = savedKey;
+    connect(savedUrl, savedKey);
+  }
+})();
+</script>
+</body>
+</html>
