@@ -58,6 +58,23 @@
     width: 100%;
   }
   .hint { font-size: 11px; color: var(--text-lo); margin-top: 12px; line-height: 1.5; }
+  .section-h1 { margin-top: 24px; }
+  .clip-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+  .clip-text {
+    flex: 1;
+    font-size: 13px;
+    word-break: break-word;
+  }
+  .clip-copied { color: var(--amber); font-size: 11px; flex: 0 0 auto; }
+  .clip-empty { font-size: 12px; color: var(--text-lo); }
   .status { font-size: 11px; color: var(--amber); margin-top: 10px; min-height: 14px; }
   .disconnect {
     background: transparent;
@@ -90,6 +107,11 @@
     <h1>Scratchpad</h1>
     <textarea id="text" placeholder="Type here… syncs to your PC."></textarea>
     <p id="status" class="status"></p>
+
+    <h1 class="section-h1">From your PC</h1>
+    <p class="hint">Tap an item to copy it. Only things explicitly shared here show up — nothing syncs automatically.</p>
+    <div id="clip_list"></div>
+
     <button id="disconnect" class="disconnect">Disconnect this phone</button>
   </div>
 
@@ -97,6 +119,7 @@
 (function () {
   var TABLE = "sync_notes";
   var ROW_ID = "scratchpad";
+  var CLIP_TABLE = "clipboard_items";
   var POLL_MS = 2500;
 
   var setupScreen = document.getElementById("setup");
@@ -107,6 +130,7 @@
   var textEl = document.getElementById("text");
   var statusEl = document.getElementById("status");
   var disconnectBtn = document.getElementById("disconnect");
+  var clipListEl = document.getElementById("clip_list");
 
   var client = null;
   var pollTimer = null;
@@ -120,7 +144,11 @@
     setupScreen.classList.add("hidden");
     appScreen.classList.remove("hidden");
     loadInitial();
-    pollTimer = setInterval(pollRemote, POLL_MS);
+    pollClipboard();
+    pollTimer = setInterval(function () {
+      pollRemote();
+      pollClipboard();
+    }, POLL_MS);
   }
 
   function loadInitial() {
@@ -152,6 +180,53 @@
         statusEl.textContent = "Up to date.";
       }
     });
+  }
+
+  function renderClipList(items) {
+    clipListEl.innerHTML = "";
+    if (!items || !items.length) {
+      var empty = document.createElement("p");
+      empty.className = "clip-empty";
+      empty.textContent = "Nothing shared yet.";
+      clipListEl.appendChild(empty);
+      return;
+    }
+    items.forEach(function (item) {
+      var row = document.createElement("div");
+      row.className = "clip-row";
+
+      var text = document.createElement("span");
+      text.className = "clip-text";
+      text.textContent = item.text;
+
+      var copied = document.createElement("span");
+      copied.className = "clip-copied";
+      copied.textContent = "";
+
+      row.appendChild(text);
+      row.appendChild(copied);
+      row.addEventListener("click", function () {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(item.text).then(function () {
+            copied.textContent = "Copied";
+            setTimeout(function () { copied.textContent = ""; }, 1200);
+          });
+        }
+      });
+      clipListEl.appendChild(row);
+    });
+  }
+
+  function pollClipboard() {
+    client
+      .from(CLIP_TABLE)
+      .select("id, text, captured_at")
+      .order("captured_at", { ascending: false })
+      .limit(30)
+      .then(function (res) {
+        if (res.error) return; // stay quiet — the scratchpad's own status line covers connection errors
+        renderClipList(res.data || []);
+      });
   }
 
   function pushLocal() {
