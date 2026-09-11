@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>سجل قياسات السكر</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  :root {
+    --bg: #EFF4EE;
+    --surface: #FFFFFF;
+    --ink: #1F2A24;
+    --muted-ink: #5B6B60;
+    --primary: #2F6D52;
+    --primary-dark: #234F3C;
+    --accent: #C98A3D;
+    --border: #D9E3D6;
+    --danger: #B5533C;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Tajawal', sans-serif;
+    font-size: 18px;
+    line-height: 1.6;
+    padding: 24px 16px 64px;
+  }
+  .page { max-width: 480px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 28px; }
+  header h1 { font-size: 1.6rem; font-weight: 700; margin: 0 0 6px; color: var(--primary-dark); }
+  header .clock { color: var(--muted-ink); font-size: 0.95rem; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  label { display: block; font-weight: 500; margin-bottom: 8px; font-size: 1rem; }
+  .field { margin-bottom: 18px; }
+  input[type="number"], select, textarea {
+    width: 100%;
+    font-family: inherit;
+    font-size: 1.15rem;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #FBFDFA;
+    color: var(--ink);
+  }
+  input[type="number"] {
+    font-size: 1.8rem;
+    font-weight: 700;
+    text-align: center;
+    padding: 16px;
+  }
+  textarea { resize: vertical; min-height: 60px; font-size: 1rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .chip {
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 9px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: #FBFDFA;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .chip.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+    font-weight: 500;
+  }
+  .subtle-label { color: var(--muted-ink); font-size: 0.88rem; margin: -10px 0 12px; }
+  button.save {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 10px;
+    background: var(--primary);
+    color: #fff;
+    font-family: inherit;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  button.save:active { background: var(--primary-dark); }
+  .feedback { text-align: center; margin-top: 12px; font-weight: 500; min-height: 1.4em; }
+  .feedback.ok { color: var(--primary-dark); }
+  .feedback.err { color: var(--danger); }
+  .section-title { font-weight: 700; font-size: 1.1rem; margin: 0 0 14px; color: var(--primary-dark); }
+  .entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .entry:last-child { border-bottom: none; }
+  .entry-value { font-size: 1.3rem; font-weight: 700; color: var(--primary-dark); min-width: 64px; }
+  .entry-meta { flex: 1; font-size: 0.92rem; color: var(--muted-ink); }
+  .entry-meta .context { color: var(--ink); font-weight: 500; }
+  .delete-link {
+    color: var(--danger);
+    font-size: 0.88rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 4px 6px;
+  }
+  .empty { color: var(--muted-ink); text-align: center; padding: 12px 0; }
+  canvas { max-width: 100%; }
+  footer { text-align: center; color: var(--muted-ink); font-size: 0.8rem; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>سجل قياسات السكر</h1>
+    <div class="clock" id="clock"></div>
+  </header>
+
+  <div class="card">
+    <form id="entry-form">
+      <div class="field">
+        <label for="value">قيمة القراءة (mg/dL)</label>
+        <input type="number" id="value" inputmode="decimal" step="1" min="0" required>
+      </div>
+      <div class="field">
+        <label for="context">الوقت بالنسبة للأكل</label>
+        <select id="context">
+          <option value="صائم">صائم</option>
+          <option value="قبل الأكل">قبل الأكل</option>
+          <option value="بعد الأكل بساعتين">بعد الأكل بساعتين</option>
+          <option value="قبل النوم">قبل النوم</option>
+          <option value="أخرى">أخرى</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>كيف تشعرين؟ (اختياري)</label>
+        <div class="chips" id="feeling-chips">
+          <button type="button" class="chip" data-label="بخير">بخير</button>
+          <button type="button" class="chip" data-label="دوخة">دوخة</button>
+          <button type="button" class="chip" data-label="تعب">تعب</button>
+          <button type="button" class="chip" data-label="عطش شديد">عطش شديد</button>
+          <button type="button" class="chip" data-label="جوع شديد">جوع شديد</button>
+          <button type="button" class="chip" data-label="تعرّق">تعرّق</button>
+          <button type="button" class="chip" data-label="ارتجاف">ارتجاف</button>
+          <button type="button" class="chip" data-label="صداع">صداع</button>
+          <button type="button" class="chip" data-label="غثيان">غثيان</button>
+        </div>
+        <div class="subtle-label">يمكنك اختيار أكثر من كلمة</div>
+        <label for="notes">تفاصيل إضافية (اختياري)</label>
+        <textarea id="notes" placeholder="اكتبي أي شيء آخر تريدين إضافته هنا"></textarea>
+      </div>
+      <button type="submit" class="save">حفظ القراءة</button>
+      <div class="feedback" id="feedback"></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="section-title">آخر القراءات</div>
+    <div id="history"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">الاتجاه خلال آخر القراءات</div>
+    <canvas id="trend-chart" height="180"></canvas>
+  </div>
+
+  <footer>يُسجَّل التاريخ والوقت تلقائيًا مع كل قراءة</footer>
+</div>
+
+<script>
+// ====== إعدادات Supabase ======
+// انسخي نفس القيم المستخدمة في صفحات steel-platform (نفس المشروع، جدول جديد)
+const SUPABASE_URL = "PASTE_YOUR_SUPABASE_URL_HERE";
+const SUPABASE_ANON_KEY = "PASTE_YOUR_SUPABASE_ANON_KEY_HERE";
+const TABLE_NAME = "sugar_readings";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleString('ar-DZ', { dateStyle: 'full', timeStyle: 'short' });
+}
+updateClock();
+setInterval(updateClock, 1000 * 30);
+
+const form = document.getElementById('entry-form');
+const feedback = document.getElementById('feedback');
+const historyEl = document.getElementById('history');
+let chartInstance = null;
+
+const selectedFeelings = new Set();
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const label = chip.dataset.label;
+    if (selectedFeelings.has(label)) {
+      selectedFeelings.delete(label);
+      chip.classList.remove('active');
+    } else {
+      selectedFeelings.add(label);
+      chip.classList.add('active');
+    }
+  });
+});
+
+function resetFeelings() {
+  selectedFeelings.clear();
+  document.querySelectorAll('.chip').forEach(chip => chip.classList.remove('active'));
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const value = document.getElementById('value').value;
+  const context = document.getElementById('context').value;
+  const details = document.getElementById('notes').value.trim();
+  const feelings = [...selectedFeelings].join('، ');
+  const notes = [feelings, details].filter(Boolean).join(' — ');
+
+  feedback.textContent = "جارٍ الحفظ...";
+  feedback.className = "feedback";
+
+  const { error } = await supabaseClient.from(TABLE_NAME).insert([
+    { value: Number(value), context, notes: notes || null }
+  ]);
+
+  if (error) {
+    feedback.textContent = "حدث خطأ أثناء الحفظ. تحقّقي من الاتصال بالإنترنت.";
+    feedback.className = "feedback err";
+    console.error(error);
+    return;
+  }
+
+  feedback.textContent = "تم الحفظ ✅";
+  feedback.className = "feedback ok";
+  form.reset();
+  resetFeelings();
+  loadHistory();
+});
+
+async function loadHistory() {
+  const { data, error } = await supabaseClient
+    .from(TABLE_NAME)
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (error) {
+    historyEl.innerHTML = '<div class="empty">تعذّر تحميل السجل.</div>';
+    console.error(error);
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    historyEl.innerHTML = '<div class="empty">لا توجد قراءات بعد.</div>';
+    updateChart([]);
+    return;
+  }
+
+  historyEl.innerHTML = data.map(row => {
+    const d = new Date(row.created_at);
+    const dateStr = d.toLocaleString('ar-DZ', { dateStyle: 'medium', timeStyle: 'short' });
+    return `
+      <div class="entry">
+        <div class="entry-value">${row.value}</div>
+        <div class="entry-meta">
+          <span class="context">${row.context || ''}</span><br>
+          ${dateStr}
+          ${row.notes ? `<br>${row.notes}` : ''}
+        </div>
+        <button class="delete-link" onclick="deleteEntry('${row.id}')">حذف</button>
+      </div>
+    `;
+  }).join('');
+
+  updateChart([...data].reverse());
+}
+
+async function deleteEntry(id) {
+  if (!confirm("هل تريدين حذف هذه القراءة؟")) return;
+  const { error } = await supabaseClient.from(TABLE_NAME).delete().eq('id', id);
+  if (error) {
+    alert("تعذّر الحذف.");
+    console.error(error);
+    return;
+  }
+  loadHistory();
+}
+
+function updateChart(rows) {
+  const ctx = document.getElementById('trend-chart');
+  const labels = rows.map(r => new Date(r.created_at).toLocaleDateString('ar-DZ', { day: 'numeric', month: 'short' }));
+  const values = rows.map(r => r.value);
+
+  if (chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        borderColor: '#2F6D52',
+        backgroundColor: 'rgba(47,109,82,0.12)',
+        tension: 0.3,
+        fill: true,
+        pointRadius: 3
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { reverse: true },
+        y: { beginAtZero: false }
+      }
+    }
+  });
+}
+
+loadHistory();
+</script>
+</body>
+</html>
