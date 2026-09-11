@@ -107,18 +107,50 @@
   .entry-value { font-size: 1.3rem; font-weight: 700; color: var(--primary-dark); min-width: 64px; }
   .entry-meta { flex: 1; font-size: 0.92rem; color: var(--muted-ink); }
   .entry-meta .context { color: var(--ink); font-weight: 500; }
-  .delete-link {
-    color: var(--danger);
+  .delete-link, .edit-link {
     font-size: 0.88rem;
     background: none;
     border: none;
     cursor: pointer;
     font-family: inherit;
     padding: 4px 6px;
+    white-space: nowrap;
   }
+  .delete-link { color: var(--danger); }
+  .edit-link { color: var(--primary-dark); }
+  .entry-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
   .empty { color: var(--muted-ink); text-align: center; padding: 12px 0; }
   canvas { max-width: 100%; }
   footer { text-align: center; color: var(--muted-ink); font-size: 0.8rem; margin-top: 8px; }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .card-header .section-title { margin: 0; }
+  .print-btn {
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--primary);
+    background: #fff;
+    color: var(--primary-dark);
+    cursor: pointer;
+  }
+  .cancel-edit {
+    display: block;
+    width: 100%;
+    text-align: center;
+    background: none;
+    border: none;
+    color: var(--muted-ink);
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 10px;
+    cursor: pointer;
+  }
+  @media print {
+    #form-card, .print-btn, .edit-link, .delete-link, footer { display: none !important; }
+    body { background: #fff; padding: 0; }
+    .card { border: none; padding: 0; margin-bottom: 20px; }
+  }
 </style>
 </head>
 <body>
@@ -128,7 +160,7 @@
     <div class="clock" id="clock"></div>
   </header>
 
-  <div class="card">
+  <div class="card" id="form-card">
     <form id="entry-form">
       <div class="field">
         <label for="value">قيمة القراءة</label>
@@ -175,12 +207,16 @@
         <textarea id="notes" placeholder="اكتبي أي شيء آخر تريدين إضافته هنا"></textarea>
       </div>
       <button type="submit" class="save">حفظ القراءة</button>
+      <button type="button" id="cancel-edit" class="cancel-edit" style="display:none;">إلغاء التعديل</button>
       <div class="feedback" id="feedback"></div>
     </form>
   </div>
 
   <div class="card">
-    <div class="section-title">آخر القراءات</div>
+    <div class="card-header">
+      <div class="section-title">آخر القراءات</div>
+      <button type="button" class="print-btn" id="print-btn">طباعة</button>
+    </div>
     <div id="history"></div>
   </div>
 
@@ -220,6 +256,12 @@ const historyEl = document.getElementById('history');
 const datetimeInput = document.getElementById('entry-datetime');
 let chartInstance = null;
 let weightChartInstance = null;
+let editingId = null;
+const saveBtn = document.querySelector('.save');
+const cancelEditBtn = document.getElementById('cancel-edit');
+
+document.getElementById('print-btn').addEventListener('click', () => window.print());
+cancelEditBtn.addEventListener('click', cancelEdit);
 
 function toLocalDatetimeValue(date) {
   const pad = n => String(n).padStart(2, '0');
@@ -259,16 +301,18 @@ form.addEventListener('submit', async (e) => {
   feedback.textContent = "جارٍ الحفظ...";
   feedback.className = "feedback";
 
-  const { error } = await supabaseClient.from(TABLE_NAME).insert([
-    {
-      value: Number(value),
-      context,
-      weight: weight ? Number(weight) : null,
-      meal: meal || null,
-      notes: notes || null,
-      created_at: new Date(datetimeInput.value).toISOString()
-    }
-  ]);
+  const payload = {
+    value: Number(value),
+    context,
+    weight: weight ? Number(weight) : null,
+    meal: meal || null,
+    notes: notes || null,
+    created_at: new Date(datetimeInput.value).toISOString()
+  };
+
+  const { error } = editingId
+    ? await supabaseClient.from(TABLE_NAME).update(payload).eq('id', editingId)
+    : await supabaseClient.from(TABLE_NAME).insert([payload]);
 
   if (error) {
     feedback.textContent = "حدث خطأ أثناء الحفظ. تحقّقي من الاتصال بالإنترنت.";
@@ -277,13 +321,45 @@ form.addEventListener('submit', async (e) => {
     return;
   }
 
-  feedback.textContent = "تم الحفظ ✅";
+  feedback.textContent = editingId ? "تم التحديث ✅" : "تم الحفظ ✅";
   feedback.className = "feedback ok";
+  editingId = null;
+  saveBtn.textContent = "حفظ القراءة";
+  cancelEditBtn.style.display = "none";
   form.reset();
   resetFeelings();
   datetimeInput.value = toLocalDatetimeValue(new Date());
   loadHistory();
 });
+
+async function startEdit(id) {
+  const { data, error } = await supabaseClient.from(TABLE_NAME).select('*').eq('id', id).single();
+  if (error || !data) {
+    alert("تعذّر تحميل هذه القراءة.");
+    console.error(error);
+    return;
+  }
+  editingId = id;
+  document.getElementById('value').value = data.value;
+  datetimeInput.value = toLocalDatetimeValue(new Date(data.created_at));
+  document.getElementById('context').value = data.context || 'صائم';
+  document.getElementById('weight').value = data.weight ?? '';
+  document.getElementById('meal').value = data.meal || '';
+  document.getElementById('notes').value = data.notes || '';
+  resetFeelings();
+  saveBtn.textContent = "تحديث القراءة";
+  cancelEditBtn.style.display = "block";
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelEdit() {
+  editingId = null;
+  form.reset();
+  resetFeelings();
+  datetimeInput.value = toLocalDatetimeValue(new Date());
+  saveBtn.textContent = "حفظ القراءة";
+  cancelEditBtn.style.display = "none";
+}
 
 async function loadHistory() {
   const { data, error } = await supabaseClient
@@ -318,7 +394,10 @@ async function loadHistory() {
           ${row.meal ? `<br>الأكل: ${row.meal}` : ''}
           ${row.notes ? `<br>${row.notes}` : ''}
         </div>
-        <button class="delete-link" onclick="deleteEntry('${row.id}')">حذف</button>
+        <div class="entry-actions">
+          <button class="edit-link" onclick="startEdit('${row.id}')">تعديل</button>
+          <button class="delete-link" onclick="deleteEntry('${row.id}')">حذف</button>
+        </div>
       </div>
     `;
   }).join('');
