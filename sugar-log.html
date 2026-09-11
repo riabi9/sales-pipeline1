@@ -236,11 +236,29 @@
 <script>
 // ====== إعدادات Supabase ======
 // انسخي نفس القيم المستخدمة في صفحات steel-platform (نفس المشروع، جدول جديد)
-const SUPABASE_URL = "PASTE_YOUR_SUPABASE_URL_HERE";
-const SUPABASE_ANON_KEY = "PASTE_YOUR_SUPABASE_ANON_KEY_HERE";
+const SUPABASE_URL = "https://fmmfofjkebdsrnkchrfo.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtbWZvZmprZWJkc3Jua2NocmZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDAxNDIsImV4cCI6MjA5MjA3NjE0Mn0.bQQJt06mucLCQCrY1NgN-ed2ngDeRLmITmOfQCAM7ZU";
 const TABLE_NAME = "sugar_readings";
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let supabaseClient = null;
+if (SUPABASE_URL.includes("PASTE_YOUR") || SUPABASE_ANON_KEY.includes("PASTE_YOUR")) {
+  document.body.innerHTML =
+    '<div style="max-width:480px;margin:60px auto;padding:20px;background:#fff;border:1px solid #B5533C;border-radius:12px;color:#1F2A24;font-family:sans-serif;text-align:center;">' +
+    'لم يتم إعداد الاتصال بقاعدة البيانات بعد.<br><br>' +
+    'افتحي هذا الملف وابحثي عن السطر الذي يحتوي على PASTE_YOUR_SUPABASE_URL_HERE واستبدليه برابط ومفتاح Supabase الحقيقيين (نفس القيم المستخدمة في صفحات steel-platform).' +
+    '</div>';
+  throw new Error("Supabase URL/key not configured — replace the placeholders near the top of the script.");
+}
+
+try {
+  supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} catch (e) {
+  document.body.innerHTML =
+    '<div style="max-width:480px;margin:60px auto;padding:20px;background:#fff;border:1px solid #B5533C;border-radius:12px;color:#1F2A24;font-family:sans-serif;text-align:center;">' +
+    'تعذّر الاتصال بقاعدة البيانات. تأكدي من صحة رابط ومفتاح Supabase.' +
+    '</div>';
+  throw e;
+}
 
 function updateClock() {
   const now = new Date();
