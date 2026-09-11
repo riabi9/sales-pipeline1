@@ -43,7 +43,7 @@
   }
   label { display: block; font-weight: 500; margin-bottom: 8px; font-size: 1rem; }
   .field { margin-bottom: 18px; }
-  input[type="number"], select, textarea {
+  input[type="number"], input[type="text"], select, textarea {
     width: 100%;
     font-family: inherit;
     font-size: 1.15rem;
@@ -53,7 +53,7 @@
     background: #FBFDFA;
     color: var(--ink);
   }
-  input[type="number"] {
+  #value {
     font-size: 1.8rem;
     font-weight: 700;
     text-align: center;
@@ -145,6 +145,14 @@
         </select>
       </div>
       <div class="field">
+        <label for="weight">الوزن (كغ) - اختياري</label>
+        <input type="number" id="weight" inputmode="decimal" step="0.1" min="0">
+      </div>
+      <div class="field">
+        <label for="meal">ماذا أكلت؟ (اختياري)</label>
+        <textarea id="meal" placeholder="مثال: طبق كسكسي وسلطة"></textarea>
+      </div>
+      <div class="field">
         <label>كيف تشعرين؟ (اختياري)</label>
         <div class="chips" id="feeling-chips">
           <button type="button" class="chip" data-label="بخير">بخير</button>
@@ -176,6 +184,11 @@
     <canvas id="trend-chart" height="180"></canvas>
   </div>
 
+  <div class="card">
+    <div class="section-title">الوزن عبر الوقت</div>
+    <canvas id="weight-chart" height="180"></canvas>
+  </div>
+
   <footer>يُسجَّل التاريخ والوقت تلقائيًا مع كل قراءة</footer>
 </div>
 
@@ -200,6 +213,7 @@ const form = document.getElementById('entry-form');
 const feedback = document.getElementById('feedback');
 const historyEl = document.getElementById('history');
 let chartInstance = null;
+let weightChartInstance = null;
 
 const selectedFeelings = new Set();
 document.querySelectorAll('.chip').forEach(chip => {
@@ -224,6 +238,8 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const value = document.getElementById('value').value;
   const context = document.getElementById('context').value;
+  const weight = document.getElementById('weight').value;
+  const meal = document.getElementById('meal').value.trim();
   const details = document.getElementById('notes').value.trim();
   const feelings = [...selectedFeelings].join('، ');
   const notes = [feelings, details].filter(Boolean).join(' — ');
@@ -232,7 +248,13 @@ form.addEventListener('submit', async (e) => {
   feedback.className = "feedback";
 
   const { error } = await supabaseClient.from(TABLE_NAME).insert([
-    { value: Number(value), context, notes: notes || null }
+    {
+      value: Number(value),
+      context,
+      weight: weight ? Number(weight) : null,
+      meal: meal || null,
+      notes: notes || null
+    }
   ]);
 
   if (error) {
@@ -265,6 +287,7 @@ async function loadHistory() {
   if (!data || data.length === 0) {
     historyEl.innerHTML = '<div class="empty">لا توجد قراءات بعد.</div>';
     updateChart([]);
+    updateWeightChart([]);
     return;
   }
 
@@ -277,6 +300,8 @@ async function loadHistory() {
         <div class="entry-meta">
           <span class="context">${row.context || ''}</span><br>
           ${dateStr}
+          ${row.weight ? `<br>الوزن: ${row.weight} كغ` : ''}
+          ${row.meal ? `<br>الأكل: ${row.meal}` : ''}
           ${row.notes ? `<br>${row.notes}` : ''}
         </div>
         <button class="delete-link" onclick="deleteEntry('${row.id}')">حذف</button>
@@ -285,6 +310,7 @@ async function loadHistory() {
   }).join('');
 
   updateChart([...data].reverse());
+  updateWeightChart([...data].reverse());
 }
 
 async function deleteEntry(id) {
@@ -312,6 +338,36 @@ function updateChart(rows) {
         data: values,
         borderColor: '#2F6D52',
         backgroundColor: 'rgba(47,109,82,0.12)',
+        tension: 0.3,
+        fill: true,
+        pointRadius: 3
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { reverse: true },
+        y: { beginAtZero: false }
+      }
+    }
+  });
+}
+
+function updateWeightChart(rows) {
+  const weighed = rows.filter(r => r.weight !== null && r.weight !== undefined);
+  const ctx = document.getElementById('weight-chart');
+  const labels = weighed.map(r => new Date(r.created_at).toLocaleDateString('ar-DZ', { day: 'numeric', month: 'short' }));
+  const values = weighed.map(r => r.weight);
+
+  if (weightChartInstance) weightChartInstance.destroy();
+  weightChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        borderColor: '#C98A3D',
+        backgroundColor: 'rgba(201,138,61,0.12)',
         tension: 0.3,
         fill: true,
         pointRadius: 3
